@@ -1,15 +1,159 @@
-/* MaintPro CMMS - Main Application */
+/* ============================================
+   MaintPro CMMS v2.0 - Main Application
+   Login flow, navigation, all views including
+   Calendar and Asset History
+   ============================================ */
 class App {
     constructor() {
         this.currentView = 'dashboard';
         this.charts = {};
+        this.calendarDate = new Date();
+        this.viewingAssetId = null;
         this.init();
     }
 
     init() {
+        // Check session
+        if (auth.isLoggedIn()) {
+            const cedula = auth.getCurrentCedula();
+            if (cedula) {
+                initStore(cedula);
+                this.showApp();
+            } else if (auth.isAdmin()) {
+                this.showApp(); // Admin without student selected
+            }
+        } else {
+            this.showLogin();
+        }
+    }
+
+    // ========== LOGIN ==========
+    showLogin() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
+        const form = document.getElementById('loginForm');
+        const errorEl = document.getElementById('loginError');
+        errorEl.style.display = 'none';
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('loginIdentifier').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            // Attempt login
+            const result = auth.login(identifier, password);
+            if (result.success) {
+                errorEl.style.display = 'none';
+                if (result.type === 'admin') {
+                    this.showApp();
+                } else {
+                    initStore(result.student.cedula);
+                    this.showApp();
+                }
+            } else {
+                errorEl.textContent = result.message;
+                errorEl.style.display = 'block';
+                document.getElementById('loginIdentifier').classList.add('input-error');
+                setTimeout(() => document.getElementById('loginIdentifier').classList.remove('input-error'), 1500);
+            }
+        };
+    }
+
+    showApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+        this.setupSidebar();
         this.bindNav();
-        this.bindCompanySelector();
-        this.navigate('dashboard');
+
+        if (auth.isAdmin() && !auth.getCurrentCedula()) {
+            this.showAdminStudentPicker();
+        } else {
+            this.navigate('dashboard');
+        }
+    }
+
+    setupSidebar() {
+        // User info in sidebar
+        const userInfo = document.getElementById('userInfo');
+        const adminSelector = document.getElementById('adminStudentSelector');
+
+        if (auth.isAdmin()) {
+            userInfo.innerHTML = `
+                <div class="user-avatar admin"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <div class="user-name">Administrador</div>
+                    <div class="user-role">Modo Docente</div>
+                </div>`;
+            adminSelector.style.display = 'block';
+            // Populate student dropdown
+            const sel = document.getElementById('adminStudentSelect');
+            sel.innerHTML = '<option value="">— Seleccionar Estudiante —</option>' +
+                STUDENTS.map(s => `<option value="${s.cedula}" ${auth.getCurrentCedula() === s.cedula ? 'selected' : ''}>${s.nombre}</option>`).join('');
+            sel.onchange = () => {
+                if (sel.value) {
+                    auth.adminViewStudent(sel.value);
+                    initStore(sel.value);
+                    this.navigate('dashboard');
+                }
+            };
+        } else {
+            const session = auth.getSession();
+            const student = getStudentByCedula(session.cedula);
+            const nombre = student ? student.nombre.split(',').reverse().join(' ').trim() : session.nombre;
+            const sector = getStudentSector(session.cedula);
+            userInfo.innerHTML = `
+                <div class="user-avatar student">${nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
+                <div>
+                    <div class="user-name">${nombre}</div>
+                    <div class="user-role">${sector.name}</div>
+                </div>`;
+            adminSelector.style.display = 'none';
+        }
+
+        // Logout button
+        document.getElementById('btnLogout').onclick = () => {
+            auth.logout();
+            store = null;
+            this.showLogin();
+        };
+    }
+
+    showAdminStudentPicker() {
+        // Show a centered prompt to pick a student
+        const content = document.getElementById('content');
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        const el = document.getElementById('view-dashboard');
+        el.classList.add('active');
+        el.innerHTML = `
+        <div class="admin-picker-wrapper">
+            <div class="admin-picker-card">
+                <div class="admin-picker-icon"><i class="fas fa-user-shield"></i></div>
+                <h2>Modo Administrador</h2>
+                <p>Seleccione un estudiante para visualizar su gestión de mantenimiento.</p>
+                <div class="admin-student-grid">
+                    ${STUDENTS.map(s => {
+                        const preview = getStudentAssetPreview(s.cedula);
+                        return `<div class="admin-student-card" data-cedula="${s.cedula}">
+                            <div class="admin-student-avatar">${s.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
+                            <div class="admin-student-name">${s.nombre.split(',').reverse().join(' ').trim()}</div>
+                            <div class="admin-student-sector"><i class="fas fa-industry"></i> ${preview.company} · ${preview.sector}</div>
+                            <div class="admin-student-assets">
+                                ${preview.assets.map(a => `<div class="admin-asset-tag"><i class="fas fa-cog"></i> ${a}</div>`).join('')}
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>`;
+        el.querySelectorAll('.admin-student-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const cedula = card.dataset.cedula;
+                auth.adminViewStudent(cedula);
+                initStore(cedula);
+                document.getElementById('adminStudentSelect').value = cedula;
+                this.navigate('dashboard');
+            });
+        });
     }
 
     // ---- Navigation ----
@@ -19,21 +163,18 @@ class App {
         });
     }
 
-    bindCompanySelector() {
-        const sel = document.getElementById('companySelect');
-        if (sel) {
-            sel.innerHTML = store.getCompanies().map(c =>
-                `<option value="${c.id}">${c.name}</option>`
-            ).join('');
-            sel.value = store.currentCompanyId;
-            sel.addEventListener('change', () => {
-                store.setCurrentCompany(sel.value);
-                this.navigate(this.currentView);
-            });
-        }
-    }
-
     navigate(view) {
+        // Close mobile sidebar on navigate
+        document.getElementById('sidebar').classList.remove('open');
+
+        if (!store) {
+            if (auth.isAdmin()) {
+                this.showAdminStudentPicker();
+                return;
+            }
+            return;
+        }
+
         this.currentView = view;
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const activeNav = document.querySelector(`.nav-item[data-view="${view}"]`);
@@ -43,16 +184,35 @@ class App {
         const section = document.getElementById(`view-${view}`);
         if (section) { section.classList.add('active'); section.innerHTML = ''; }
 
-        const titles = { dashboard: 'Dashboard', assets: 'Activos / Equipos', workorders: 'Órdenes de Trabajo', preventive: 'Mantenimiento Preventivo', inventory: 'Inventario de Repuestos', personnel: 'Personal Técnico', reports: 'Reportes y KPIs' };
+        const titles = {
+            dashboard: 'Dashboard', assets: 'Activos / Equipos', workorders: 'Órdenes de Trabajo',
+            preventive: 'Mantenimiento Preventivo', inventory: 'Inventario de Repuestos',
+            personnel: 'Personal Técnico', reports: 'Reportes y KPIs',
+            calendar: 'Calendario de Mantenimiento', assetDetail: 'Historial del Equipo'
+        };
         const topTitle = document.getElementById('topbarTitle');
         if (topTitle) topTitle.textContent = titles[view] || '';
 
-        const render = { dashboard: () => this.renderDashboard(), assets: () => this.renderAssets(), workorders: () => this.renderWorkOrders(), preventive: () => this.renderPreventive(), inventory: () => this.renderInventory(), personnel: () => this.renderPersonnel(), reports: () => this.renderReports() };
+        // Company name in topbar
+        const companyLabel = document.getElementById('topbarCompany');
+        if (companyLabel && store) {
+            const c = store.getCurrentCompany();
+            companyLabel.textContent = c ? c.name : '';
+        }
+
+        const render = {
+            dashboard: () => this.renderDashboard(), assets: () => this.renderAssets(),
+            workorders: () => this.renderWorkOrders(), preventive: () => this.renderPreventive(),
+            inventory: () => this.renderInventory(), personnel: () => this.renderPersonnel(),
+            reports: () => this.renderReports(), calendar: () => this.renderCalendar(),
+            assetDetail: () => this.renderAssetDetail()
+        };
         if (render[view]) render[view]();
         this.updateBadges();
     }
 
     updateBadges() {
+        if (!store) return;
         const k = store.getKPIs();
         const b = document.getElementById('badgePendingWOs');
         if (b) { b.textContent = k.pendingWOs; b.style.display = k.pendingWOs > 0 ? '' : 'none'; }
@@ -122,15 +282,14 @@ class App {
         const el = document.getElementById('view-dashboard');
         const k = store.getKPIs();
         const logs = store.getRecentLogs(8);
-        const wos = store.getWorkOrders();
         const plans = store.getPreventivePlans();
         const today = store.today();
         const overduePlans = plans.filter(p => p.nextExecution && p.nextExecution < today && p.status === 'activo');
         const upcomingPlans = plans.filter(p => p.nextExecution && p.nextExecution >= today && p.status === 'activo').sort((a, b) => a.nextExecution.localeCompare(b.nextExecution)).slice(0, 5);
 
         el.innerHTML = `
-      ${k.overduePMs > 0 ? `<div class="alert-bar alert-danger"><i class="fas fa-exclamation-circle"></i><strong>${k.overduePMs} plan(es) preventivo(s) vencido(s)</strong> - Requieren atención inmediata</div>` : ''}
-      ${k.lowStockCount > 0 ? `<div class="alert-bar alert-warning"><i class="fas fa-boxes-stacked"></i><strong>${k.lowStockCount} ítem(s) con stock bajo</strong> - Revisar inventario</div>` : ''}
+      ${k.overduePMs > 0 ? `<div class="alert-bar alert-danger"><i class="fas fa-exclamation-circle"></i><strong>${k.overduePMs} plan(es) preventivo(s) vencido(s)</strong> — Requieren atención inmediata</div>` : ''}
+      ${k.lowStockCount > 0 ? `<div class="alert-bar alert-warning"><i class="fas fa-boxes-stacked"></i><strong>${k.lowStockCount} ítem(s) con stock bajo</strong> — Revisar inventario</div>` : ''}
       <div class="kpi-grid">
         <div class="kpi-card kpi-primary"><div class="kpi-icon"><i class="fas fa-cogs"></i></div><div class="kpi-content"><div class="kpi-label">Total Activos</div><div class="kpi-value">${k.totalAssets}</div><div class="kpi-trend up"><i class="fas fa-circle-check"></i> ${k.activeAssets} operativos</div></div></div>
         <div class="kpi-card kpi-warning"><div class="kpi-icon"><i class="fas fa-clipboard-list"></i></div><div class="kpi-content"><div class="kpi-label">OT Pendientes</div><div class="kpi-value">${k.pendingWOs}</div><div class="kpi-trend"><i class="fas fa-spinner"></i> ${k.inProgressWOs} en progreso</div></div></div>
@@ -145,8 +304,8 @@ class App {
       </div>
       <div class="grid-2">
         <div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-clock-rotate-left"></i> Actividad Reciente</div></div>
-          <ul class="recent-list">${logs.length === 0 ? '<li class="recent-item"><span class="recent-meta">Sin actividad reciente</span></li>' : logs.map(l => {
-            const icons = { wo_created: ['fa-plus', 'info'], wo_started: ['fa-play', 'warning'], wo_completed: ['fa-check', 'success'] };
+          <ul class="recent-list">${logs.length === 0 ? '<li class="recent-item"><span class="recent-meta">Sin actividad reciente — ¡Crea tu primera OT!</span></li>' : logs.map(l => {
+            const icons = { wo_created: ['fa-plus', 'info'], wo_started: ['fa-play', 'warning'], wo_completed: ['fa-check', 'success'], system: ['fa-gear', 'primary'], asset_created: ['fa-cog', 'primary'] };
             const [ico, cls] = icons[l.action] || ['fa-circle', 'primary'];
             return `<li class="recent-item"><div class="recent-icon" style="background:var(--${cls}-bg);color:var(--${cls})"><i class="fas ${ico}"></i></div><div class="recent-info"><div class="recent-title">${l.message}</div><div class="recent-meta">${l.user || 'Sistema'} · ${new Date(l.timestamp).toLocaleString('es-CO')}</div></div></li>`;
         }).join('')}</ul>
@@ -156,7 +315,6 @@ class App {
         </div>
       </div>`;
 
-        // Charts
         this.renderChart('chartWOType', 'doughnut', {
             labels: ['Correctivo', 'Preventivo', 'Predictivo', 'Mejora'],
             datasets: [{ data: [k.woByType.correctivo, k.woByType.preventivo, k.woByType.predictivo, k.woByType.mejora], backgroundColor: ['#ff5252', '#00e676', '#448aff', '#ffab40'], borderWidth: 0 }]
@@ -200,7 +358,7 @@ class App {
         return assets.map(a => `<tr>
       <td><strong>${a.code}</strong></td><td>${a.name}</td><td>${a.category}</td><td>${a.location}</td>
       <td>${this.criticalityHTML(a.criticality)}</td><td>${this.statusBadge(a.status)}</td>
-      <td><div class="action-btns"><button class="btn btn-icon btn-sm" data-edit="${a.id}" data-tooltip="Editar"><i class="fas fa-pen"></i></button><button class="btn btn-icon btn-sm" data-del="${a.id}" data-tooltip="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
+      <td><div class="action-btns"><button class="btn btn-icon btn-sm" data-viewasset="${a.id}" data-tooltip="Ver historial"><i class="fas fa-eye"></i></button><button class="btn btn-icon btn-sm" data-edit="${a.id}" data-tooltip="Editar"><i class="fas fa-pen"></i></button><button class="btn btn-icon btn-sm" data-del="${a.id}" data-tooltip="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
     }
 
     filterAssets() {
@@ -214,6 +372,10 @@ class App {
     }
 
     bindAssetActions() {
+        document.querySelectorAll('[data-viewasset]').forEach(b => b.addEventListener('click', () => {
+            this.viewingAssetId = b.dataset.viewasset;
+            this.navigate('assetDetail');
+        }));
         document.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => this.showAssetForm(b.dataset.edit)));
         document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
             this.confirmAction('Este activo será eliminado permanentemente.', () => { store.deleteAsset(b.dataset.del); this.renderAssets(); this.toast('Activo eliminado', 'danger'); });
@@ -262,7 +424,7 @@ class App {
     }
 
     renderWORows(wos) {
-        if (wos.length === 0) return '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-clipboard-list"></i><h3>Sin órdenes de trabajo</h3></div></td></tr>';
+        if (wos.length === 0) return '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-clipboard-list"></i><h3>Sin órdenes de trabajo</h3><p>Crea tu primera orden de trabajo para comenzar</p></div></td></tr>';
         const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
         return wos.map(w => `<tr>
       <td><strong>${w.id.substring(0, 8).toUpperCase()}</strong></td><td>${this.getAssetName(w.assetId)}</td>
@@ -354,7 +516,7 @@ class App {
                 const woData = { assetId: p.assetId, type: 'preventivo', priority: 'media', status: 'completada', description: `Plan PM ejecutado: ${p.name}`, assignedTo: p.assignedTo, createdDate: store.today(), completedDate: store.today(), estimatedHours: p.estimatedHours, actualHours: p.estimatedHours, spareParts: '', notes: `Tareas: ${(p.tasks || '').replace(/\|/g, ', ')}` };
                 store.addWorkOrder(woData);
                 store.addLog({ action: 'wo_completed', message: `PM ejecutado: ${p.name}` });
-                this.toast('Plan ejecutado - OT generada'); this.renderPreventive();
+                this.toast('Plan ejecutado — OT generada'); this.renderPreventive();
             }
         }));
         document.querySelectorAll('[data-editpm]').forEach(b => b.addEventListener('click', () => this.showPMForm(b.dataset.editpm)));
@@ -456,10 +618,10 @@ class App {
       <div class="toolbar"><div class="toolbar-left"><div class="search-input"><i class="fas fa-search"></i><input type="text" id="perSearch" placeholder="Buscar personal..."></div></div>
         <div class="toolbar-right"><button class="btn btn-primary" id="btnAddPer"><i class="fas fa-plus"></i> Nuevo Técnico</button></div></div>
       <div class="table-container"><table class="data-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Especialización</th><th>Turno</th><th>OTs Activas</th><th>Estado</th><th>Acciones</th></tr></thead>
-        <tbody>${personnel.length === 0 ? '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i><h3>Sin personal</h3></div></td></tr>' : personnel.map(p => {
+        <tbody>${personnel.length === 0 ? '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i><h3>Sin personal</h3></div></td></tr>' : personnel.map((p, idx) => {
             const activeWOs = wos.filter(w => w.assignedTo === p.id && (w.status === 'pendiente' || w.status === 'en_progreso')).length;
             const colors = ['avatar-primary', 'avatar-success', 'avatar-warning'];
-            return `<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar ${colors[Math.floor(Math.random() * 3)]}">${p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>${p.name}</div></td><td>${p.role}</td><td>${p.specialization}</td><td>${p.shift}</td>
+            return `<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar ${colors[idx % 3]}">${p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>${p.name}</div></td><td>${p.role}</td><td>${p.specialization}</td><td>${p.shift}</td>
           <td><strong>${activeWOs}</strong></td><td>${this.statusBadge(p.status)}</td>
           <td><div class="action-btns"><button class="btn btn-icon btn-sm" data-editper="${p.id}"><i class="fas fa-pen"></i></button><button class="btn btn-icon btn-sm" data-delper="${p.id}"><i class="fas fa-trash"></i></button></div></td></tr>`;
         }).join('')}</tbody></table></div>`;
@@ -490,6 +652,216 @@ class App {
         });
     }
 
+    // ========== CALENDAR ==========
+    renderCalendar() {
+        const el = document.getElementById('view-calendar');
+        const year = this.calendarDate.getFullYear();
+        const month = this.calendarDate.getMonth();
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        let startDow = firstDay.getDay() - 1;
+        if (startDow < 0) startDow = 6;
+
+        const wos = store.getWorkOrders();
+        const plans = store.getPreventivePlans().filter(p => p.status === 'activo');
+        const todayStr = store.today();
+
+        // Build calendar cells
+        let cells = '';
+        for (let i = 0; i < startDow; i++) cells += '<div class="cal-cell cal-empty"></div>';
+
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = dateStr === todayStr;
+
+            // OTs on this date (by created, start or completed)
+            const dayWOs = wos.filter(w => w.createdDate === dateStr || w.startDate === dateStr || w.completedDate === dateStr);
+            // PMs due on this date
+            const dayPMs = plans.filter(p => p.nextExecution === dateStr);
+
+            const hasEvents = dayWOs.length > 0 || dayPMs.length > 0;
+
+            let dots = '';
+            if (dayWOs.length > 0) {
+                const statuses = [...new Set(dayWOs.map(w => w.status))];
+                dots = statuses.map(s => {
+                    const cls = s === 'pendiente' ? 'dot-warning' : s === 'en_progreso' ? 'dot-info' : s === 'completada' ? 'dot-success' : 'dot-muted';
+                    return `<span class="cal-dot ${cls}"></span>`;
+                }).join('');
+            }
+            if (dayPMs.length > 0) {
+                const overdue = dayPMs.some(p => dateStr < todayStr);
+                dots += `<span class="cal-dot ${overdue ? 'dot-danger' : 'dot-primary'}"></span>`;
+            }
+
+            cells += `<div class="cal-cell ${isToday ? 'cal-today' : ''} ${hasEvents ? 'cal-has-events' : ''}" data-date="${dateStr}">
+                <div class="cal-day-num">${day}</div>
+                ${dots ? `<div class="cal-dots">${dots}</div>` : ''}
+                ${dayWOs.length > 0 ? `<div class="cal-count">${dayWOs.length} OT${dayWOs.length > 1 ? 's' : ''}</div>` : ''}
+            </div>`;
+        }
+
+        el.innerHTML = `
+        <div class="calendar-header">
+            <button class="btn btn-icon" id="calPrev"><i class="fas fa-chevron-left"></i></button>
+            <h2 class="calendar-month-title">${monthNames[month]} ${year}</h2>
+            <button class="btn btn-icon" id="calNext"><i class="fas fa-chevron-right"></i></button>
+            <button class="btn btn-secondary" id="calToday" style="margin-left:16px"><i class="fas fa-crosshairs"></i> Hoy</button>
+        </div>
+        <div class="calendar-legend">
+            <span class="legend-item"><span class="cal-dot dot-warning"></span> Pendiente</span>
+            <span class="legend-item"><span class="cal-dot dot-info"></span> En Progreso</span>
+            <span class="legend-item"><span class="cal-dot dot-success"></span> Completada</span>
+            <span class="legend-item"><span class="cal-dot dot-primary"></span> PM Programado</span>
+            <span class="legend-item"><span class="cal-dot dot-danger"></span> PM Vencido</span>
+        </div>
+        <div class="calendar-grid">
+            ${dayNames.map(d => `<div class="cal-header-cell">${d}</div>`).join('')}
+            ${cells}
+        </div>
+        <div id="calDayDetail" class="cal-day-detail"></div>`;
+
+        // Navigation
+        document.getElementById('calPrev').addEventListener('click', () => {
+            this.calendarDate.setMonth(this.calendarDate.getMonth() - 1);
+            this.renderCalendar();
+        });
+        document.getElementById('calNext').addEventListener('click', () => {
+            this.calendarDate.setMonth(this.calendarDate.getMonth() + 1);
+            this.renderCalendar();
+        });
+        document.getElementById('calToday').addEventListener('click', () => {
+            this.calendarDate = new Date();
+            this.renderCalendar();
+        });
+
+        // Click day for details
+        el.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
+            cell.addEventListener('click', () => {
+                el.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('cal-selected'));
+                cell.classList.add('cal-selected');
+                this.showCalDayDetail(cell.dataset.date);
+            });
+        });
+    }
+
+    showCalDayDetail(dateStr) {
+        const detailEl = document.getElementById('calDayDetail');
+        const wos = store.getWorkOrders().filter(w => w.createdDate === dateStr || w.startDate === dateStr || w.completedDate === dateStr);
+        const plans = store.getPreventivePlans().filter(p => p.nextExecution === dateStr && p.status === 'activo');
+
+        if (wos.length === 0 && plans.length === 0) {
+            detailEl.innerHTML = `<div class="cal-detail-empty"><i class="fas fa-calendar-day"></i> Sin eventos para ${this.fmtDate(dateStr)}</div>`;
+            return;
+        }
+
+        const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
+        let html = `<div class="cal-detail-title"><i class="fas fa-calendar-day"></i> Eventos del ${this.fmtDate(dateStr)}</div>`;
+
+        if (wos.length > 0) {
+            html += `<div class="cal-detail-section">Órdenes de Trabajo</div>`;
+            html += wos.map(w => `<div class="cal-detail-item">
+                <div class="cal-detail-item-header">${this.statusBadge(w.status)} <span class="badge badge-${w.type === 'correctivo' ? 'danger' : 'success'}">${typeLabels[w.type]}</span> ${this.priorityBadge(w.priority)}</div>
+                <div class="cal-detail-item-title">${this.getAssetName(w.assetId)}</div>
+                <div class="cal-detail-item-desc">${w.description || '—'}</div>
+                <div class="cal-detail-item-meta"><i class="fas fa-user"></i> ${this.getPersonName(w.assignedTo)}</div>
+            </div>`).join('');
+        }
+
+        if (plans.length > 0) {
+            html += `<div class="cal-detail-section">Planes Preventivos</div>`;
+            html += plans.map(p => `<div class="cal-detail-item cal-detail-pm">
+                <div class="cal-detail-item-title"><i class="fas fa-wrench"></i> ${p.name}</div>
+                <div class="cal-detail-item-desc">${this.getAssetName(p.assetId)} — Cada ${p.frequency} ${p.frequencyUnit}</div>
+            </div>`).join('');
+        }
+
+        detailEl.innerHTML = html;
+    }
+
+    // ========== ASSET DETAIL / HISTORY ==========
+    renderAssetDetail() {
+        const el = document.getElementById('view-assetDetail');
+        if (!this.viewingAssetId) {
+            el.innerHTML = '<div class="empty-state"><i class="fas fa-eye-slash"></i><h3>Seleccione un equipo</h3><p>Vuelva a Activos y presione el botón 👁 para ver el historial.</p></div>';
+            return;
+        }
+
+        const asset = store.getAsset(this.viewingAssetId);
+        if (!asset) {
+            el.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Equipo no encontrado</h3></div>';
+            return;
+        }
+
+        const kpis = store.getAssetKPIs(this.viewingAssetId);
+        const wos = store.getWorkOrders().filter(w => w.assetId === this.viewingAssetId).sort((a, b) => (b.createdDate || '').localeCompare(a.createdDate || ''));
+        const plans = store.getPreventivePlans().filter(p => p.assetId === this.viewingAssetId);
+        const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
+
+        el.innerHTML = `
+        <div class="toolbar"><div class="toolbar-left"><button class="btn btn-secondary" id="btnBackAssets"><i class="fas fa-arrow-left"></i> Volver a Activos</button></div></div>
+
+        <div class="asset-detail-header">
+            <div class="asset-detail-info">
+                <h2 class="asset-detail-name">${asset.name}</h2>
+                <div class="asset-detail-code">${asset.code} · ${asset.brand} ${asset.model}</div>
+            </div>
+            <div class="asset-detail-status">${this.statusBadge(asset.status)} ${this.criticalityHTML(asset.criticality)}</div>
+        </div>
+
+        <div class="detail-grid" style="margin-bottom:24px">
+            <div class="detail-field"><div class="detail-field-label">Categoría</div><div class="detail-field-value">${asset.category}</div></div>
+            <div class="detail-field"><div class="detail-field-label">Ubicación</div><div class="detail-field-value">${asset.location}</div></div>
+            <div class="detail-field"><div class="detail-field-label">Serial</div><div class="detail-field-value">${asset.serial || '—'}</div></div>
+            <div class="detail-field"><div class="detail-field-label">Instalación</div><div class="detail-field-value">${this.fmtDate(asset.installDate)}</div></div>
+            <div class="detail-field"><div class="detail-field-label">Especificaciones</div><div class="detail-field-value" style="font-size:0.8rem">${asset.specs || '—'}</div></div>
+        </div>
+
+        <div class="kpi-grid" style="margin-bottom:24px">
+            <div class="kpi-card kpi-primary"><div class="kpi-icon"><i class="fas fa-clipboard-list"></i></div><div class="kpi-content"><div class="kpi-label">Total OTs</div><div class="kpi-value">${kpis.totalWOs}</div><div class="kpi-trend">${kpis.completedWOs} completadas</div></div></div>
+            <div class="kpi-card kpi-success"><div class="kpi-icon"><i class="fas fa-clock"></i></div><div class="kpi-content"><div class="kpi-label">MTTR</div><div class="kpi-value">${kpis.mttr}h</div><div class="kpi-trend">Tiempo medio reparación</div></div></div>
+            <div class="kpi-card kpi-warning"><div class="kpi-icon"><i class="fas fa-hourglass-half"></i></div><div class="kpi-content"><div class="kpi-label">Horas Acum.</div><div class="kpi-value">${kpis.totalHours}h</div><div class="kpi-trend">Total mantenimiento</div></div></div>
+            <div class="kpi-card kpi-info"><div class="kpi-icon"><i class="fas fa-calendar-check"></i></div><div class="kpi-content"><div class="kpi-label">Última Intervención</div><div class="kpi-value" style="font-size:1rem">${kpis.lastIntervention ? this.fmtDate(kpis.lastIntervention) : '—'}</div></div></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-history"></i> Historial de Mantenimiento</div></div>
+                ${wos.length === 0 ? '<div class="empty-state" style="padding:30px"><i class="fas fa-clipboard-list"></i><h3>Sin órdenes de trabajo</h3><p>Crea una OT asociada a este equipo para iniciar su historial.</p></div>' :
+                `<div class="timeline">${wos.map(w => `<div class="timeline-item">
+                    <div class="timeline-date">${this.fmtDate(w.createdDate)} ${w.completedDate ? '→ ' + this.fmtDate(w.completedDate) : ''}</div>
+                    <div class="timeline-content">
+                        <div style="margin-bottom:4px">${this.statusBadge(w.status)} <span class="badge badge-${w.type === 'correctivo' ? 'danger' : w.type === 'preventivo' ? 'success' : 'info'}">${typeLabels[w.type]}</span> ${this.priorityBadge(w.priority)}</div>
+                        <div style="font-weight:500;margin-bottom:4px">${w.description}</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted)"><i class="fas fa-user"></i> ${this.getPersonName(w.assignedTo)} · <i class="fas fa-clock"></i> Est: ${w.estimatedHours || '—'}h / Real: ${w.actualHours || '—'}h</div>
+                        ${w.spareParts ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px"><i class="fas fa-box"></i> ${w.spareParts}</div>` : ''}
+                        ${w.notes ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px"><i class="fas fa-sticky-note"></i> ${w.notes}</div>` : ''}
+                    </div>
+                </div>`).join('')}</div>`}
+            </div>
+            <div class="card">
+                <div class="card-header"><div class="card-title"><i class="fas fa-calendar-check"></i> Planes Preventivos</div></div>
+                ${plans.length === 0 ? '<div class="empty-state" style="padding:30px"><i class="fas fa-calendar"></i><h3>Sin planes asignados</h3><p>Crea un plan preventivo para este equipo.</p></div>' :
+                `<div class="recent-list">${plans.map(p => {
+                    const overdue = p.nextExecution && p.nextExecution < store.today() && p.status === 'activo';
+                    return `<li class="recent-item">
+                        <div class="recent-icon" style="background:${overdue ? 'var(--danger-bg)' : 'var(--primary-glow)'};color:${overdue ? 'var(--danger)' : 'var(--primary)'}"><i class="fas ${overdue ? 'fa-exclamation' : 'fa-wrench'}"></i></div>
+                        <div class="recent-info">
+                            <div class="recent-title">${p.name} ${this.statusBadge(p.status)}</div>
+                            <div class="recent-meta">${overdue ? '<span style="color:var(--danger)">VENCIDO</span> · ' : ''}Cada ${p.frequency} ${p.frequencyUnit} · Próxima: ${this.fmtDate(p.nextExecution)}</div>
+                            <div class="recent-meta">Tareas: ${(p.tasks || '').replace(/\|/g, ', ')}</div>
+                        </div>
+                    </li>`;
+                }).join('')}</div>`}
+            </div>
+        </div>`;
+
+        document.getElementById('btnBackAssets').addEventListener('click', () => this.navigate('assets'));
+    }
+
     // ========== REPORTS ==========
     renderReports() {
         const el = document.getElementById('view-reports');
@@ -512,7 +884,7 @@ class App {
         <div class="chart-card"><div class="card-title">Distribución por Tipo de Mantenimiento</div><div class="chart-wrapper"><canvas id="chartReportType"></canvas></div></div>
       </div>
       <div style="text-align:center;margin-top:16px"><button class="btn btn-secondary" id="btnExportData"><i class="fas fa-download"></i> Exportar Datos (JSON)</button>
-        <button class="btn btn-danger" id="btnResetData" style="margin-left:10px"><i class="fas fa-rotate-left"></i> Restablecer Datos Demo</button></div>`;
+        <button class="btn btn-danger" id="btnResetData" style="margin-left:10px"><i class="fas fa-rotate-left"></i> Restablecer Datos Iniciales</button></div>`;
 
         this.renderChart('chartReportStatus', 'doughnut', {
             labels: ['Pendiente', 'En Progreso', 'Completada', 'Cancelada'],
@@ -529,7 +901,7 @@ class App {
             this.toast('Datos exportados correctamente', 'info');
         });
         document.getElementById('btnResetData').addEventListener('click', () => {
-            this.confirmAction('Se restablecerán todos los datos a los valores de demostración. Perderás los cambios realizados.', () => { store.resetData(); this.navigate('dashboard'); this.toast('Datos restablecidos', 'warning'); });
+            this.confirmAction('Se restablecerán todos los datos a los valores iniciales. Perderás los cambios realizados.', () => { store.resetData(); this.navigate('dashboard'); this.toast('Datos restablecidos', 'warning'); });
         });
     }
 }
