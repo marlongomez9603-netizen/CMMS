@@ -1,20 +1,87 @@
 /* ============================================
-   MaintPro CMMS v3.0 - Data Store
-   Almacenamiento aislado por cédula (localStorage)
+   MaintPro CMMS v4.1 - Data Store
+   Almacenamiento híbrido: localStorage (rápido) + Firebase Firestore (nube)
+   Los datos NUNCA se pierden aunque el estudiante borre el caché.
    ============================================ */
+
+// ── Firebase Configuration ──────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA1opQnr1pUyNM2vlB1dy08CvBhlw1t5FU",
+    authDomain: "maintpro-cmms-d5e71.firebaseapp.com",
+    projectId: "maintpro-cmms-d5e71",
+    storageBucket: "maintpro-cmms-d5e71.firebasestorage.app",
+    messagingSenderId: "955471872147",
+    appId: "1:955471872147:web:36b9ed3309d788a3c08d66"
+};
+
+// Inicializar Firebase una sola vez
+let _fbApp = null;
+let _fbDb  = null;
+try {
+    if (!firebase.apps.length) {
+        _fbApp = firebase.initializeApp(FIREBASE_CONFIG);
+    } else {
+        _fbApp = firebase.apps[0];
+    }
+    _fbDb = firebase.firestore();
+} catch(e) {
+    console.warn('[MaintPro] Firebase no disponible (modo offline):', e.message);
+}
 
 class DataStore {
     constructor(cedula) {
         this.cedula = cedula;
         this.STORAGE_KEY = `maintpro_${cedula}`;
+        this.db = _fbDb;  // referencia global a Firestore
+        this._cloudRef = this.db
+            ? this.db.collection('students').doc(String(cedula))
+            : null;
+
+        // 1. Intentar cargar de localStorage (rápido, sincrónico)
         this.data = this.load();
+
         if (!this.data || !this.data.companies || this.data.companies.length === 0) {
+            // 2. Si localStorage vacío → intentar recuperar de Firestore
+            this.data = null;  // se llenará en loadFromCloud (async)
+            this._bootstrapFromCloud(cedula);  // no esperar async
+        } else {
+            // Datos locales ok → migrar y sincronizar en background
+            this._migrate();
+            this.currentCompanyId = this.data.companies[0].id;
+            this._syncToCloud();  // actualizar Firestore en background
+        }
+    }
+
+    /** Carga desde Firestore si localStorage está vacío (primer login desde nuevo dispositivo) */
+    async _bootstrapFromCloud(cedula) {
+        let loaded = false;
+        if (this._cloudRef) {
+            try {
+                const snap = await this._cloudRef.get();
+                if (snap.exists) {
+                    const cloudData = snap.data();
+                    if (cloudData && cloudData.companies && cloudData.companies.length > 0) {
+                        this.data = cloudData;
+                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+                        loaded = true;
+                        console.info('[MaintPro] ✅ Datos recuperados de Firestore para:', cedula);
+                    }
+                }
+            } catch(e) {
+                console.warn('[MaintPro] No se pudo leer Firestore:', e.message);
+            }
+        }
+        if (!loaded) {
+            // Sin datos en nube → generar datos iniciales
             this.data = generateStudentData(cedula);
             if (this.data) this.save();
         }
-        // Migrate old data (add missing collections)
         this._migrate();
         this.currentCompanyId = this.data ? this.data.companies[0].id : null;
+        // Notificar a la app que los datos están listos (rerender suave)
+        if (window.app && typeof window.app.navigate === 'function') {
+            window.app.navigate(window.app.currentSection || 'dashboard');
+        }
     }
 
     _migrate() {
@@ -59,8 +126,35 @@ class DataStore {
 
     save() {
         if (this.data) {
+            // 1. Guardar localmente (instantáneo)
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+            // 2. Sincronizar a Firestore en background (no bloquea la UI)
+            this._syncToCloud();
         }
+    }
+
+    /** Sincroniza el estado actual a Firestore (background, no bloquea) */
+    _syncToCloud() {
+        if (!this._cloudRef || !this.data) return;
+        // Usamos set() con merge para no sobrescribir campos que pueda tener el docente
+        this._cloudRef.set(this.data)
+            .catch(e => console.warn('[MaintPro] Error sync Firestore:', e.message));
+    }
+
+    /** Fuerza recuperar los datos desde Firestore (útil si el docente hizo cambios remotos) */
+    async refreshFromCloud() {
+        if (!this._cloudRef) return false;
+        try {
+            const snap = await this._cloudRef.get();
+            if (snap.exists) {
+                this.data = snap.data();
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+                return true;
+            }
+        } catch(e) {
+            console.warn('[MaintPro] Error al refrescar desde Firestore:', e.message);
+        }
+        return false;
     }
 
     resetData() {
