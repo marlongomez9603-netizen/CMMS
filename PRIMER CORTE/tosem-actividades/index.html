@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMEF Interactivo — UNIPAZ TOSEM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --card: #1a2235;
+            --border: #2a3550;
+            --primary: #3b82f6;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --purple: #8b5cf6;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --white: #fff;
+            --gold: #daa520;
+            --navy: #1a3a5c;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* NAV */
+        .topnav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: .3s;
+        }
+
+        .topnav .logo {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+
+        .topnav .logo span {
+            color: var(--muted);
+            font-weight: 400;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 6px;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: .3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--white);
+            background: var(--card);
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 40px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -200px;
+            left: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.1), transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--white), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(16px, 2vw, 22px);
+            color: var(--muted);
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+
+        .hero .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--navy), #2a5a8c);
+            color: var(--white);
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid rgba(218, 165, 32, 0.3);
+        }
+
+        .hero .cta {
+            display: inline-flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            transition: .3s;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            color: var(--white);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* SECTIONS */
+        section {
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .section-sub {
+            color: var(--muted);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: .3s;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .grid3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .card .icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        /* INFO BOXES */
+        .info-box {
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .info-blue {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .info-gold {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--accent);
+        }
+
+        .info-red {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger);
+        }
+
+        .info-green {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid var(--success);
+        }
+
+        /* TABLES */
+        table.scale {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+
+        table.scale th {
+            background: var(--navy);
+            color: var(--white);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table.scale td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.scale tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .risk-high {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .risk-med {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .risk-low {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* FORMULA */
+        .formula-box {
+            background: linear-gradient(135deg, var(--navy), #2a5a8c);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 24px 0;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: 3px;
+        }
+
+        .formula-box span {
+            color: var(--gold);
+        }
+
+        /* STEPS */
+        .step {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            min-width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--white);
+        }
+
+        .step-content h4 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            background: var(--card);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            transition: .3s;
+            font-family: inherit;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeIn .4s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* AMEF PRACTICE TABLE */
+        .amef-table-wrap {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .amef-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 900px;
+        }
+
+        .amef-table th {
+            background: var(--navy);
+            color: var(--white);
+            padding: 10px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .amef-table td {
+            padding: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .amef-table input,
+        .amef-table select {
+            width: 100%;
+            padding: 6px;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        .amef-table input:focus,
+        .amef-table select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .npr-cell {
+            font-weight: 800;
+            font-size: 16px;
+            min-width: 60px;
+        }
+
+        .btn-delete-row {
+            background: none;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: .3s;
+            line-height: 1;
+        }
+
+        .btn-delete-row:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        .npr-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .npr-med {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent);
+        }
+
+        .npr-low {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        /* SCENARIO */
+        .scenario-box {
+            background: linear-gradient(135deg, var(--card), var(--surface));
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 24px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-box::before {
+            content: '📋';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            font-size: 60px;
+            opacity: 0.15;
+        }
+
+        .scenario-box h3 {
+            color: var(--accent);
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        /* RESULTS */
+        .results-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-panel h3 {
+            color: var(--success);
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .metric {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--surface);
+            border-radius: 12px;
+            margin: 6px;
+        }
+
+        .metric .val {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .metric .lbl {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* REVEAL ANIMATION */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: .8s;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:768px) {
+            section {
+                padding: 60px 20px;
+            }
+
+            .topnav {
+                padding: 10px 16px;
+            }
+
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .formula-box {
+                font-size: 20px;
+                padding: 20px;
+            }
+        }
+
+        /* TOOLTIP */
+        .tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dashed var(--muted);
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        /* PROGRESS */
+        .progress-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            z-index: 101;
+            transition: width .3s;
+            width: 0%;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            animation: fadeIn .3s;
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal h3 {
+            color: var(--white);
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .modal p {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .modal label {
+            display: block;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .modal input[type=text] {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            margin-bottom: 16px;
+        }
+
+        .modal input[type=text]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .modal .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+            color: var(--white);
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-save:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 300;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: .4s;
+            font-family: inherit;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+
+        /* SAVE SECTION */
+        .save-section {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+            border: 2px dashed var(--success);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .save-section h3 {
+            color: var(--success);
+            margin-bottom: 8px;
+        }
+
+        .save-section p {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--white);
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="topnav">
+        <div class="logo">UNIPAZ <span>· TOSEM · AMEF Interactivo</span></div>
+        <div class="nav-links">
+            <a href="#teoria" class="active">📘 Teoría</a>
+            <a href="#escalas">📊 Escalas</a>
+            <a href="#pasos">🔧 Paso a Paso</a>
+            <a href="#practica">🎯 Práctica</a>
+        </div>
+    </nav>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- HERO -->
+    <div class="hero" id="hero">
+        <div>
+            <div class="badge">UF2 · Diagnóstico de Fallas · 2026-I</div>
+            <h1>AMEF</h1>
+            <p class="subtitle">Análisis de Modos y Efectos de Falla<br><em>Failure Mode and Effects Analysis
+                    (FMEA)</em></p>
+            <p style="color:var(--muted);font-size:14px;max-width:600px;margin:0 auto 24px;">Metodología sistemática
+                para identificar fallas potenciales, evaluar su riesgo y priorizar acciones preventivas y correctivas.
+            </p>
+            <div class="cta">
+                <a href="#teoria" class="btn btn-primary">Comenzar la clase →</a>
+                <a href="#practica" class="btn btn-outline">Ir a la práctica</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECCIÓN 1: TEORÍA ==================== -->
+    <section id="teoria">
+        <div class="reveal">
+            <span class="section-tag">Módulo 1</span>
+            <h2 class="section-title">¿Qué es el AMEF?</h2>
+            <p class="section-sub">Comprendiendo la herramienta más poderosa del análisis de fallas</p>
+        </div>
+
+        <div class="info-blue reveal">
+            <strong>📖 Definición:</strong> El AMEF es una metodología <strong>sistemática y proactiva</strong> que
+            identifica los <strong>modos potenciales de falla</strong> de un producto, proceso o sistema, evalúa sus
+            <strong>efectos</strong>, determina sus <strong>causas</strong> y asigna un <strong>nivel de riesgo</strong>
+            para priorizar acciones correctivas y preventivas.
+        </div>
+
+        <div class="grid2 reveal" style="margin-top:30px;">
+            <div class="card">
+                <div class="icon">📜</div>
+                <h3>Origen Histórico</h3>
+                <ul style="color:var(--muted);font-size:14px;padding-left:18px;">
+                    <li><strong>1940s:</strong> Fuerzas Armadas de EE.UU. (MIL-P-1629)</li>
+                    <li><strong>1960s:</strong> NASA lo adopta para las misiones Apollo</li>
+                    <li><strong>1970s:</strong> Ford Motor Company lo populariza</li>
+                    <li><strong>Hoy:</strong> Requisito en IATF 16949, ISO 9001, IEC 60812</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="icon">🎯</div>
+                <h3>¿Para qué sirve?</h3>
+                <ul style="color:var(--muted);font-size:14px;padding-left:18px;">
+                    <li>Identificar fallas <strong>antes</strong> de que ocurran</li>
+                    <li>Evaluar y priorizar el riesgo de cada falla</li>
+                    <li>Documentar el conocimiento del equipo</li>
+                    <li>Mejorar la confiabilidad y seguridad</li>
+                    <li>Alimentar planes de mantenimiento</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- TIPOS DE AMEF -->
+        <div class="reveal" style="margin-top:50px;">
+            <span class="section-tag">Conceptos Clave</span>
+            <h2 class="section-title">Tipos de AMEF</h2>
+        </div>
+        <div class="grid2 reveal">
+            <div class="card" style="border-top:3px solid var(--primary);">
+                <h3>📐 AMEF de Diseño (DFMEA)</h3>
+                <p>Se aplica durante la fase de <strong>diseño del producto</strong>, antes de la manufactura.</p>
+                <ul style="color:var(--muted);font-size:13px;padding-left:18px;margin-top:8px;">
+                    <li>Analiza fallas potenciales del diseño</li>
+                    <li>Evalúa geometría, materiales, tolerancias</li>
+                    <li>Responsable: Ingeniería de Diseño</li>
+                </ul>
+                <div class="info-blue" style="margin-top:12px;font-size:13px;">
+                    <strong>Ejemplo:</strong> Al diseñar un eje, se evalúa si el diámetro soportará los esfuerzos de
+                    torsión.
+                </div>
+            </div>
+            <div class="card" style="border-top:3px solid var(--accent);">
+                <h3>⚙️ AMEF de Proceso (PFMEA)</h3>
+                <p>Se aplica al <strong>proceso de manufactura o mantenimiento</strong>.</p>
+                <ul style="color:var(--muted);font-size:13px;padding-left:18px;margin-top:8px;">
+                    <li>Analiza fallas del proceso productivo</li>
+                    <li>Evalúa herramientas, procedimientos, operadores</li>
+                    <li>Responsable: Ing. de Proceso / Mantenimiento</li>
+                </ul>
+                <div class="info-gold" style="margin-top:12px;font-size:13px;">
+                    <strong>💡 En TOSEM</strong> usamos principalmente el AMEF de Proceso, aplicado a procedimientos de
+                    mantenimiento y operación de equipos.
+                </div>
+            </div>
+        </div>
+
+        <!-- TERMINOLOGÍA -->
+        <div class="reveal" style="margin-top:50px;">
+            <span class="section-tag">Terminología</span>
+            <h2 class="section-title">Los 3 Pilares del AMEF</h2>
+            <p class="section-sub">Todo AMEF responde estas tres preguntas fundamentales</p>
+        </div>
+        <div class="grid3 reveal">
+            <div class="card" style="border-top:3px solid var(--danger);text-align:center;">
+                <div class="icon">🔴</div>
+                <h3>Modo de Falla</h3>
+                <p style="font-size:18px;color:var(--white);font-weight:700;margin:8px 0;">¿Qué puede salir mal?</p>
+                <p>La forma en que un componente puede <strong>dejar de cumplir</strong> su función prevista.</p>
+                <div class="info-box info-red" style="font-size:12px;text-align:left;">
+                    <em>Ejemplos: "El rodamiento se traba", "La válvula no cierra", "El sello tiene fuga"</em>
+                </div>
+            </div>
+            <div class="card" style="border-top:3px solid var(--accent);text-align:center;">
+                <div class="icon">⚡</div>
+                <h3>Efecto de la Falla</h3>
+                <p style="font-size:18px;color:var(--white);font-weight:700;margin:8px 0;">¿Qué consecuencia tiene?</p>
+                <p>El <strong>impacto</strong> que el modo de falla produce en el sistema o usuario final.</p>
+                <div class="info-box info-gold" style="font-size:12px;text-align:left;">
+                    <em>Ejemplos: "Paro de producción", "Contaminación del producto", "Riesgo de lesión"</em>
+                </div>
+            </div>
+            <div class="card" style="border-top:3px solid var(--primary);text-align:center;">
+                <div class="icon">🔍</div>
+                <h3>Causa de la Falla</h3>
+                <p style="font-size:18px;color:var(--white);font-weight:700;margin:8px 0;">¿Por qué ocurre?</p>
+                <p>La <strong>razón raíz</strong> que origina el modo de falla.</p>
+                <div class="info-box info-blue" style="font-size:12px;text-align:left;">
+                    <em>Ejemplos: "Lubricación insuficiente", "Material incorrecto", "Operador no capacitado"</em>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECCIÓN 2: ESCALAS ==================== -->
+    <section id="escalas">
+        <div class="reveal">
+            <span class="section-tag">Módulo 2</span>
+            <h2 class="section-title">Los 3 Criterios de Evaluación</h2>
+            <p class="section-sub">Cada modo de falla se evalúa con tres criterios en escala de 1 a 10</p>
+        </div>
+
+        <div class="formula-box reveal">
+            NPR = <span>S</span>everidad × <span>O</span>currencia × <span>D</span>etección
+        </div>
+
+        <!-- TABS PARA ESCALAS -->
+        <div class="reveal">
+            <div class="tabs" id="scaleTabs">
+                <button class="tab active" onclick="showTab('sev')">🔴 Severidad (S)</button>
+                <button class="tab" onclick="showTab('ocu')">🟠 Ocurrencia (O)</button>
+                <button class="tab" onclick="showTab('det')">🔵 Detección (D)</button>
+                <button class="tab" onclick="showTab('npr')">📊 NPR — Rangos</button>
+            </div>
+
+            <!-- SEVERIDAD -->
+            <div class="tab-panel active" id="tab-sev">
+                <div class="info-blue" style="margin-bottom:16px;">
+                    <strong>Severidad</strong> evalúa <strong>qué tan grave es el efecto</strong> de la falla.
+                    <strong>No se puede reducir</strong> con controles; solo cambiando el diseño.
+                </div>
+                <table class="scale">
+                    <thead>
+                        <tr>
+                            <th>Valor</th>
+                            <th>Nivel</th>
+                            <th>Criterio</th>
+                            <th>Ejemplo en Mantenimiento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="risk-high">10</td>
+                            <td>Peligroso sin aviso</td>
+                            <td>Riesgo de muerte sin señal previa</td>
+                            <td>Explosión de recipiente a presión sin alarma</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-high">9</td>
+                            <td>Peligroso con aviso</td>
+                            <td>Riesgo de muerte con señal previa</td>
+                            <td>Fuga tóxica de H₂S con detector activado</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-high">8</td>
+                            <td>Muy alto</td>
+                            <td>Equipo inoperable, paro total</td>
+                            <td>Falla de turbina principal</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">7</td>
+                            <td>Alto</td>
+                            <td>Afecta producción significativamente</td>
+                            <td>Bomba fuera de servicio, producción al 50%</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">6</td>
+                            <td>Moderado</td>
+                            <td>Degradación funcional importante</td>
+                            <td>Compresor con vibración alta, con restricción</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">5</td>
+                            <td>Bajo-moderado</td>
+                            <td>Degradación menor</td>
+                            <td>Intercambiador con eficiencia reducida 15%</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">4</td>
+                            <td>Bajo</td>
+                            <td>Defecto menor detectable</td>
+                            <td>Ruido anormal en ventilador, sin afectar función</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">3</td>
+                            <td>Muy bajo</td>
+                            <td>Defecto menor, difícil de notar</td>
+                            <td>Vibración leve, solo detectable con instrumento</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">2</td>
+                            <td>Mínimo</td>
+                            <td>Casi imperceptible</td>
+                            <td>Leve variación de temperatura sin impacto</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">1</td>
+                            <td>Ninguno</td>
+                            <td>Sin efecto</td>
+                            <td>Falla en componente redundante sin consecuencia</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- OCURRENCIA -->
+            <div class="tab-panel" id="tab-ocu">
+                <div class="info-gold" style="margin-bottom:16px;">
+                    <strong>Ocurrencia</strong> evalúa <strong>la probabilidad de que la causa se presente</strong>. Se
+                    basa en datos históricos de falla o estimaciones.
+                </div>
+                <table class="scale">
+                    <thead>
+                        <tr>
+                            <th>Valor</th>
+                            <th>Nivel</th>
+                            <th>Frecuencia</th>
+                            <th>Ejemplo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="risk-high">10</td>
+                            <td>Muy alta</td>
+                            <td>Más de 1 vez/semana</td>
+                            <td>Obstrucción en filtro sin plan de limpieza</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-high">9</td>
+                            <td>Muy alta</td>
+                            <td>Cada 2 semanas</td>
+                            <td>Fuga de sello con fluido abrasivo</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-high">8</td>
+                            <td>Alta</td>
+                            <td>Una vez al mes</td>
+                            <td>Sobrecalentamiento de motor sin ventilación</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">7</td>
+                            <td>Alta</td>
+                            <td>Cada 2 meses</td>
+                            <td>Desalineación post-mantenimiento</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">6</td>
+                            <td>Moderada</td>
+                            <td>Cada 6 meses</td>
+                            <td>Corrosión en ambiente costero</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">5</td>
+                            <td>Moderada</td>
+                            <td>Una vez al año</td>
+                            <td>Falla eléctrica por tormenta</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">4</td>
+                            <td>Baja</td>
+                            <td>Cada 2-3 años</td>
+                            <td>Fractura por fatiga en eje bien dimensionado</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">3</td>
+                            <td>Baja</td>
+                            <td>Cada 5 años</td>
+                            <td>Falla de PLC por firmware</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">2</td>
+                            <td>Muy baja</td>
+                            <td>Cada 10+ años</td>
+                            <td>Rotura de carcasa de hierro fundido</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">1</td>
+                            <td>Remota</td>
+                            <td>Casi imposible</td>
+                            <td>Falla simultánea de sistemas redundantes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- DETECCIÓN -->
+            <div class="tab-panel" id="tab-det">
+                <div class="info-blue" style="margin-bottom:16px;">
+                    <strong>Detección</strong> evalúa la capacidad de los controles actuales para <strong>detectar la
+                        falla antes</strong> de que llegue al usuario. <strong>A menor capacidad, mayor valor.</strong>
+                </div>
+                <table class="scale">
+                    <thead>
+                        <tr>
+                            <th>Valor</th>
+                            <th>Nivel</th>
+                            <th>Capacidad de Detección</th>
+                            <th>Ejemplo de Control</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="risk-high">10</td>
+                            <td>Imposible</td>
+                            <td>No existe control</td>
+                            <td>Sin instrumentación ni inspección</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-high">9</td>
+                            <td>Muy remota</td>
+                            <td>Muy improbable</td>
+                            <td>Solo inspección visual ocasional</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-high">8</td>
+                            <td>Remota</td>
+                            <td>Baja probabilidad</td>
+                            <td>Inspección visual mensual programada</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">7</td>
+                            <td>Muy baja</td>
+                            <td>Detecta ocasionalmente</td>
+                            <td>Medición manual periódica (sin tendencia)</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">6</td>
+                            <td>Baja</td>
+                            <td>Detecta a veces</td>
+                            <td>Análisis de aceite trimestral</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-med">5</td>
+                            <td>Moderada</td>
+                            <td>Detecta ~50%</td>
+                            <td>Ruta de vibración mensual con tendencia</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">4</td>
+                            <td>Moderada-alta</td>
+                            <td>Buena probabilidad</td>
+                            <td>Monitoreo de condición con alarma</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">3</td>
+                            <td>Alta</td>
+                            <td>Muy probable</td>
+                            <td>Sensor en línea con alarma automática</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">2</td>
+                            <td>Muy alta</td>
+                            <td>Casi segura</td>
+                            <td>Doble sensor con trip automático</td>
+                        </tr>
+                        <tr>
+                            <td class="risk-low">1</td>
+                            <td>Casi cierta</td>
+                            <td>100% garantizada</td>
+                            <td>Protección física + interlock + alarma</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="info-gold" style="margin-top:12px;font-size:13px;">
+                    <strong>💡 Para reducir D:</strong> Agregar sensores, implementar monitoreo de condición, crear
+                    rutas de inspección, instalar sistemas de protección automática.
+                </div>
+            </div>
+
+            <!-- NPR -->
+            <div class="tab-panel" id="tab-npr">
+                <div class="grid2">
+                    <div>
+                        <h3 style="color:var(--white);margin-bottom:16px;">📊 Rangos del NPR</h3>
+                        <table class="scale">
+                            <thead>
+                                <tr>
+                                    <th>Rango NPR</th>
+                                    <th>Nivel</th>
+                                    <th>Acción Requerida</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="risk-high">500 — 1000</td>
+                                    <td class="risk-high">MUY ALTO</td>
+                                    <td>Acción correctiva INMEDIATA</td>
+                                </tr>
+                                <tr>
+                                    <td class="risk-high">200 — 499</td>
+                                    <td class="risk-high">ALTO</td>
+                                    <td>Acción correctiva prioritaria</td>
+                                </tr>
+                                <tr>
+                                    <td class="risk-med">100 — 199</td>
+                                    <td class="risk-med">MEDIO</td>
+                                    <td>Acción preventiva recomendada</td>
+                                </tr>
+                                <tr>
+                                    <td class="risk-low">40 — 99</td>
+                                    <td class="risk-low">BAJO</td>
+                                    <td>Monitoreo y seguimiento</td>
+                                </tr>
+                                <tr>
+                                    <td class="risk-low">1 — 39</td>
+                                    <td class="risk-low">MUY BAJO</td>
+                                    <td>Aceptable, documentar</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h3 style="color:var(--white);margin-bottom:16px;">⚠️ Consideraciones</h3>
+                        <div class="card">
+                            <ul style="color:var(--muted);font-size:14px;padding-left:18px;">
+                                <li>NPR <strong>máximo</strong>: 10 × 10 × 10 = <strong>1000</strong></li>
+                                <li>NPR <strong>mínimo</strong>: 1 × 1 × 1 = <strong>1</strong></li>
+                                <li>NPR alto NO siempre = mayor riesgo real</li>
+                                <li>Siempre analice la <strong>Severidad por separado</strong></li>
+                                <li>Después de acciones, se recalcula el NPR</li>
+                            </ul>
+                        </div>
+                        <div class="info-red" style="margin-top:12px;font-size:14px;">
+                            <strong>🚨 Regla de Oro:</strong> Si Severidad ≥ 9, el modo de falla requiere acción
+                            correctiva <strong>obligatoria</strong>, sin importar O o D.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECCIÓN 3: PASO A PASO ==================== -->
+    <section id="pasos">
+        <div class="reveal">
+            <span class="section-tag">Módulo 3</span>
+            <h2 class="section-title">¿Cómo se Elabora un AMEF?</h2>
+            <p class="section-sub">9 pasos sistemáticos para un análisis completo</p>
+        </div>
+        <div class="grid2 reveal">
+            <div>
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>Definir el sistema/proceso</h4>
+                        <p>Delimitar el alcance: qué equipo o proceso se va a analizar.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Identificar funciones</h4>
+                        <p>Listar qué debe hacer cada componente. Usar verbo + sustantivo: "Bombear fluido".</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>Identificar modos de falla</h4>
+                        <p>¿De qué formas puede dejar de cumplirse cada función?</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>Determinar efectos</h4>
+                        <p>¿Qué pasa si ocurre? Impacto en sistema, producción, seguridad.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h4>Identificar causas</h4>
+                        <p>Causa raíz de cada modo de falla (Ishikawa, 5 Por Qué).</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="step">
+                    <div class="step-num">6</div>
+                    <div class="step-content">
+                        <h4>Controles actuales</h4>
+                        <p>¿Qué controles existen para prevenir o detectar la falla?</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">7</div>
+                    <div class="step-content">
+                        <h4>Asignar S, O y D</h4>
+                        <p>Usar las escalas de 1-10 para cada criterio.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">8</div>
+                    <div class="step-content">
+                        <h4>Calcular NPR</h4>
+                        <p>Multiplicar S × O × D. Priorizar los más altos.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">9</div>
+                    <div class="step-content">
+                        <h4>Definir acciones</h4>
+                        <p>Acciones correctivas con responsable y fecha para los NPR más altos.</p>
+                    </div>
+                </div>
+                <div class="info-green" style="margin-top:16px;">
+                    <strong>📌 Recuerda:</strong> El AMEF es un <strong>documento vivo</strong>. Se actualiza cada vez
+                    que hay cambios en el diseño, proceso o cuando se implementan acciones.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECCIÓN 4: PRÁCTICA ==================== -->
+    <section id="practica">
+        <div class="reveal">
+            <span class="section-tag">Módulo 4 · Manos a la obra</span>
+            <h2 class="section-title">🎯 Práctica Guiada: Construyamos un AMEF</h2>
+            <p class="section-sub">Vamos a construir juntos un AMEF para un sistema real paso a paso</p>
+        </div>
+
+        <div class="scenario-box reveal">
+            <h3>📋 Escenario: Bomba Centrífuga P-101</h3>
+            <p style="color:var(--muted);margin-bottom:12px;">Una planta petroquímica opera una <strong>bomba centrífuga
+                    horizontal</strong> de 100 HP que transfiere crudo desde el tanque de almacenamiento hasta la torre
+                de destilación. La bomba opera 24/7 y es <strong>crítica para la producción</strong>.</p>
+            <div class="grid3" style="margin-top:16px;">
+                <div style="background:var(--surface);padding:14px;border-radius:10px;">
+                    <strong style="color:var(--accent);">Componentes principales:</strong>
+                    <ul style="color:var(--muted);font-size:13px;padding-left:16px;margin-top:6px;">
+                        <li>Rodamientos (lado acople y libre)</li>
+                        <li>Sello mecánico</li>
+                        <li>Impulsor (impeller)</li>
+                        <li>Acople flexible</li>
+                        <li>Motor eléctrico 100 HP</li>
+                    </ul>
+                </div>
+                <div style="background:var(--surface);padding:14px;border-radius:10px;">
+                    <strong style="color:var(--accent);">Condiciones de operación:</strong>
+                    <ul style="color:var(--muted);font-size:13px;padding-left:16px;margin-top:6px;">
+                        <li>Fluido: crudo liviano (API 35)</li>
+                        <li>Temperatura: 65°C</li>
+                        <li>Presión descarga: 12 bar</li>
+                        <li>RPM: 3560</li>
+                        <li>Operación: continua 24/7</li>
+                    </ul>
+                </div>
+                <div style="background:var(--surface);padding:14px;border-radius:10px;">
+                    <strong style="color:var(--accent);">Controles actuales:</strong>
+                    <ul style="color:var(--muted);font-size:13px;padding-left:16px;margin-top:6px;">
+                        <li>Ruta de vibración mensual</li>
+                        <li>Inspección visual semanal</li>
+                        <li>Análisis de aceite trimestral</li>
+                        <li>Monitoreo de presión y caudal</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- AMEF TABLE -->
+        <div class="reveal" style="margin-top:30px;">
+            <h3 style="color:var(--white);margin-bottom:16px;">✏️ Complete la Matriz AMEF — Discutamos cada fila juntos
+            </h3>
+            <div class="amef-table-wrap">
+                <table class="amef-table" id="amefTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th style="min-width:100px;">Componente</th>
+                            <th style="min-width:120px;">Función</th>
+                            <th style="min-width:120px;">Modo de Falla</th>
+                            <th style="min-width:130px;">Efecto</th>
+                            <th style="min-width:50px;">S</th>
+                            <th style="min-width:120px;">Causa</th>
+                            <th style="min-width:50px;">O</th>
+                            <th style="min-width:120px;">Control Actual</th>
+                            <th style="min-width:50px;">D</th>
+                            <th style="min-width:65px;">NPR</th>
+                            <th style="min-width:140px;">Acción Recomendada</th>
+                            <th style="min-width:40px;">🗑️</th>
+                        </tr>
+                    </thead>
+                    <tbody id="amefBody">
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;align-items:center;">
+                <button class="btn btn-primary" onclick="addRow()">+ Agregar fila</button>
+                <div style="position:relative;display:inline-block;">
+                    <select id="exampleSelector"
+                        style="padding:10px 16px;background:var(--surface);color:var(--primary);border:1px solid var(--primary);border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;appearance:none;padding-right:32px;">
+                        <option value="" disabled selected>📥 Cargar ejemplo…</option>
+                        <option value="bomba">🔧 Bomba Centrífuga P-101</option>
+                        <option value="compresor">🌬️ Compresor de Aire K-201</option>
+                        <option value="banda">⚙️ Banda Transportadora CV-301</option>
+                        <option value="generador">⚡ Generador Diésel GE-401</option>
+                        <option value="torre">🌡️ Torre de Enfriamiento CT-501</option>
+                        <option value="transformador">🔌 Transformador TR-601</option>
+                    </select>
+                    <span
+                        style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--primary);pointer-events:none;">▼</span>
+                </div>
+                <button class="btn btn-outline" onclick="loadSelectedExample()">📥 Cargar ejemplo</button>
+                <button class="btn btn-outline" onclick="clearTable()">🗑️ Limpiar tabla</button>
+                <button class="btn btn-outline" onclick="calcAll()">📊 Recalcular NPR</button>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results-panel" id="resultsPanel">
+            <h3>📊 Resumen del Análisis AMEF</h3>
+            <div id="metricsArea" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;"></div>
+            <div id="priorityList"></div>
+        </div>
+
+        <!-- SAVE SECTION -->
+        <div class="save-section reveal">
+            <h3>💾 Guardar tu Análisis AMEF</h3>
+            <p>Cuando termines de llenar tu matriz, presiona el botón para enviar tus resultados al profesor.</p>
+            <button class="btn btn-save" onclick="openSaveModal()" style="font-size:16px;padding:16px 40px;">💾 Guardar
+                y Enviar mi AMEF</button>
+        </div>
+    </section>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal">
+            <button class="close-btn" onclick="closeSaveModal()">&times;</button>
+            <h3>💾 Guardar Análisis AMEF</h3>
+            <p>Ingresa tus datos para enviar tu trabajo al profesor.</p>
+            <label for="studentName">👤 Nombre completo</label>
+            <input type="text" id="studentName" placeholder="Ej: Juan Pérez González">
+            <label for="studentId">🪪 Número de cédula</label>
+            <input type="text" id="studentId" placeholder="Ej: 1098765432">
+            <div class="modal-actions">
+                <button class="btn btn-save" id="btnSubmit" onclick="submitAMEF()" style="flex:1;">📤 Enviar
+                    AMEF</button>
+                <button class="btn btn-outline" onclick="closeSaveModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <footer>
+        <p><strong>Instituto Universitario de la Paz — UNIPAZ</strong></p>
+        <p>Tecnología en Operación y Sostenimiento de Equipos Mecánicos (TOSEM)</p>
+        <p>Unidad Formativa 2 — Diagnóstico de Fallas · 2026-I</p>
+        <p style="margin-top:10px;font-size:11px;color:var(--border);">"El AMEF no es un formato que se llena una vez.
+            Es un documento vivo que se actualiza continuamente."</p>
+    </footer>
+
+    <script>
+        // === TABS ===
+        function showTab(id) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // === SCROLL REVEAL ===
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // === PROGRESS BAR ===
+        window.addEventListener('scroll', () => {
+            const h = document.documentElement;
+            const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+            document.getElementById('progressBar').style.width = pct + '%';
+            // active nav
+            const sections = ['teoria', 'escalas', 'pasos', 'practica'];
+            sections.forEach(s => {
+                const el = document.getElementById(s);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    const link = document.querySelector(`.nav-links a[href="#${s}"]`);
+                    if (rect.top < 300 && rect.bottom > 300) link.classList.add('active');
+                    else link.classList.remove('active');
+                }
+            });
+        });
+
+        // === AMEF TABLE ===
+        let rowCount = 0;
+        function createSelect(max) {
+            let opts = '<option value="">-</option>';
+            for (let i = 1; i <= max; i++) opts += `<option value="${i}">${i}</option>`;
+            return opts;
+        }
+
+        function addRow(data) {
+            rowCount++;
+            const tr = document.createElement('tr');
+            const d = data || {};
+            tr.innerHTML = `
+    <td class="row-num" style="font-weight:700;color:var(--primary);">${rowCount}</td>
+    <td><input value="${d.comp || ''}" placeholder="Ej: Rodamiento"></td>
+    <td><input value="${d.func || ''}" placeholder="Ej: Soportar carga"></td>
+    <td><input value="${d.mode || ''}" placeholder="Ej: Desgaste prematuro"></td>
+    <td><input value="${d.effect || ''}" placeholder="Ej: Vibración alta"></td>
+    <td><select onchange="calcNPR(this)">${createSelect(10)}</select></td>
+    <td><input value="${d.cause || ''}" placeholder="Ej: Lubricación insuficiente"></td>
+    <td><select onchange="calcNPR(this)">${createSelect(10)}</select></td>
+    <td><input value="${d.control || ''}" placeholder="Ej: Ruta vibración mensual"></td>
+    <td><select onchange="calcNPR(this)">${createSelect(10)}</select></td>
+    <td class="npr-cell">—</td>
+    <td><input value="${d.action || ''}" placeholder="Ej: Lubricación automática"></td>
+    <td><button class="btn-delete-row" onclick="deleteRow(this)" title="Eliminar fila">❌</button></td>
+  `;
+            document.getElementById('amefBody').appendChild(tr);
+            if (d.s) { const sels = tr.querySelectorAll('select'); sels[0].value = d.s; sels[1].value = d.o; sels[2].value = d.d; calcNPR(sels[0]); }
+        }
+
+        function deleteRow(btn) {
+            const tr = btn.closest('tr');
+            tr.style.transition = '0.3s';
+            tr.style.opacity = '0';
+            tr.style.transform = 'translateX(50px)';
+            setTimeout(() => {
+                tr.remove();
+                renumberRows();
+                updateResults();
+            }, 300);
+        }
+
+        function renumberRows() {
+            const rows = document.querySelectorAll('#amefBody tr');
+            rowCount = rows.length;
+            rows.forEach((tr, i) => {
+                const numCell = tr.querySelector('.row-num');
+                if (numCell) numCell.textContent = i + 1;
+            });
+        }
+
+        function calcNPR(el) {
+            const tr = el.closest('tr');
+            const sels = tr.querySelectorAll('select');
+            const s = parseInt(sels[0].value) || 0;
+            const o = parseInt(sels[1].value) || 0;
+            const d = parseInt(sels[2].value) || 0;
+            const npr = s * o * d;
+            const cell = tr.querySelector('.npr-cell');
+            if (npr > 0) {
+                cell.textContent = npr;
+                cell.className = 'npr-cell ' + (npr >= 200 ? 'npr-high' : npr >= 100 ? 'npr-med' : 'npr-low');
+            } else { cell.textContent = '—'; cell.className = 'npr-cell'; }
+            updateResults();
+        }
+
+        function calcAll() {
+            document.querySelectorAll('#amefBody select').forEach(s => {
+                if (s.closest('td').cellIndex === 5) calcNPR(s);
+            });
+        }
+
+        function clearTable() {
+            document.getElementById('amefBody').innerHTML = '';
+            rowCount = 0;
+            document.getElementById('resultsPanel').style.display = 'none';
+            for (let i = 0; i < 5; i++) addRow();
+            showToast('Tabla limpiada correctamente', 'success');
+        }
+
+        function loadSelectedExample() {
+            const sel = document.getElementById('exampleSelector');
+            if (!sel.value) { showToast('Selecciona un ejemplo del menú', 'error'); return; }
+            loadExample(sel.value);
+            sel.selectedIndex = 0;
+        }
+
+        function loadExample(tipo) {
+            document.getElementById('amefBody').innerHTML = '';
+            rowCount = 0;
+            const all = {
+                bomba: [
+                    { comp: 'Rodamiento', func: 'Soportar carga radial', mode: 'Desgaste prematuro', effect: 'Vibración alta, paro de bomba', s: '8', cause: 'Lubricación insuficiente', o: '6', control: 'Ruta vibración mensual', d: '5', action: 'Implementar lubricación automática' },
+                    { comp: 'Sello mecánico', func: 'Sellar fluido', mode: 'Fuga externa', effect: 'Derrame de crudo, contaminación', s: '7', cause: 'Desgaste por abrasión', o: '5', control: 'Inspección visual semanal', d: '7', action: 'Cambiar a sello doble con flush plan' },
+                    { comp: 'Impulsor', func: 'Generar presión y caudal', mode: 'Erosión de álabes', effect: 'Pérdida de caudal, baja presión', s: '6', cause: 'Partículas abrasivas en fluido', o: '4', control: 'Medición de presión/caudal', d: '6', action: 'Instalar filtro aguas arriba' },
+                    { comp: 'Acople flexible', func: 'Transmitir torque motor→bomba', mode: 'Fractura de elementos elásticos', effect: 'Paro total, daño a sellos', s: '8', cause: 'Desalineación angular excesiva', o: '3', control: 'Verificación en overhaul anual', d: '7', action: 'Alineación láser semestral' },
+                    { comp: 'Motor eléctrico', func: 'Suministrar potencia', mode: 'Sobrecalentamiento del bobinado', effect: 'Trip térmico, paro no programado', s: '7', cause: 'Ventilador obstruido por polvo', o: '5', control: 'Inspección visual mensual', d: '6', action: 'Limpieza quincenal + sensor RTD' },
+                ],
+                compresor: [
+                    { comp: 'Válvulas de admisión', func: 'Regular entrada de aire', mode: 'Fractura de platinas', effect: 'Pérdida de capacidad de compresión', s: '7', cause: 'Fatiga por ciclos de operación', o: '5', control: 'Medición de presión de descarga', d: '6', action: 'Reemplazo programado cada 8000 hrs' },
+                    { comp: 'Filtro de aire', func: 'Retener partículas del ambiente', mode: 'Saturación / obstrucción', effect: 'Aumento de temperatura, mayor consumo', s: '5', cause: 'Ambiente con alta carga de polvo', o: '7', control: 'Diferencial de presión semanal', d: '3', action: 'Cambio preventivo mensual' },
+                    { comp: 'Sistema de lubricación', func: 'Lubricar pistones y cojinetes', mode: 'Bajo nivel de aceite', effect: 'Desgaste acelerado, falla catastrófica', s: '9', cause: 'Fuga en empaquetaduras', o: '4', control: 'Nivel visual diario', d: '4', action: 'Sensor de nivel con alarma automática' },
+                    { comp: 'Intercooler', func: 'Enfriar aire entre etapas', mode: 'Fouling en tubos', effect: 'Alta temperatura de descarga, trip', s: '6', cause: 'Calidad del agua de enfriamiento', o: '5', control: 'Temperatura de descarga continua', d: '4', action: 'Limpieza química trimestral' },
+                    { comp: 'Correa de transmisión', func: 'Transmitir potencia del motor', mode: 'Desgaste y agrietamiento', effect: 'Rotura, paro inesperado', s: '6', cause: 'Tensión incorrecta o desalineación', o: '4', control: 'Inspección visual quincenal', d: '5', action: 'Tensiómetro + reemplazo cada 6 meses' },
+                ],
+                banda: [
+                    { comp: 'Banda/Correa', func: 'Transportar material', mode: 'Desgarramiento longitudinal', effect: 'Paro de producción, derrame de material', s: '8', cause: 'Objeto extraño atrapado', o: '4', control: 'Inspección visual por turno', d: '6', action: 'Instalar detector de metales upstream' },
+                    { comp: 'Rodillos de carga', func: 'Soportar y guiar la banda', mode: 'Rodillo trabado / bloqueado', effect: 'Desgaste acelerado de banda, calor', s: '7', cause: 'Falla de rodamiento interno', o: '5', control: 'Ronda de inspección semanal', d: '5', action: 'Termografía mensual + rodillos autorregulables' },
+                    { comp: 'Tambor motriz', func: 'Transmitir tracción a la banda', mode: 'Desgaste del recubrimiento', effect: 'Patinaje de banda, reducción de velocidad', s: '6', cause: 'Material abrasivo y agua', o: '5', control: 'Medición de velocidad vs. nominal', d: '6', action: 'Recubrimiento cerámico de alta resistencia' },
+                    { comp: 'Tensor hidráulico', func: 'Mantener tensión de la banda', mode: 'Pérdida de presión hidráulica', effect: 'Banda floja, desalineación, patinaje', s: '7', cause: 'Fuga en sellos del cilindro', o: '3', control: 'Presión del sistema quincenal', d: '5', action: 'Kit de sellos preventivo anual' },
+                    { comp: 'Raspador de retorno', func: 'Limpiar material adherido', mode: 'Desgaste de cuchillas', effect: 'Material adherido en rodillos de retorno', s: '4', cause: 'Material húmedo y pegajoso', o: '7', control: 'Inspección visual diaria', d: '3', action: 'Raspador primario + secundario motorizado' },
+                ],
+                generador: [
+                    { comp: 'Motor diésel', func: 'Convertir energía térmica en mecánica', mode: 'Falla de arranque', effect: 'No hay respaldo eléctrico ante falla de red', s: '9', cause: 'Batería de arranque descargada', o: '4', control: 'Prueba de arranque semanal', d: '3', action: 'Cargador automático + prueba quincenal' },
+                    { comp: 'Sistema de combustible', func: 'Suministrar diésel al motor', mode: 'Inyectores obstruidos', effect: 'Pérdida de potencia, humo negro', s: '7', cause: 'Contaminación del combustible', o: '5', control: 'Análisis de combustible trimestral', d: '5', action: 'Filtro coalescente + tanque con drenaje diario' },
+                    { comp: 'Alternador', func: 'Generar energía eléctrica', mode: 'Falla de aislamiento del bobinado', effect: 'Cortocircuito, paro de generación', s: '9', cause: 'Humedad y polvo en bobinados', o: '3', control: 'Medición de aislamiento semestral', d: '4', action: 'Calefactor antihumedad + Megger trimestral' },
+                    { comp: 'Radiador', func: 'Disipar calor del motor', mode: 'Fuga de refrigerante', effect: 'Sobrecalentamiento, shutdown automático', s: '8', cause: 'Corrosión en tubos del radiador', o: '4', control: 'Nivel de refrigerante diario', d: '4', action: 'Análisis de coolant + aditivos anticorrosión' },
+                    { comp: 'Tablero de transferencia', func: 'Conmutar red ↔ generador', mode: 'Fallo del contactor de transferencia', effect: 'No conmuta: planta sin energía', s: '9', cause: 'Desgaste contactos por arcos', o: '3', control: 'Prueba de transferencia mensual', d: '4', action: 'Reemplazo contactores cada 5 años' },
+                ],
+                torre: [
+                    { comp: 'Ventilador', func: 'Forzar flujo de aire', mode: 'Desbalance de aspas', effect: 'Vibración excesiva, daño a estructura', s: '7', cause: 'Acumulación de incrustaciones', o: '4', control: 'Análisis vibracional trimestral', d: '4', action: 'Limpieza semestral + aspas en FRP' },
+                    { comp: 'Relleno (fill)', func: 'Maximizar superficie de contacto', mode: 'Colapso o degradación', effect: 'Reducción de eficiencia de enfriamiento', s: '6', cause: 'Agua con alta dureza y algas', o: '5', control: 'Inspección visual en parada', d: '7', action: 'Tratamiento químico + biocida continuo' },
+                    { comp: 'Bomba de recirculación', func: 'Circular agua por la torre', mode: 'Cavitación', effect: 'Ruido, vibración, daño al impulsor', s: '7', cause: 'NPSH insuficiente por filtro tapado', o: '4', control: 'Presión succión continua', d: '5', action: 'Filtro autolavable + sensor de presión' },
+                    { comp: 'Sistema de distribución', func: 'Distribuir agua sobre el relleno', mode: 'Boquillas tapadas', effect: 'Enfriamiento desigual, hot spots', s: '5', cause: 'Sedimentos y sólidos en el agua', o: '6', control: 'Temperatura de agua de retorno', d: '6', action: 'Purga continua + filtración lateral' },
+                    { comp: 'Estructura metálica', func: 'Soportar componentes de la torre', mode: 'Corrosión de perfiles', effect: 'Riesgo de colapso estructural', s: '10', cause: 'Ambiente húmedo con químicos', o: '3', control: 'Inspección de espesores anual', d: '5', action: 'Recubrimiento epóxico + inspección UT' },
+                ],
+                transformador: [
+                    { comp: 'Aceite dieléctrico', func: 'Aislar y refrigerar bobinados', mode: 'Degradación térmica del aceite', effect: 'Reducción de rigidez dieléctrica', s: '8', cause: 'Sobrecarga prolongada', o: '4', control: 'Análisis fisicoquímico anual', d: '4', action: 'Regeneración de aceite + monitoreo en línea' },
+                    { comp: 'Bushings (pasatapas)', func: 'Conectar devanados al exterior', mode: 'Falla de aislamiento', effect: 'Explosión, incendio, paro total', s: '10', cause: 'Humedad infiltrada', o: '2', control: 'Termografía semestral', d: '5', action: 'Bushings con sensor capacitivo integrado' },
+                    { comp: 'Tap changer (OLTC)', func: 'Regular voltaje de salida', mode: 'Contactos quemados', effect: 'Voltaje inestable, daño a equipos', s: '7', cause: 'Arcos eléctricos por maniobras frecuentes', o: '4', control: 'Contador de operaciones', d: '5', action: 'Mantenimiento preventivo cada 50k operaciones' },
+                    { comp: 'Radiadores', func: 'Disipar calor del aceite', mode: 'Fuga por corrosión en soldaduras', effect: 'Bajo nivel de aceite, sobrecalentamiento', s: '7', cause: 'Oxidación por ambiente agresivo', o: '3', control: 'Nivel de aceite visual semanal', d: '4', action: 'Pintura anticorrosiva + inspección UT bianual' },
+                    { comp: 'Bobinados', func: 'Transformar voltaje', mode: 'Cortocircuito entre espiras', effect: 'Falla catastrófica, paro prolongado', s: '10', cause: 'Envejecimiento del papel aislante', o: '2', control: 'Análisis de gases disueltos (DGA)', d: '3', action: 'DGA trimestral + monitoreo online de gases' },
+                ],
+            };
+            const equipoNombres = {
+                bomba: 'Bomba Centrífuga P-101',
+                compresor: 'Compresor de Aire K-201',
+                banda: 'Banda Transportadora CV-301',
+                generador: 'Generador Diésel GE-401',
+                torre: 'Torre de Enfriamiento CT-501',
+                transformador: 'Transformador TR-601'
+            };
+            const examples = all[tipo] || all['bomba'];
+            examples.forEach(e => addRow(e));
+            updateResults();
+            showToast('Ejemplo cargado: ' + (equipoNombres[tipo] || tipo), 'success');
+        }
+
+        function updateResults() {
+            const rows = document.querySelectorAll('#amefBody tr');
+            if (rows.length === 0) return;
+            let nprs = [];
+            rows.forEach(tr => {
+                const cell = tr.querySelector('.npr-cell');
+                const v = parseInt(cell.textContent);
+                if (!isNaN(v) && v > 0) {
+                    const comp = tr.querySelectorAll('input')[0].value || '—';
+                    const mode = tr.querySelectorAll('input')[2].value || '—';
+                    nprs.push({ npr: v, comp, mode });
+                }
+            });
+            if (nprs.length === 0) { document.getElementById('resultsPanel').style.display = 'none'; return; }
+            nprs.sort((a, b) => b.npr - a.npr);
+            const panel = document.getElementById('resultsPanel');
+            panel.style.display = 'block';
+            const max = Math.max(...nprs.map(n => n.npr));
+            const min = Math.min(...nprs.map(n => n.npr));
+            const avg = Math.round(nprs.reduce((s, n) => s + n.npr, 0) / nprs.length);
+            const critical = nprs.filter(n => n.npr >= 200).length;
+            document.getElementById('metricsArea').innerHTML = `
+    <div class="metric"><span class="val" style="color:var(--danger)">${max}</span><span class="lbl">NPR Máximo</span></div>
+    <div class="metric"><span class="val" style="color:var(--accent)">${avg}</span><span class="lbl">NPR Promedio</span></div>
+    <div class="metric"><span class="val" style="color:var(--success)">${min}</span><span class="lbl">NPR Mínimo</span></div>
+    <div class="metric"><span class="val" style="color:var(--danger)">${critical}</span><span class="lbl">Críticos (≥200)</span></div>
+    <div class="metric"><span class="val" style="color:var(--primary)">${nprs.length}</span><span class="lbl">Modos Analizados</span></div>
+  `;
+            let html = '<h4 style="color:var(--white);margin:16px 0 10px;">🏆 Priorización (mayor NPR primero):</h4>';
+            nprs.forEach((n, i) => {
+                const cls = n.npr >= 200 ? 'risk-high' : n.npr >= 100 ? 'risk-med' : 'risk-low';
+                html += `<div style="display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--surface);border-radius:8px;margin-bottom:6px;">
+      <span style="font-weight:800;color:var(--muted);min-width:24px;">${i + 1}.</span>
+      <span class="${cls}" style="min-width:50px;font-size:18px;">${n.npr}</span>
+      <span style="color:var(--white);font-weight:600;">${n.comp}</span>
+      <span style="color:var(--muted);font-size:13px;">→ ${n.mode}</span>
+    </div>`;
+            });
+            document.getElementById('priorityList').innerHTML = html;
+        }
+
+        // Init with 5 empty rows
+        for (let i = 0; i < 5; i++) addRow();
+
+        // === SAVE / GOOGLE SHEETS ===
+        // INSTRUCCIONES: Reemplaza esta URL con la de tu Google Apps Script desplegado
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4QCLSyd9ZYciqlyBLuilCMQyqXmdj1cjOjh53pDGz5mdODu8wq4HvVj5TnEjHqyto/exec';
+
+        function openSaveModal() {
+            // Check if table has data
+            const rows = document.querySelectorAll('#amefBody tr');
+            let hasData = false;
+            rows.forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                if (inputs[0] && inputs[0].value.trim()) hasData = true;
+            });
+            if (!hasData) { showToast('Primero llena al menos una fila de la matriz AMEF', 'error'); return; }
+            document.getElementById('saveModal').classList.add('show');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.remove('show');
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast toast-' + type + ' show';
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        function collectTableData() {
+            const rows = document.querySelectorAll('#amefBody tr');
+            const data = [];
+            rows.forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                const sels = tr.querySelectorAll('select');
+                const comp = inputs[0]?.value || '';
+                if (!comp.trim()) return; // skip empty rows
+                data.push({
+                    componente: comp,
+                    funcion: inputs[1]?.value || '',
+                    modo_falla: inputs[2]?.value || '',
+                    efecto: inputs[3]?.value || '',
+                    severidad: sels[0]?.value || '',
+                    causa: inputs[4]?.value || '',
+                    ocurrencia: sels[1]?.value || '',
+                    control: inputs[5]?.value || '',
+                    deteccion: sels[2]?.value || '',
+                    npr: tr.querySelector('.npr-cell')?.textContent || '',
+                    accion: inputs[6]?.value || ''
+                });
+            });
+            return data;
+        }
+
+        async function submitAMEF() {
+            const name = document.getElementById('studentName').value.trim();
+            const cedula = document.getElementById('studentId').value.trim();
+            if (!name || !cedula) { showToast('Por favor completa tu nombre y cédula', 'error'); return; }
+            const tableData = collectTableData();
+            if (tableData.length === 0) { showToast('La tabla AMEF está vacía', 'error'); return; }
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Enviando...';
+            const payload = {
+                nombre: name,
+                cedula: cedula,
+                fecha: new Date().toLocaleString('es-CO'),
+                filas: tableData
+            };
+            try {
+                if (GOOGLE_SCRIPT_URL === 'TU_URL_AQUI') {
+                    // Demo mode - save to localStorage
+                    const saved = JSON.parse(localStorage.getItem('amef_submissions') || '[]');
+                    saved.push(payload);
+                    localStorage.setItem('amef_submissions', JSON.stringify(saved));
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = '📤 Enviar AMEF';
+                        closeSaveModal();
+                        showToast('✅ AMEF guardado localmente (modo demo). Configura Google Sheets para enviar a la nube.', 'success');
+                    }, 1000);
+                    return;
+                }
+                const resp = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                btn.disabled = false;
+                btn.innerHTML = '📤 Enviar AMEF';
+                closeSaveModal();
+                showToast('✅ ¡AMEF enviado exitosamente! Tu profesor recibirá tu trabajo.', 'success');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '📤 Enviar AMEF';
+                showToast('❌ Error al enviar. Intenta de nuevo.', 'error');
+                console.error(err);
+            }
+        }
+
+        // Close modal on overlay click
+        document.getElementById('saveModal').addEventListener('click', function (e) {
+            if (e.target === this) closeSaveModal();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+# Archivos temporales de Microsoft Office
+~$*.docx
+~$*.xlsx
+~$*.pptx
+*.tmp
+~WRL*.tmp
+
+# Node / npm (por si acaso)
+node_modules/
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Archivos de caché del navegador (localStorage no se sube)
+*.log

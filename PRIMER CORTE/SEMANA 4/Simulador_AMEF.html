@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador AMEF Interactivo — UNIPAZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Montserrat',sans-serif; background:linear-gradient(135deg,#0d1b2a 0%,#1b2838 50%,#0d1b2a 100%); min-height:100vh; color:#e0e0e0; }
+
+/* Header */
+.app-header { background:linear-gradient(135deg,#1a3a5c,#2a5a8c); padding:18px 40px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 20px rgba(0,0,0,0.3); position:sticky; top:0; z-index:100; }
+.app-header .logo { font-size:18px; font-weight:800; color:#fff; letter-spacing:3px; }
+.app-header .title { color:#daa520; font-size:16px; font-weight:600; }
+.app-header .subtitle { color:rgba(255,255,255,0.7); font-size:12px; }
+
+/* Main container */
+.container { max-width:1400px; margin:0 auto; padding:25px; }
+
+/* Dashboard cards */
+.dashboard { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:25px; }
+.dash-card { background:linear-gradient(135deg,#1e3454,#253d5e); border-radius:12px; padding:18px; text-align:center; border:1px solid rgba(218,165,32,0.15); transition:transform 0.2s; }
+.dash-card:hover { transform:translateY(-3px); }
+.dash-card .value { font-size:36px; font-weight:800; color:#daa520; }
+.dash-card .label { font-size:12px; color:#8aa; margin-top:5px; text-transform:uppercase; letter-spacing:1px; }
+.dash-card.danger .value { color:#e74c3c; }
+.dash-card.warning .value { color:#f39c12; }
+.dash-card.success .value { color:#2ecc71; }
+
+/* Toolbar */
+.toolbar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.btn { padding:10px 22px; border:none; border-radius:8px; font-family:'Montserrat',sans-serif; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+.btn-primary { background:linear-gradient(135deg,#daa520,#c9941a); color:#1a3a5c; }
+.btn-primary:hover { background:linear-gradient(135deg,#e6b422,#daa520); transform:translateY(-1px); box-shadow:0 4px 12px rgba(218,165,32,0.3); }
+.btn-danger { background:linear-gradient(135deg,#c0392b,#a93226); color:#fff; }
+.btn-danger:hover { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+.btn-secondary { background:linear-gradient(135deg,#2a5a8c,#1a3a5c); color:#fff; border:1px solid rgba(218,165,32,0.3); }
+.btn-secondary:hover { background:linear-gradient(135deg,#3a6a9c,#2a5a8c); }
+.btn-success { background:linear-gradient(135deg,#27ae60,#1e8449); color:#fff; }
+.btn-success:hover { background:linear-gradient(135deg,#2ecc71,#27ae60); }
+
+/* Table container */
+.table-container { background:linear-gradient(135deg,#152238,#1a2a42); border-radius:14px; overflow:hidden; border:1px solid rgba(218,165,32,0.12); box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+.table-title { padding:18px 25px; background:linear-gradient(135deg,#1a3a5c,#2a5a8c); font-size:16px; font-weight:700; color:#fff; display:flex; justify-content:space-between; align-items:center; }
+
+/* AMEF Table */
+.amef-table { width:100%; border-collapse:collapse; font-size:12px; }
+.amef-table thead th { background:#1a3a5c; color:#fff; padding:10px 8px; text-align:center; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-right:1px solid rgba(255,255,255,0.1); position:sticky; top:0; }
+.amef-table tbody td { padding:6px 6px; border-bottom:1px solid rgba(255,255,255,0.06); vertical-align:middle; }
+.amef-table tbody tr { transition:background 0.15s; }
+.amef-table tbody tr:hover { background:rgba(218,165,32,0.08); }
+.amef-table tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
+
+/* Inputs */
+.amef-table input[type="text"], .amef-table textarea {
+    width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+    border-radius:6px; padding:7px 8px; color:#e0e0e0; font-family:'Montserrat',sans-serif;
+    font-size:11px; transition:border-color 0.2s; resize:vertical;
+}
+.amef-table input:focus, .amef-table textarea:focus { border-color:#daa520; outline:none; background:rgba(218,165,32,0.06); }
+.amef-table textarea { min-height:50px; }
+
+.amef-table select {
+    width:100%; background:#1e3454; border:1px solid rgba(255,255,255,0.15);
+    border-radius:6px; padding:7px 4px; color:#e0e0e0; font-family:'Montserrat',sans-serif;
+    font-size:12px; font-weight:700; text-align:center; cursor:pointer; appearance:auto;
+}
+.amef-table select:focus { border-color:#daa520; outline:none; }
+
+/* NPR cell styling */
+.npr-cell { font-size:16px; font-weight:800; text-align:center; border-radius:8px; padding:8px !important; min-width:60px; }
+.npr-very-high { background:linear-gradient(135deg,#c0392b,#e74c3c) !important; color:#fff; }
+.npr-high { background:linear-gradient(135deg,#d35400,#e67e22) !important; color:#fff; }
+.npr-medium { background:linear-gradient(135deg,#f39c12,#f1c40f) !important; color:#1a3a5c; }
+.npr-low { background:linear-gradient(135deg,#27ae60,#2ecc71) !important; color:#fff; }
+.npr-very-low { background:linear-gradient(135deg,#1abc9c,#16a085) !important; color:#fff; }
+
+/* Risk level badge */
+.risk-badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+.risk-muy-alto { background:#c0392b; color:#fff; }
+.risk-alto { background:#e67e22; color:#fff; }
+.risk-medio { background:#f1c40f; color:#1a3a5c; }
+.risk-bajo { background:#2ecc71; color:#fff; }
+.risk-muy-bajo { background:#1abc9c; color:#fff; }
+
+/* S/O/D select coloring */
+.s-high, .o-high, .d-high { color:#e74c3c !important; }
+.s-med, .o-med, .d-med { color:#f39c12 !important; }
+.s-low, .o-low, .d-low { color:#2ecc71 !important; }
+
+/* Delete button in row */
+.btn-delete-row { background:none; border:1px solid rgba(231,76,60,0.3); color:#e74c3c; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.btn-delete-row:hover { background:#e74c3c; color:#fff; }
+
+/* Row number */
+.row-num { background:#1a3a5c; color:#daa520; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; margin:0 auto; }
+
+/* Scales reference panel */
+.scales-panel { display:none; background:linear-gradient(135deg,#152238,#1a2a42); border-radius:14px; border:1px solid rgba(218,165,32,0.12); padding:25px; margin-bottom:20px; }
+.scales-panel.active { display:block; }
+.scales-panel h3 { color:#daa520; margin-bottom:12px; }
+.scale-ref { display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; }
+.scale-ref table { width:100%; border-collapse:collapse; font-size:11px; }
+.scale-ref th { background:#1a3a5c; color:#fff; padding:6px; text-align:center; }
+.scale-ref td { padding:5px; border-bottom:1px solid rgba(255,255,255,0.06); text-align:center; }
+
+/* Export area */
+.export-preview { display:none; background:#152238; border-radius:12px; padding:20px; margin-top:20px; border:1px solid rgba(218,165,32,0.15); }
+.export-preview.active { display:block; }
+.export-preview pre { background:#0d1b2a; padding:15px; border-radius:8px; overflow-x:auto; color:#e0e0e0; font-size:11px; }
+
+/* Info tooltip */
+.info-icon { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; background:#daa520; color:#1a3a5c; border-radius:50%; font-size:10px; font-weight:800; cursor:help; margin-left:4px; }
+
+/* Print styles */
+@media print {
+    body { background:#fff; color:#000; }
+    .app-header, .toolbar, .btn-delete-row, .scales-panel, .dashboard { display:none !important; }
+    .table-container { border:2px solid #1a3a5c; box-shadow:none; }
+    .amef-table input, .amef-table textarea, .amef-table select { border:none; background:none; color:#000; }
+    .table-title { background:#1a3a5c !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+    <div>
+        <div class="logo">UNIPAZ</div>
+        <div class="subtitle">Instituto Universitario de la Paz</div>
+    </div>
+    <div style="text-align:center;">
+        <div class="title">Simulador AMEF Interactivo</div>
+        <div class="subtitle">Análisis de Modos y Efectos de Falla</div>
+    </div>
+    <div style="text-align:right;">
+        <div class="subtitle">TOSEM — UF2</div>
+        <div class="subtitle">Diagnóstico de Fallas</div>
+    </div>
+</div>
+
+<div class="container">
+
+<!-- Dashboard -->
+<div class="dashboard">
+    <div class="dash-card" id="dc-total">
+        <div class="value" id="total-modes">0</div>
+        <div class="label">Modos de Falla</div>
+    </div>
+    <div class="dash-card danger" id="dc-critical">
+        <div class="value" id="critical-count">0</div>
+        <div class="label">Riesgo Alto/Muy Alto</div>
+    </div>
+    <div class="dash-card warning" id="dc-avg">
+        <div class="value" id="avg-npr">0</div>
+        <div class="label">NPR Promedio</div>
+    </div>
+    <div class="dash-card success" id="dc-max">
+        <div class="value" id="max-npr">0</div>
+        <div class="label">NPR Máximo</div>
+    </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <button class="btn btn-primary" onclick="addRow()">➕ Agregar Fila</button>
+    <button class="btn btn-secondary" onclick="toggleScales()">📊 Ver Escalas S-O-D</button>
+    <button class="btn btn-secondary" onclick="loadExample()">📋 Cargar Ejemplo</button>
+    <button class="btn btn-success" onclick="exportCSV()">📥 Exportar CSV</button>
+    <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑️ Limpiar Todo</button>
+</div>
+
+<!-- Scales reference -->
+<div class="scales-panel" id="scalesPanel">
+    <h3>📊 Escalas de Referencia para S, O y D</h3>
+    <div class="scale-ref">
+        <div>
+            <h3 style="font-size:14px;">Severidad (S)</h3>
+            <table>
+                <thead><tr><th>Valor</th><th>Nivel</th></tr></thead>
+                <tbody>
+                <tr><td style="color:#e74c3c;font-weight:700;">10</td><td>Peligroso sin aviso</td></tr>
+                <tr><td style="color:#e74c3c;font-weight:700;">9</td><td>Peligroso con aviso</td></tr>
+                <tr><td style="color:#e74c3c;font-weight:700;">8</td><td>Muy alto (paro total)</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">7</td><td>Alto (afecta producción)</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">6</td><td>Moderado (degradación)</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">5</td><td>Bajo-moderado</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">4</td><td>Bajo</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">3</td><td>Muy bajo</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">2</td><td>Mínimo</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">1</td><td>Ninguno</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h3 style="font-size:14px;">Ocurrencia (O)</h3>
+            <table>
+                <thead><tr><th>Valor</th><th>Frecuencia</th></tr></thead>
+                <tbody>
+                <tr><td style="color:#e74c3c;font-weight:700;">10</td><td>Más de 1/semana</td></tr>
+                <tr><td style="color:#e74c3c;font-weight:700;">9</td><td>Cada 2 semanas</td></tr>
+                <tr><td style="color:#e74c3c;font-weight:700;">8</td><td>Una vez al mes</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">7</td><td>Cada 2 meses</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">6</td><td>Cada 6 meses</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">5</td><td>Una vez al año</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">4</td><td>Cada 2-3 años</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">3</td><td>Cada 5 años</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">2</td><td>Cada 10+ años</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">1</td><td>Casi imposible</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h3 style="font-size:14px;">Detección (D)</h3>
+            <table>
+                <thead><tr><th>Valor</th><th>Capacidad</th></tr></thead>
+                <tbody>
+                <tr><td style="color:#e74c3c;font-weight:700;">10</td><td>Imposible detectar</td></tr>
+                <tr><td style="color:#e74c3c;font-weight:700;">9</td><td>Muy remota</td></tr>
+                <tr><td style="color:#e74c3c;font-weight:700;">8</td><td>Remota</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">7</td><td>Muy baja</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">6</td><td>Baja</td></tr>
+                <tr><td style="color:#f39c12;font-weight:700;">5</td><td>Moderada</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">4</td><td>Moderada-alta</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">3</td><td>Alta</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">2</td><td>Muy alta</td></tr>
+                <tr><td style="color:#2ecc71;font-weight:700;">1</td><td>Detección segura</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- AMEF Table -->
+<div class="table-container">
+    <div class="table-title">
+        <span>📋 Matriz AMEF — <input type="text" id="systemName" value="Sistema / Proceso" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 10px;color:#fff;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:600;width:300px;"></span>
+        <span id="tableInfo" style="font-size:12px;color:rgba(255,255,255,0.6);"></span>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="amef-table" id="amefTable">
+        <thead>
+            <tr>
+                <th style="width:3%;">#</th>
+                <th style="width:9%;">Componente<br>/Paso</th>
+                <th style="width:10%;">Función</th>
+                <th style="width:10%;">Modo de<br>Falla</th>
+                <th style="width:10%;">Efecto de<br>la Falla</th>
+                <th style="width:4%;">S</th>
+                <th style="width:10%;">Causa de<br>la Falla</th>
+                <th style="width:4%;">O</th>
+                <th style="width:10%;">Control<br>Actual</th>
+                <th style="width:4%;">D</th>
+                <th style="width:5%;background:#c0392b;">NPR</th>
+                <th style="width:5%;">Nivel</th>
+                <th style="width:11%;">Acción<br>Recomendada</th>
+                <th style="width:3%;">🗑️</th>
+            </tr>
+        </thead>
+        <tbody id="amefBody">
+        </tbody>
+    </table>
+    </div>
+</div>
+
+</div>
+
+<script>
+let rowCount = 0;
+
+function createSelect(name, onChange) {
+    let html = `<select name="${name}" onchange="${onChange}">`;
+    for (let i = 1; i <= 10; i++) {
+        let cls = i >= 8 ? 'color:#e74c3c;font-weight:700;' : (i >= 5 ? 'color:#f39c12;font-weight:700;' : 'color:#2ecc71;font-weight:700;');
+        html += `<option value="${i}" style="${cls}">${i}</option>`;
+    }
+    html += '</select>';
+    return html;
+}
+
+function addRow(data) {
+    rowCount++;
+    const tbody = document.getElementById('amefBody');
+    const tr = document.createElement('tr');
+    tr.id = `row-${rowCount}`;
+    const n = rowCount;
+    const d = data || {};
+
+    tr.innerHTML = `
+        <td><div class="row-num">${n}</div></td>
+        <td><input type="text" placeholder="Ej: Rodamiento" value="${d.comp||''}"></td>
+        <td><input type="text" placeholder="Ej: Soportar carga" value="${d.func||''}"></td>
+        <td><input type="text" placeholder="Ej: Desgaste prematuro" value="${d.mode||''}"></td>
+        <td><input type="text" placeholder="Ej: Vibración alta" value="${d.effect||''}"></td>
+        <td>${createSelect('sev','recalcRow(this)')}</td>
+        <td><input type="text" placeholder="Ej: Lubricación insuficiente" value="${d.cause||''}"></td>
+        <td>${createSelect('occ','recalcRow(this)')}</td>
+        <td><input type="text" placeholder="Ej: Ruta vibración mensual" value="${d.control||''}"></td>
+        <td>${createSelect('det','recalcRow(this)')}</td>
+        <td class="npr-cell npr-very-low" id="npr-${n}">1</td>
+        <td style="text-align:center;" id="risk-${n}"><span class="risk-badge risk-muy-bajo">MUY BAJO</span></td>
+        <td><input type="text" placeholder="Acción correctiva..." value="${d.action||''}"></td>
+        <td><button class="btn-delete-row" onclick="deleteRow('row-${n}')">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+
+    // Set select values if data provided
+    if (d.s) { tr.querySelectorAll('select')[0].value = d.s; }
+    if (d.o) { tr.querySelectorAll('select')[1].value = d.o; }
+    if (d.d) { tr.querySelectorAll('select')[2].value = d.d; }
+
+    if (d.s || d.o || d.d) recalcRowByTr(tr);
+    updateDashboard();
+}
+
+function recalcRow(el) {
+    const tr = el.closest('tr');
+    recalcRowByTr(tr);
+}
+
+function recalcRowByTr(tr) {
+    const selects = tr.querySelectorAll('select');
+    const s = parseInt(selects[0].value);
+    const o = parseInt(selects[1].value);
+    const d = parseInt(selects[2].value);
+    const npr = s * o * d;
+
+    const nprId = tr.querySelector('.npr-cell').id;
+    const riskId = nprId.replace('npr-','risk-');
+    const nprCell = document.getElementById(nprId);
+    const riskCell = document.getElementById(riskId);
+
+    nprCell.textContent = npr;
+    nprCell.className = 'npr-cell';
+
+    let riskText, riskClass, nprClass;
+    if (npr >= 500) { riskText='MUY ALTO'; riskClass='risk-muy-alto'; nprClass='npr-very-high'; }
+    else if (npr >= 200) { riskText='ALTO'; riskClass='risk-alto'; nprClass='npr-high'; }
+    else if (npr >= 100) { riskText='MEDIO'; riskClass='risk-medio'; nprClass='npr-medium'; }
+    else if (npr >= 40) { riskText='BAJO'; riskClass='risk-bajo'; nprClass='npr-low'; }
+    else { riskText='MUY BAJO'; riskClass='risk-muy-bajo'; nprClass='npr-very-low'; }
+
+    nprCell.classList.add(nprClass);
+    riskCell.innerHTML = `<span class="risk-badge ${riskClass}">${riskText}</span>`;
+
+    updateDashboard();
+}
+
+function deleteRow(id) {
+    const row = document.getElementById(id);
+    if (row && confirm('¿Eliminar esta fila?')) {
+        row.remove();
+        renumberRows();
+        updateDashboard();
+    }
+}
+
+function renumberRows() {
+    const rows = document.querySelectorAll('#amefBody tr');
+    rows.forEach((tr, i) => {
+        const numDiv = tr.querySelector('.row-num');
+        if (numDiv) numDiv.textContent = i + 1;
+    });
+}
+
+function updateDashboard() {
+    const rows = document.querySelectorAll('#amefBody tr');
+    let total = rows.length;
+    let nprs = [];
+    let critical = 0;
+
+    rows.forEach(tr => {
+        const nprCell = tr.querySelector('.npr-cell');
+        if (nprCell) {
+            const v = parseInt(nprCell.textContent) || 0;
+            nprs.push(v);
+            if (v >= 200) critical++;
+        }
+    });
+
+    document.getElementById('total-modes').textContent = total;
+    document.getElementById('critical-count').textContent = critical;
+    document.getElementById('avg-npr').textContent = nprs.length ? Math.round(nprs.reduce((a,b)=>a+b,0)/nprs.length) : 0;
+    document.getElementById('max-npr').textContent = nprs.length ? Math.max(...nprs) : 0;
+
+    // Color max NPR card
+    const maxCard = document.getElementById('dc-max');
+    const maxVal = nprs.length ? Math.max(...nprs) : 0;
+    maxCard.className = 'dash-card';
+    if (maxVal >= 500) maxCard.classList.add('danger');
+    else if (maxVal >= 200) maxCard.classList.add('warning');
+    else maxCard.classList.add('success');
+}
+
+function toggleScales() {
+    document.getElementById('scalesPanel').classList.toggle('active');
+}
+
+function clearAll() {
+    if (confirm('¿Está seguro de limpiar todos los datos? Esta acción no se puede deshacer.')) {
+        document.getElementById('amefBody').innerHTML = '';
+        rowCount = 0;
+        updateDashboard();
+    }
+}
+
+function loadExample() {
+    if (document.querySelectorAll('#amefBody tr').length > 0) {
+        if (!confirm('Esto reemplazará los datos actuales. ¿Continuar?')) return;
+    }
+    document.getElementById('amefBody').innerHTML = '';
+    rowCount = 0;
+    document.getElementById('systemName').value = 'Bomba Centrífuga P-101 — Unidad de Proceso';
+
+    const examples = [
+        {comp:'Rodamiento',func:'Soportar carga radial y axial',mode:'Desgaste prematuro',effect:'Vibración alta, paro no programado',s:'8',cause:'Lubricación insuficiente',o:'6',control:'Ruta de vibración mensual',d:'5',action:'Implementar lubricación automática por grasa'},
+        {comp:'Sello mecánico',func:'Sellar fluido de proceso',mode:'Fuga externa visible',effect:'Derrame de fluido, riesgo ambiental',s:'7',cause:'Desgaste por partículas abrasivas',o:'5',control:'Inspección visual semanal',d:'7',action:'Cambiar a sello doble con flush plan'},
+        {comp:'Impulsor',func:'Generar presión diferencial',mode:'Erosión de álabes',effect:'Pérdida de caudal progresiva',s:'6',cause:'Sólidos en suspensión en el fluido',o:'4',control:'Medición de presión de descarga',d:'6',action:'Instalar filtro tipo Y de 100 mesh'},
+        {comp:'Acople flexible',func:'Transmitir torque del motor',mode:'Fractura de elementos elásticos',effect:'Pérdida total de transmisión, paro',s:'8',cause:'Desalineación excesiva',o:'3',control:'Verificación de alineación post-mtto',d:'4',action:'Alineación láser obligatoria + checklist'},
+        {comp:'Motor eléctrico',func:'Proveer potencia de accionamiento',mode:'Sobrecalentamiento de bobinado',effect:'Trip térmico, paro, posible daño',s:'7',cause:'Ventilación obstruida por polvo',o:'5',control:'Monitoreo de corriente',d:'4',action:'Limpieza trimestral de ventilador + filtro'},
+        {comp:'Base/Anclaje',func:'Fijar equipo a la cimentación',mode:'Aflojamiento de pernos de anclaje',effect:'Vibración excesiva, daño en tuberías',s:'6',cause:'Vibración cíclica sin retorque',o:'4',control:'Inspección visual semestral',d:'7',action:'Retorque semestral con torquímetro calibrado'},
+    ];
+
+    examples.forEach(ex => addRow(ex));
+}
+
+function exportCSV() {
+    const rows = document.querySelectorAll('#amefBody tr');
+    if (rows.length === 0) { alert('No hay datos para exportar.'); return; }
+
+    let csv = 'No.,Componente,Función,Modo de Falla,Efecto,S,Causa,O,Control Actual,D,NPR,Nivel de Riesgo,Acción Recomendada\n';
+
+    rows.forEach((tr, i) => {
+        const inputs = tr.querySelectorAll('input[type="text"]');
+        const selects = tr.querySelectorAll('select');
+        const nprCell = tr.querySelector('.npr-cell');
+        const riskBadge = tr.querySelector('.risk-badge');
+
+        const vals = [
+            i + 1,
+            `"${inputs[0]?.value || ''}"`,
+            `"${inputs[1]?.value || ''}"`,
+            `"${inputs[2]?.value || ''}"`,
+            `"${inputs[3]?.value || ''}"`,
+            selects[0]?.value || '',
+            `"${inputs[4]?.value || ''}"`,
+            selects[1]?.value || '',
+            `"${inputs[5]?.value || ''}"`,
+            selects[2]?.value || '',
+            nprCell?.textContent || '',
+            `"${riskBadge?.textContent || ''}"`,
+            `"${inputs[6]?.value || ''}"`,
+        ];
+        csv += vals.join(',') + '\n';
+    });
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `AMEF_${document.getElementById('systemName').value.replace(/[^a-zA-Z0-9]/g,'_')}.csv`;
+    link.click();
+}
+
+// Start with 3 empty rows
+addRow(); addRow(); addRow();
+</script>
+
+</body>
+</html>

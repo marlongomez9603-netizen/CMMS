@@ -1,0 +1,395 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Diagrama de Ishikawa — UNIPAZ</title><style>
+*{margin:0;padding:0;box-sizing:border-box;}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+body{font-family:'Montserrat',sans-serif;background:#0d1b2a;}
+.slide{width:1280px;min-height:720px;margin:30px auto;background:#fff;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);border-radius:6px;page-break-after:always;}
+.slide::before{content:'';position:absolute;bottom:0;left:0;width:100%;height:120px;background:linear-gradient(135deg,rgba(26,58,92,0.07),rgba(26,58,92,0.03));clip-path:ellipse(80% 100% at 50% 100%);}
+.hb{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);padding:18px 50px;display:flex;justify-content:space-between;align-items:center;}
+.hb .lo{color:#fff;font-size:14px;font-weight:700;letter-spacing:2px;}
+.hb .su{color:rgba(255,255,255,0.85);font-size:12px;}
+.ct{padding:30px 50px 40px;position:relative;z-index:1;}
+h1{color:#1a3a5c;font-size:30px;font-weight:800;margin-bottom:8px;border-bottom:3px solid #daa520;padding-bottom:10px;display:inline-block;}
+h2{color:#1a3a5c;font-size:24px;font-weight:700;margin:14px 0 8px;}
+h3{color:#daa520;font-size:18px;font-weight:700;margin:12px 0 6px;}
+p,li{color:#2c2c2c;font-size:14px;line-height:1.65;}
+ul{margin-left:25px;}ul li{margin-bottom:5px;list-style:disc;}ul li::marker{color:#daa520;}
+.hl{background:linear-gradient(135deg,#f0f4f8,#e8eef5);border-left:4px solid #1a3a5c;padding:14px 18px;border-radius:0 8px 8px 0;margin:10px 0;}
+.gb{background:linear-gradient(135deg,#fdf6e3,#fceabb);border-left:4px solid #daa520;padding:14px 18px;border-radius:0 8px 8px 0;margin:10px 0;}
+.rb{background:linear-gradient(135deg,#fde8e8,#fcc);border-left:4px solid #c0392b;padding:14px 18px;border-radius:0 8px 8px 0;margin:10px 0;}
+.gnb{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-left:4px solid #27ae60;padding:14px 18px;border-radius:0 8px 8px 0;margin:10px 0;}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px;}
+.trc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-top:8px;}
+.cd{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:15px;}
+.cd h3{margin-top:0;}
+.tg{display:inline-block;background:#1a3a5c;color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;margin:2px;}
+.tg-g{background:#daa520;}
+.ft{position:absolute;bottom:0;left:0;width:100%;padding:8px 50px;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#888;}
+.ft .ln{width:100%;height:2px;background:linear-gradient(90deg,#1a3a5c,#daa520,#1a3a5c);position:absolute;top:0;left:0;}
+.ts .ct{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:620px;text-align:center;}
+.ts h1{font-size:36px;border-bottom:4px solid #daa520;margin-bottom:15px;}
+.ts .st{color:#daa520;font-size:20px;font-weight:600;margin-bottom:25px;}
+.ts .inf{color:#555;font-size:14px;line-height:2;}
+.sf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.si{background:#1a3a5c;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;}
+.sa{color:#daa520;font-size:18px;font-weight:700;}
+.nt{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px;}
+.nt th{background:#1a3a5c;color:#fff;padding:8px;text-align:left;}
+.nt td{padding:7px 8px;border-bottom:1px solid #e2e8f0;}
+.nt tr:nth-child(even){background:#f8fafc;}
+.en{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;background:#1a3a5c;color:#fff;border-radius:50%;font-weight:700;font-size:13px;margin-right:8px;}
+</style></head><body>
+<div class="slide ts"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct"><h1>Diagrama de Ishikawa</h1><p class="st">Causa-Efecto · Espina de Pescado · Las 6M</p><div class="inf"><strong>Unidad Formativa 2:</strong> Diagnóstico de Fallas<br><strong>Programa:</strong> TOSEM — UNIPAZ<br><strong>Periodo:</strong> 2026-I</div></div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 1</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>¿Qué es el Diagrama de Ishikawa?</h1>
+<div class="hl"><p><strong>Definición:</strong> Es una herramienta gráfica de análisis de calidad que permite identificar, organizar y visualizar las <strong>posibles causas</strong> de un problema (efecto) específico, agrupándolas en categorías para facilitar su análisis sistemático.</p></div>
+<div class="tc">
+<div class="cd">
+<h3>📜 Origen e historia</h3>
+<ul>
+<li>Creado por <strong>Kaoru Ishikawa</strong> en 1943, profesor de ingeniería de la Universidad de Tokio</li>
+<li>Desarrollado como parte del movimiento de <strong>Control de Calidad Total (TQC)</strong> en Japón</li>
+<li>Fue clave en la reconstrucción industrial japonesa de posguerra</li>
+<li>Ishikawa es considerado uno de los "padres de la calidad" junto con Deming, Juran y Crosby</li>
+<li>Es una de las <strong>7 herramientas básicas de la calidad</strong></li>
+</ul>
+</div>
+<div class="cd">
+<h3>🎯 ¿Para qué sirve?</h3>
+<ul>
+<li>Identificar <strong>todas</strong> las causas posibles de un problema, no solo las obvias</li>
+<li>Organizar las causas en <strong>categorías lógicas</strong></li>
+<li>Facilitar la <strong>lluvia de ideas</strong> en equipo</li>
+<li>Visualizar la <strong>relación causa-efecto</strong></li>
+<li>Priorizar causas para investigación</li>
+<li>Documentar el análisis para futuras referencias</li>
+<li>Complementar otras herramientas: AMEF, RCA, 5 Por Qué</li>
+</ul>
+</div>
+</div>
+<div class="gb"><p><strong>También se conoce como:</strong> Diagrama de Causa-Efecto, Diagrama de Espina de Pescado (Fishbone Diagram), Diagrama de las 6M, Diagrama CE.</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 2</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>Anatomía del Diagrama de Ishikawa</h1>
+<div class="hl"><p>El diagrama tiene forma de <strong>esqueleto de pescado</strong>. La "cabeza" es el problema y las "espinas" son las categorías de causas.</p></div>
+<svg viewBox="0 0 1100 380" style="width:100%;margin:10px 0;" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a3a5c"/></marker></defs>
+<!-- Espina central -->
+<line x1="80" y1="190" x2="920" y2="190" stroke="#1a3a5c" stroke-width="4" marker-end="url(#a1)"/>
+<!-- Cabeza -->
+<rect x="920" y="155" width="160" height="70" rx="10" fill="#c0392b"/>
+<text x="1000" y="185" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">PROBLEMA</text>
+<text x="1000" y="205" text-anchor="middle" fill="#fff" font-size="12">(EFECTO)</text>
+<!-- Ramas superiores -->
+<line x1="250" y1="40" x2="380" y2="190" stroke="#2a5a8c" stroke-width="2.5" marker-end="url(#a1)"/>
+<rect x="155" y="15" width="140" height="40" rx="8" fill="#1a3a5c"/><text x="225" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">CATEGORÍA 1</text>
+<line x1="200" y1="70" x2="290" y2="120" stroke="#5a8ab5" stroke-width="1.5"/>
+<text x="180" y="78" fill="#555" font-size="11">Causa</text>
+<line x1="230" y1="95" x2="310" y2="140" stroke="#5a8ab5" stroke-width="1.5"/>
+<text x="206" y="100" fill="#555" font-size="11">Causa</text>
+
+<line x1="500" y1="40" x2="580" y2="190" stroke="#2a5a8c" stroke-width="2.5" marker-end="url(#a1)"/>
+<rect x="415" y="15" width="140" height="40" rx="8" fill="#1a3a5c"/><text x="485" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">CATEGORÍA 2</text>
+
+<line x1="730" y1="40" x2="770" y2="190" stroke="#2a5a8c" stroke-width="2.5" marker-end="url(#a1)"/>
+<rect x="650" y="15" width="140" height="40" rx="8" fill="#1a3a5c"/><text x="720" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">CATEGORÍA 3</text>
+
+<!-- Ramas inferiores -->
+<line x1="250" y1="340" x2="380" y2="190" stroke="#b8860b" stroke-width="2.5" marker-end="url(#a1)"/>
+<rect x="155" y="325" width="140" height="40" rx="8" fill="#daa520"/><text x="225" y="352" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">CATEGORÍA 4</text>
+
+<line x1="500" y1="340" x2="580" y2="190" stroke="#b8860b" stroke-width="2.5" marker-end="url(#a1)"/>
+<rect x="415" y="325" width="140" height="40" rx="8" fill="#daa520"/><text x="485" y="352" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">CATEGORÍA 5</text>
+
+<line x1="730" y1="340" x2="770" y2="190" stroke="#b8860b" stroke-width="2.5" marker-end="url(#a1)"/>
+<rect x="650" y="325" width="140" height="40" rx="8" fill="#daa520"/><text x="720" y="352" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">CATEGORÍA 6</text>
+
+<!-- Anotaciones -->
+<text x="60" y="195" fill="#1a3a5c" font-size="11" font-weight="700" text-anchor="end">ESPINA</text>
+<text x="60" y="210" fill="#1a3a5c" font-size="11" font-weight="700" text-anchor="end">CENTRAL</text>
+<text x="165" y="80" fill="#888" font-size="10">← Sub-causas</text>
+</svg>
+<div class="tc">
+<div class="gb"><p><strong>Espina central:</strong> Línea horizontal que conecta las categorías con el efecto. Representa la línea de investigación.</p></div>
+<div class="gb"><p><strong>Ramas principales:</strong> Las 6 categorías (6M). Cada una agrupa causas de la misma naturaleza. De cada rama salen sub-causas.</p></div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 3</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>Las 6M — Categorías del Ishikawa</h1>
+<div class="trc">
+<div class="cd" style="border-top:4px solid #c0392b;">
+<h3>🔧 1. Máquina (Machine)</h3>
+<p>Todo lo relacionado con el <strong>equipo, herramientas y tecnología</strong> utilizada.</p>
+<ul style="font-size:12px;">
+<li>Estado del equipo (desgaste, antigüedad)</li>
+<li>Calibración y ajuste</li>
+<li>Capacidad vs. demanda</li>
+<li>Diseño del equipo</li>
+<li>Mantenimiento realizado</li>
+<li>Herramientas inadecuadas</li>
+</ul>
+<p style="font-size:11px;color:#888;margin-top:6px;"><em>Pregunta: ¿El equipo está en condiciones óptimas?</em></p>
+</div>
+<div class="cd" style="border-top:4px solid #e67e22;">
+<h3>📋 2. Método (Method)</h3>
+<p>Todo lo relacionado con <strong>procedimientos, instrucciones y formas de trabajo</strong>.</p>
+<ul style="font-size:12px;">
+<li>Procedimientos (SOP) documentados</li>
+<li>Secuencia de operaciones</li>
+<li>Estándares de trabajo</li>
+<li>Metodologías aplicadas</li>
+<li>Flujo del proceso</li>
+<li>Permisos y protocolos de seguridad</li>
+</ul>
+<p style="font-size:11px;color:#888;margin-top:6px;"><em>Pregunta: ¿El procedimiento es claro y se cumple?</em></p>
+</div>
+<div class="cd" style="border-top:4px solid #2980b9;">
+<h3>👷 3. Mano de Obra (Man)</h3>
+<p>Todo lo relacionado con el <strong>factor humano</strong>.</p>
+<ul style="font-size:12px;">
+<li>Capacitación y competencia</li>
+<li>Experiencia del personal</li>
+<li>Fatiga y condiciones laborales</li>
+<li>Motivación y actitud</li>
+<li>Comunicación entre turnos</li>
+<li>Supervisión adecuada</li>
+</ul>
+<p style="font-size:11px;color:#888;margin-top:6px;"><em>Pregunta: ¿El personal está calificado y en buenas condiciones?</em></p>
+</div>
+<div class="cd" style="border-top:4px solid #27ae60;">
+<h3>📦 4. Material (Material)</h3>
+<p>Todo lo relacionado con <strong>insumos, materias primas y repuestos</strong>.</p>
+<ul style="font-size:12px;">
+<li>Calidad de materias primas</li>
+<li>Especificaciones técnicas</li>
+<li>Proveedores y lotes</li>
+<li>Almacenamiento y conservación</li>
+<li>Repuestos originales vs genéricos</li>
+<li>Compatibilidad de materiales</li>
+</ul>
+<p style="font-size:11px;color:#888;margin-top:6px;"><em>Pregunta: ¿Los materiales cumplen especificaciones?</em></p>
+</div>
+<div class="cd" style="border-top:4px solid #8e44ad;">
+<h3>🌡️ 5. Medio Ambiente (Environment)</h3>
+<p>Todo lo relacionado con las <strong>condiciones ambientales y del entorno</strong>.</p>
+<ul style="font-size:12px;">
+<li>Temperatura y humedad</li>
+<li>Polvo y contaminación</li>
+<li>Iluminación y ventilación</li>
+<li>Ruido y vibraciones externas</li>
+<li>Condiciones climáticas</li>
+<li>Layout y espacio de trabajo</li>
+</ul>
+<p style="font-size:11px;color:#888;margin-top:6px;"><em>Pregunta: ¿Las condiciones del entorno afectan?</em></p>
+</div>
+<div class="cd" style="border-top:4px solid #1abc9c;">
+<h3>📏 6. Medición (Measurement)</h3>
+<p>Todo lo relacionado con <strong>instrumentos, inspección y control</strong>.</p>
+<ul style="font-size:12px;">
+<li>Instrumentos de medición</li>
+<li>Calibración y trazabilidad</li>
+<li>Frecuencia de inspección</li>
+<li>Criterios de aceptación</li>
+<li>Registros y datos</li>
+<li>Precisión y exactitud</li>
+</ul>
+<p style="font-size:11px;color:#888;margin-top:6px;"><em>Pregunta: ¿Las mediciones son confiables?</em></p>
+</div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 4</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>¿Cómo Construir un Diagrama de Ishikawa?</h1>
+<div class="hl"><p>El diagrama se construye en <strong>equipo multidisciplinario</strong> mediante una sesión de lluvia de ideas estructurada. Seguir estos pasos garantiza un análisis completo y organizado.</p></div>
+<div class="tc">
+<div>
+<div class="cd" style="margin-bottom:10px;">
+<h3><span class="en">1</span> Definir el Problema (Efecto)</h3>
+<p>Escribir el problema de forma <strong>clara, específica y medible</strong>. Se coloca en la "cabeza" del pescado.</p>
+<div class="rb" style="font-size:12px;"><p>❌ Mal: "La bomba falla"<br>✅ Bien: "La bomba P-101 presenta vibración > 8 mm/s cada 45 días"</p></div>
+</div>
+<div class="cd" style="margin-bottom:10px;">
+<h3><span class="en">2</span> Trazar la Espina Central</h3>
+<p>Dibujar una flecha horizontal apuntando al recuadro del problema. Esta es la "columna vertebral" del diagrama.</p>
+</div>
+<div class="cd" style="margin-bottom:10px;">
+<h3><span class="en">3</span> Agregar las 6M como Ramas</h3>
+<p>Dibujar 6 ramas diagonales (3 arriba, 3 abajo) con las categorías: Máquina, Método, Mano de obra, Material, Medio ambiente, Medición.</p>
+</div>
+</div>
+<div>
+<div class="cd" style="margin-bottom:10px;">
+<h3><span class="en">4</span> Lluvia de Ideas por Categoría</h3>
+<p>Para cada M, el equipo genera posibles causas y se escriben como <strong>sub-ramas</strong>. No descartar ninguna idea inicialmente.</p>
+<div class="gnb" style="font-size:12px;"><p>💡 Tip: Preguntar "¿Qué aspecto de [esta M] podría causar el problema?" para guiar la discusión.</p></div>
+</div>
+<div class="cd" style="margin-bottom:10px;">
+<h3><span class="en">5</span> Profundizar con Sub-causas</h3>
+<p>Para cada causa, preguntarse "¿Por qué ocurre esto?" y agregar sub-causas como ramas secundarias. Usar los <strong>5 Por Qué</strong> como complemento.</p>
+</div>
+<div class="cd" style="margin-bottom:10px;">
+<h3><span class="en">6</span> Identificar la Causa Raíz</h3>
+<p>Analizar, priorizar y <strong>verificar</strong> las causas más probables con datos. Marcar las causas raíz confirmadas para definir acciones correctivas.</p>
+<div class="gb" style="font-size:12px;"><p>📌 Las causas raíz se verifican con: datos históricos, pruebas, mediciones o experimentación.</p></div>
+</div>
+</div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 5</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>¿Cuándo Usar el Diagrama de Ishikawa?</h1>
+<div class="tc">
+<div class="cd" style="border-top:4px solid #27ae60;">
+<h3>✅ Úselo cuando...</h3>
+<ul>
+<li>Necesita identificar <strong>todas las posibles causas</strong> de un problema</li>
+<li>Quiere organizar una <strong>lluvia de ideas</strong> de forma estructurada</li>
+<li>El problema involucra <strong>múltiples factores</strong> interrelacionados</li>
+<li>Necesita <strong>documentar visualmente</strong> el análisis para el equipo</li>
+<li>Es la primera vez que se analiza un problema y no se sabe por dónde empezar</li>
+<li>Quiere complementar un <strong>AMEF o RCA</strong> con un análisis visual</li>
+<li>Está capacitando personal en <strong>resolución de problemas</strong></li>
+</ul>
+</div>
+<div class="cd" style="border-top:4px solid #c0392b;">
+<h3>❌ NO lo use cuando...</h3>
+<ul>
+<li>El problema tiene una <strong>causa obvia y única</strong></li>
+<li>No hay un equipo disponible para la lluvia de ideas</li>
+<li>Necesita un análisis <strong>cuantitativo</strong> (use Pareto o análisis estadístico)</li>
+<li>El problema requiere análisis de <strong>secuencia temporal</strong> (use línea de tiempo)</li>
+<li>Ya tiene datos que apuntan claramente a la causa (vaya directo a la acción)</li>
+</ul>
+</div>
+</div>
+<h2 style="margin-top:15px;">Errores Comunes al Construir el Diagrama</h2>
+<div class="trc">
+<div class="rb" style="font-size:12px;">
+<p><strong>❌ Error 1:</strong> Definir el problema de forma muy vaga. "La máquina no sirve" no permite un análisis efectivo.</p>
+</div>
+<div class="rb" style="font-size:12px;">
+<p><strong>❌ Error 2:</strong> Poner <strong>soluciones</strong> en vez de causas. "Falta comprar repuestos" es una solución, no una causa.</p>
+</div>
+<div class="rb" style="font-size:12px;">
+<p><strong>❌ Error 3:</strong> Dejar categorías vacías por no investigar suficiente. Cada M debe tener al menos 2-3 causas potenciales.</p>
+</div>
+</div>
+<div class="gb" style="margin-top:10px;"><p><strong>💡 Regla de oro:</strong> Un buen diagrama de Ishikawa debe tener entre <strong>15 y 30 causas potenciales</strong> distribuidas en las 6M. Si tiene menos de 10, probablemente el análisis está incompleto.</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 6</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>Ejemplo 1: Falla Recurrente en Motor Eléctrico</h1>
+<div class="hl"><p><strong>Problema:</strong> El motor eléctrico de 50 HP del ventilador de la torre de enfriamiento presenta sobrecalentamiento y trip térmico cada 3 semanas.</p></div>
+<svg viewBox="0 0 1100 400" style="width:100%;margin:5px 0;" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a3a5c"/></marker></defs>
+<line x1="80" y1="200" x2="920" y2="200" stroke="#1a3a5c" stroke-width="3" marker-end="url(#a2)"/>
+<rect x="920" y="168" width="160" height="64" rx="8" fill="#c0392b"/><text x="1000" y="194" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">SOBRECALENTA-</text><text x="1000" y="212" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MIENTO MOTOR</text>
+
+<line x1="220" y1="45" x2="340" y2="200" stroke="#2a5a8c" stroke-width="2" marker-end="url(#a2)"/>
+<rect x="130" y="20" width="120" height="32" rx="6" fill="#1a3a5c"/><text x="190" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MÁQUINA</text>
+<text x="180" y="72" fill="#333" font-size="9.5">• Ventilador del motor obstruido</text>
+<text x="180" y="87" fill="#333" font-size="9.5">• Rodamientos desgastados</text>
+<text x="180" y="102" fill="#333" font-size="9.5">• Aislamiento deteriorado</text>
+
+<line x1="470" y1="45" x2="560" y2="200" stroke="#2a5a8c" stroke-width="2" marker-end="url(#a2)"/>
+<rect x="400" y="20" width="120" height="32" rx="6" fill="#1a3a5c"/><text x="460" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MÉTODO</text>
+<text x="440" y="72" fill="#333" font-size="9.5">• Sin plan de limpieza periódica</text>
+<text x="440" y="87" fill="#333" font-size="9.5">• Arranques frecuentes sin espera</text>
+<text x="440" y="102" fill="#333" font-size="9.5">• No se verifica ventilación</text>
+
+<line x1="720" y1="45" x2="770" y2="200" stroke="#2a5a8c" stroke-width="2" marker-end="url(#a2)"/>
+<rect x="640" y="20" width="140" height="32" rx="6" fill="#1a3a5c"/><text x="710" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MANO DE OBRA</text>
+<text x="690" y="72" fill="#333" font-size="9.5">• Operador no reporta anomalías</text>
+<text x="690" y="87" fill="#333" font-size="9.5">• Sin capacitación en motores</text>
+<text x="690" y="102" fill="#333" font-size="9.5">• Cambio de turno sin relevo</text>
+
+<line x1="220" y1="360" x2="340" y2="200" stroke="#b8860b" stroke-width="2" marker-end="url(#a2)"/>
+<rect x="140" y="352" width="120" height="32" rx="6" fill="#daa520"/><text x="200" y="374" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MATERIAL</text>
+<text x="180" y="340" fill="#333" font-size="9.5">• Grasa de rodamientos vencida</text>
+<text x="180" y="325" fill="#333" font-size="9.5">• Repuesto no original</text>
+
+<line x1="470" y1="360" x2="560" y2="200" stroke="#b8860b" stroke-width="2" marker-end="url(#a2)"/>
+<rect x="380" y="352" width="150" height="32" rx="6" fill="#daa520"/><text x="455" y="374" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MEDIO AMBIENTE</text>
+<text x="440" y="340" fill="#333" font-size="9.5">• Polvo excesivo en el área</text>
+<text x="440" y="325" fill="#333" font-size="9.5">• Temperatura ambiental > 40°C</text>
+
+<line x1="720" y1="360" x2="770" y2="200" stroke="#b8860b" stroke-width="2" marker-end="url(#a2)"/>
+<rect x="650" y="352" width="120" height="32" rx="6" fill="#daa520"/><text x="710" y="374" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MEDICIÓN</text>
+<text x="690" y="340" fill="#333" font-size="9.5">• Sin sensor de temperatura</text>
+<text x="690" y="325" fill="#333" font-size="9.5">• Amperímetro no calibrado</text>
+</svg>
+<div class="gnb"><p><strong>Causa raíz identificada:</strong> <strong>Ventilador del motor obstruido por polvo</strong> (Máquina) combinado con <strong>ausencia de plan de limpieza</strong> (Método) en un <strong>ambiente con polvo excesivo</strong> (Medio Ambiente). La falta de <strong>sensor de temperatura</strong> (Medición) impide la detección temprana.</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 7</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>Ejemplo 1: Plan de Acción</h1>
+<h2>Acciones derivadas — Motor eléctrico ventilador torre de enfriamiento</h2>
+<table class="nt">
+<thead><tr><th>M</th><th>Causa</th><th>Acción Correctiva</th><th>Responsable</th><th>Plazo</th></tr></thead>
+<tbody>
+<tr><td><strong>Máquina</strong></td><td>Ventilador obstruido por polvo</td><td>Limpieza inmediata + instalar filtro de aire</td><td>Mtto. Mecánico</td><td>Inmediato</td></tr>
+<tr><td><strong>Método</strong></td><td>Sin plan de limpieza</td><td>Crear OT preventiva de limpieza quincenal</td><td>Planificador</td><td>1 semana</td></tr>
+<tr><td><strong>Mano de obra</strong></td><td>Operador no reporta anomalías</td><td>Capacitación: "Signos de alerta en motores eléctricos"</td><td>Coord. Mtto.</td><td>2 semanas</td></tr>
+<tr><td><strong>Material</strong></td><td>Grasa de rodamientos vencida</td><td>Relubricación + implementar control de vencimiento</td><td>Almacén</td><td>Inmediato</td></tr>
+<tr><td><strong>Medio Ambiente</strong></td><td>Polvo excesivo en el área</td><td>Instalar barrera contra polvo en zona del motor</td><td>Proyectos</td><td>1 mes</td></tr>
+<tr><td><strong>Medición</strong></td><td>Sin sensor de temperatura</td><td>Instalar RTD con alarma a 80°C y trip a 95°C</td><td>Instrumentación</td><td>2 semanas</td></tr>
+</tbody>
+</table>
+<div class="gb"><p><strong>📊 Seguimiento:</strong> Después de implementar las acciones, monitorear por 3 meses. Si el motor opera sin trip térmico durante ese periodo, el análisis fue exitoso. Documentar en el sistema de gestión de mantenimiento.</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 8</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>Ejemplo 2: Producto Defectuoso en Línea de Envasado</h1>
+<div class="hl"><p><strong>Problema:</strong> El 8% de las botellas de la línea de envasado #2 presentan nivel de llenado fuera de especificación (±2 ml), generando rechazos de calidad y reproceso.</p></div>
+<svg viewBox="0 0 1100 400" style="width:100%;margin:5px 0;" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a3a5c"/></marker></defs>
+<line x1="80" y1="200" x2="920" y2="200" stroke="#1a3a5c" stroke-width="3" marker-end="url(#a3)"/>
+<rect x="920" y="168" width="160" height="64" rx="8" fill="#c0392b"/><text x="1000" y="190" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">NIVEL DE</text><text x="1000" y="207" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">LLENADO</text><text x="1000" y="224" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">INCORRECTO</text>
+
+<line x1="220" y1="45" x2="340" y2="200" stroke="#2a5a8c" stroke-width="2" marker-end="url(#a3)"/>
+<rect x="130" y="20" width="120" height="32" rx="6" fill="#1a3a5c"/><text x="190" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MÁQUINA</text>
+<text x="175" y="72" fill="#333" font-size="9.5">• Válvula dosificadora desgastada</text>
+<text x="175" y="87" fill="#333" font-size="9.5">• Boquilla de llenado obstruida</text>
+<text x="175" y="102" fill="#333" font-size="9.5">• Velocidad de línea inestable</text>
+
+<line x1="470" y1="45" x2="560" y2="200" stroke="#2a5a8c" stroke-width="2" marker-end="url(#a3)"/>
+<rect x="400" y="20" width="120" height="32" rx="6" fill="#1a3a5c"/><text x="460" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MÉTODO</text>
+<text x="440" y="72" fill="#333" font-size="9.5">• Ajuste de dosificación empírico</text>
+<text x="440" y="87" fill="#333" font-size="9.5">• Sin verificación cada hora</text>
+<text x="440" y="102" fill="#333" font-size="9.5">• Cambio de producto sin purga</text>
+
+<line x1="720" y1="45" x2="770" y2="200" stroke="#2a5a8c" stroke-width="2" marker-end="url(#a3)"/>
+<rect x="640" y="20" width="140" height="32" rx="6" fill="#1a3a5c"/><text x="710" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MANO DE OBRA</text>
+<text x="690" y="72" fill="#333" font-size="9.5">• Operario nuevo sin experiencia</text>
+<text x="690" y="87" fill="#333" font-size="9.5">• Turno nocturno sin supervisor</text>
+<text x="690" y="102" fill="#333" font-size="9.5">• No registra datos de proceso</text>
+
+<line x1="220" y1="360" x2="340" y2="200" stroke="#b8860b" stroke-width="2" marker-end="url(#a3)"/>
+<rect x="140" y="352" width="120" height="32" rx="6" fill="#daa520"/><text x="200" y="374" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MATERIAL</text>
+<text x="175" y="340" fill="#333" font-size="9.5">• Viscosidad del líquido variable</text>
+<text x="175" y="325" fill="#333" font-size="9.5">• Lote de botellas con variación</text>
+
+<line x1="470" y1="360" x2="560" y2="200" stroke="#b8860b" stroke-width="2" marker-end="url(#a3)"/>
+<rect x="380" y="352" width="150" height="32" rx="6" fill="#daa520"/><text x="455" y="374" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MEDIO AMBIENTE</text>
+<text x="440" y="340" fill="#333" font-size="9.5">• Temperatura afecta viscosidad</text>
+<text x="440" y="325" fill="#333" font-size="9.5">• Vibración de equipos cercanos</text>
+
+<line x1="720" y1="360" x2="770" y2="200" stroke="#b8860b" stroke-width="2" marker-end="url(#a3)"/>
+<rect x="650" y="352" width="120" height="32" rx="6" fill="#daa520"/><text x="710" y="374" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">MEDICIÓN</text>
+<text x="690" y="340" fill="#333" font-size="9.5">• Balanza de verificación descalibrada</text>
+<text x="690" y="325" fill="#333" font-size="9.5">• Sensor de nivel con error ±3ml</text>
+</svg>
+<div class="gnb"><p><strong>Causas raíz:</strong> <strong>Válvula dosificadora desgastada</strong> (Máquina) + <strong>Ajuste empírico sin procedimiento</strong> (Método) + <strong>Sensor de nivel con error mayor a la tolerancia</strong> (Medición). Las 3 causas actúan simultáneamente.</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 9</span></div></div>
+<div class="slide ts"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Diagrama de Ishikawa · UF2</span></div><div class="ct">
+<h1>¡Practiquemos!</h1>
+<p class="st">Use el Simulador de Ishikawa Interactivo</p>
+<div class="inf">
+<strong>Archivo:</strong> Simulador_Ishikawa.html<br><br>
+<strong>Actividad:</strong><br>
+1. Defina un problema real o ficticio de su entorno<br>
+2. Construya el diagrama completo usando las 6M<br>
+3. Identifique al menos 3 causas por categoría<br>
+4. Determine la causa raíz más probable<br><br>
+<strong>"No hay problema que resista un análisis sistemático"</strong><br><br>
+Instituto Universitario de la Paz — UNIPAZ<br>
+TOSEM · UF2 · 2026-I
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 10</span></div></div>
+
+</body>
+</html>

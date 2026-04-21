@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>⚡ Competencia – Mantenimiento Industrial</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08060f;--surface:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);
+  --text:#f1f0ff;--muted:rgba(241,240,255,.5);
+  --a:#7c3aed;--a2:#06b6d4;--green:#10b981;--red:#ef4444;--gold:#f59e0b;
+  --ta:#4f1999;--tb:#0e6e7e;
+}
+body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── CANVAS ── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── LAYOUT ── */
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
+
+/* ── HEADER ── */
+.header{text-align:center;margin-bottom:2rem}
+.header h1{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:900;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{font-size:.85rem;color:var(--muted);margin-top:.3rem}
+
+/* ── SETUP ── */
+#setup{max-width:520px;margin:3rem auto}
+.setup-card{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);border-radius:16px;padding:2rem}
+.setup-card h2{font-size:1.3rem;font-weight:800;margin-bottom:1.4rem;text-align:center}
+.field-group{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.4rem}
+.field label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:.4rem}
+.field input{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:9px;padding:.6rem .9rem;color:var(--text);font-family:inherit;font-size:.95rem;outline:none;transition:.2s}
+.field input:focus{border-color:var(--a)}
+.btn-start{width:100%;background:linear-gradient(135deg,var(--a),var(--a2));border:none;color:#fff;font-family:inherit;font-size:1.1rem;font-weight:800;padding:.9rem;border-radius:12px;cursor:pointer;transition:.2s}
+.btn-start:hover{opacity:.85;transform:translateY(-1px)}
+
+/* ── SCOREBOARD ── */
+#scoreboard{display:none;margin-bottom:1.5rem}
+.scores{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem}
+.score-card{border-radius:14px;padding:1rem 1.4rem;text-align:center;border:2px solid transparent;transition:.3s}
+.score-card.team-a{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3)}
+.score-card.team-b{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3)}
+.score-card.active{transform:scale(1.04)}
+.score-card.team-a.active{border-color:var(--a);box-shadow:0 0 18px rgba(124,58,237,.35)}
+.score-card.team-b.active{border-color:var(--a2);box-shadow:0 0 18px rgba(6,182,212,.35)}
+.score-name{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:.2rem;text-transform:uppercase;letter-spacing:.06em}
+.score-pts{font-size:2.6rem;font-weight:900;line-height:1}
+.score-card.team-a .score-pts{color:var(--a)}
+.score-card.team-b .score-pts{color:var(--a2)}
+.score-goal{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+.vs{font-size:1.2rem;font-weight:900;color:var(--muted)}
+.progress-bars{margin-top:.7rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.prog-fill.a{background:var(--a)}
+.prog-fill.b{background:var(--a2)}
+
+/* ── BUZZERS ── */
+#buzzers{display:none;margin-bottom:1.5rem}
+.buzzer-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.buzzer-btn{border:none;border-radius:16px;padding:1.6rem;font-family:inherit;font-weight:900;font-size:1.2rem;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.buzzer-btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);opacity:0;transition:.15s}
+.buzzer-btn:active:not(:disabled)::after{opacity:1}
+.buzzer-btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+.buzzer-btn.ba{background:linear-gradient(135deg,#7c3aed,#9d52f5);color:#fff;box-shadow:0 6px 24px rgba(124,58,237,.4)}
+.buzzer-btn.bb{background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;box-shadow:0 6px 24px rgba(6,182,212,.4)}
+.buzzer-btn:not(:disabled):hover{transform:translateY(-2px) scale(1.01)}
+.buzzer-btn:not(:disabled):active{transform:scale(.97)}
+.buz-icon{font-size:2.2rem;display:block;margin-bottom:.4rem}
+.buz-hint{font-size:.75rem;opacity:.8;font-weight:400;margin-top:.3rem}
+.buzzed-banner{text-align:center;font-size:1.1rem;font-weight:800;padding:.7rem;border-radius:10px;margin-bottom:.8rem;display:none}
+.buzzed-banner.ba{background:rgba(124,58,237,.2);border:1px solid var(--a);color:var(--a)}
+.buzzed-banner.bb{background:rgba(6,182,212,.15);border:1px solid var(--a2);color:var(--a2)}
+
+/* ── TIMER ── */
+.timer-ring{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.8rem}
+.timer-num{font-size:2.2rem;font-weight:900;color:var(--text);transition:color .3s}
+.timer-num.urgent{color:var(--red);animation:pulse .5s infinite alternate}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+.timer-bar{height:5px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:1rem}
+.timer-progress{height:100%;border-radius:3px;transition:width 1s linear,background .3s}
+
+/* ── QUESTION ── */
+#question-area{display:none}
+.q-counter{font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+.q-text{font-size:clamp(1rem,2.5vw,1.3rem);font-weight:700;color:var(--text);line-height:1.5;margin-bottom:1.2rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.opt-btn{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;color:var(--text);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;text-align:left;transition:.2s;display:flex;align-items:center;gap:.6rem}
+.opt-btn:hover:not(:disabled){background:rgba(124,58,237,.12);border-color:var(--a)}
+.opt-btn:disabled{cursor:not-allowed}
+.opt-btn.correct{background:rgba(16,185,129,.18);border-color:var(--green);color:var(--green)}
+.opt-btn.wrong{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red)}
+.opt-letter{width:26px;height:26px;border-radius:6px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;flex-shrink:0}
+
+/* ── STATUS MESSAGES ── */
+.status-msg{text-align:center;padding:.8rem;border-radius:10px;font-weight:700;font-size:.9rem;display:none;margin-bottom:.8rem}
+.status-msg.good{background:rgba(16,185,129,.15);border:1px solid var(--green);color:var(--green)}
+.status-msg.bad{background:rgba(239,68,68,.12);border:1px solid var(--red);color:var(--red)}
+.status-msg.info{background:rgba(124,58,237,.12);border:1px solid var(--a);color:var(--a)}
+
+/* ── NEXT BTN ── */
+.btn-next{width:100%;background:rgba(124,58,237,.15);border:1px solid var(--a);color:var(--a);font-family:inherit;font-weight:800;font-size:.95rem;padding:.75rem;border-radius:10px;cursor:pointer;transition:.2s;display:none;margin-top:.8rem}
+.btn-next:hover{background:var(--a);color:#fff}
+
+/* ── WIN SCREEN ── */
+#win-screen{display:none;text-align:center;padding:3rem 1rem}
+.trophy{font-size:5rem;margin-bottom:1rem;animation:bounce 1s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.win-title{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:.5rem}
+.win-team{font-size:clamp(1.2rem,3vw,1.8rem);font-weight:700;margin-bottom:1.5rem}
+.win-scores{display:flex;justify-content:center;gap:2rem;margin-bottom:2rem}
+.ws{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;padding:1rem 2rem;font-size:.85rem}
+.ws .n{font-size:2rem;font-weight:900;margin-top:.3rem}
+.btn-restart{background:linear-gradient(135deg,var(--a),var(--a2));border:none;color:#fff;font-family:inherit;font-weight:800;font-size:1rem;padding:.85rem 2.5rem;border-radius:12px;cursor:pointer;transition:.2s}
+.btn-restart:hover{opacity:.85;transform:translateY(-2px)}
+
+/* ── CONFETTI ── */
+.conf{position:fixed;pointer-events:none;z-index:999;top:-10px;font-size:1.4rem;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .options{grid-template-columns:1fr}
+  .field-group{grid-template-columns:1fr}
+  .buzzer-row{grid-template-columns:1fr}
+  .win-scores{flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div class="wrap">
+  <div class="header">
+    <h1>⚡ Competencia: Mantenimiento Industrial</h1>
+    <p>Programación y Control del Mantenimiento · Ing. Marlon Gómez · 730502</p>
+  </div>
+
+  <!-- SETUP -->
+  <div id="setup">
+    <div class="setup-card">
+      <h2>🏆 Configurar equipos</h2>
+      <div class="field-group">
+        <div class="field">
+          <label>🟣 Nombre Equipo A</label>
+          <input id="nameA" type="text" value="Equipo Alpha" maxlength="20"/>
+        </div>
+        <div class="field">
+          <label>🔵 Nombre Equipo B</label>
+          <input id="nameB" type="text" value="Equipo Beta" maxlength="20"/>
+        </div>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;text-align:center">
+        Primero en llegar a <strong style="color:var(--text)">10 puntos</strong> gana · Si falla pasa al otro equipo · Banco de 30 preguntas
+      </p>
+      <button class="btn-start" onclick="startGame()">▶ Iniciar competencia</button>
+    </div>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div id="scoreboard">
+    <div class="scores">
+      <div class="score-card team-a" id="cardA">
+        <div class="score-name" id="labelA">Equipo A</div>
+        <div class="score-pts" id="ptsA">0</div>
+        <div class="score-goal">/ 10 pts</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="score-card team-b" id="cardB">
+        <div class="score-name" id="labelB">Equipo B</div>
+        <div class="score-pts" id="ptsB">0</div>
+        <div class="score-goal">/ 10 pts</div>
+      </div>
+    </div>
+    <div class="progress-bars">
+      <div class="prog-bar"><div class="prog-fill a" id="progA" style="width:0%"></div></div>
+      <div class="prog-bar"><div class="prog-fill b" id="progB" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- BUZZERS -->
+  <div id="buzzers">
+    <div class="buzzed-banner" id="buzzBanner"></div>
+    <div class="buzzer-row">
+      <button class="buzzer-btn ba" id="buzA" onclick="buzz('A')">
+        <span class="buz-icon">🟣</span>
+        <span id="buzLabelA">EQUIPO A</span>
+        <span class="buz-hint">¡Presiona para responder!</span>
+      </button>
+      <button class="buzzer-btn bb" id="buzB" onclick="buzz('B')">
+        <span class="buz-icon">🔵</span>
+        <span id="buzLabelB">EQUIPO B</span>
+        <span class="buz-hint">¡Presiona para responder!</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- QUESTION AREA -->
+  <div id="question-area">
+    <div class="timer-bar"><div id="timer-progress" class="timer-progress" style="width:100%;background:var(--green)"></div></div>
+    <div class="timer-ring">
+      <span style="font-size:.85rem;color:var(--muted);font-weight:700">TIEMPO: </span>
+      <span class="timer-num" id="timer-num">10</span>
+    </div>
+    <div class="q-counter" id="q-counter">Pregunta 1 de 10</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="status-msg" id="status-msg"></div>
+    <div class="options" id="options"></div>
+    <button class="btn-next" id="btn-next" onclick="nextQuestion()">Siguiente pregunta →</button>
+  </div>
+
+  <!-- WIN SCREEN -->
+  <div id="win-screen">
+    <div class="trophy">🏆</div>
+    <div class="win-title">¡Tenemos un ganador!</div>
+    <div class="win-team" id="win-team-name"></div>
+    <div class="win-scores">
+      <div class="ws"><div id="wNameA" style="color:var(--a);font-weight:700"></div><div class="n" style="color:var(--a)" id="wPtsA">0</div></div>
+      <div class="ws"><div id="wNameB" style="color:var(--a2);font-weight:700"></div><div class="n" style="color:var(--a2)" id="wPtsB">0</div></div>
+    </div>
+    <button class="btn-restart" onclick="restartGame()">↩ Nueva partida</button>
+  </div>
+</div>
+
+<script>
+// ── BG CANVAS ──
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+  let W,H,ns=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  resize();addEventListener('resize',resize);
+  class N{constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=1+Math.random()*2.5;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.a=.1+Math.random()*.25;this.c=['#7c3aed','#06b6d4','#f59e0b'][~~(Math.random()*3)];this.p=Math.random()*Math.PI*2;this.ps=.02+Math.random()*.02;}
+    upd(){this.x+=this.vx;this.y+=this.vy;this.p+=this.ps;if(this.x<-20)this.x=W+20;if(this.x>W+20)this.x=-20;if(this.y<-20)this.y=H+20;if(this.y>H+20)this.y=-20;}
+    draw(){ctx.save();ctx.globalAlpha=this.a*(1+Math.sin(this.p)*.3);ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.c;ctx.fill();ctx.restore();}
+  }
+  for(let i=0;i<60;i++)ns.push(new N());
+  function loop(){ctx.clearRect(0,0,W,H);ns.forEach(n=>{n.upd();n.draw();});requestAnimationFrame(loop);}
+  loop();
+})();
+
+// ── AUDIO ──
+const AC=new (window.AudioContext||window.webkitAudioContext)();
+function beep(freq,dur,type='sine',vol=.3){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(vol,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+dur);
+  o.start();o.stop(AC.currentTime+dur);
+}
+function buzzSound(){beep(440,.08,'square',.2);setTimeout(()=>beep(660,.12,'square',.2),80);}
+function correctSound(){beep(523,.1);setTimeout(()=>beep(659,.1),120);setTimeout(()=>beep(784,.2),240);}
+function wrongSound(){beep(220,.15,'sawtooth',.2);}
+function winSound(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.18),i*150));}
+
+// ── QUESTION BANK (30 preguntas) ──
+const BANK = [
+  {q:"¿Cuál norma define la terminología oficial de los tipos de mantenimiento?",opts:["SAE JA1011","EN 13306:2017","ISO 17359:2018","ISO 55001:2014"],ans:1},
+  {q:"Un mantenimiento que se realiza DESPUÉS de que ocurre la falla se llama:",opts:["Preventivo","Predictivo","Correctivo","Proactivo"],ans:2},
+  {q:"El mantenimiento basado en condición (CBM) actúa cuando:",opts:["Se cumple el tiempo fijo del fabricante","Un parámetro medido supera un umbral","El equipo lleva más de 1 año","El operario lo solicita"],ans:1},
+  {q:"¿Qué mide el Intervalo P-F?",opts:["La vida útil del equipo","La frecuencia de inspección ideal","El tiempo entre falla potencial y falla funcional","El costo de la reparación"],ans:2},
+  {q:"En el árbol de decisión RCM (SAE JA1011), ¿cuál es SIEMPRE la primera pregunta?",opts:["¿Cuánto cuesta la falla?","¿Existe señal detectable?","¿Afecta la producción?","¿La falla puede causar daño a personas o al ambiente?"],ans:3},
+  {q:"¿Cuándo es válido aplicar RTF (Run-To-Failure)?",opts:["Cuando el equipo es muy antiguo","Cuando no hay técnicos disponibles","Sin consecuencias de seguridad y el costo de falla < costo de prevención","Cuando el equipo es nuevo"],ans:2},
+  {q:"¿Qué técnica predictiva detecta puntos calientes en conexiones eléctricas?",opts:["Análisis de aceite","Vibrometría","Ultrasonido","Termografía infrarroja"],ans:3},
+  {q:"¿Qué parámetro β de Weibull indica que la falla AUMENTA con la edad del equipo?",opts:["β < 1","β = 0","β = 1","β > 1"],ans:3},
+  {q:"La frecuencia de inspección en CBM debe ser como máximo:",opts:["Igual al P-F interval","El doble del P-F interval","La mitad del P-F interval","El triple del P-F interval"],ans:2},
+  {q:"¿Qué norma regula las instalaciones eléctricas industriales en Colombia?",opts:["ASME Sección VIII","NFPA 10","RETIE","ISO 45001"],ans:2},
+  {q:"Los rodamientos se pueden detectar con estas técnicas predictivas:",opts:["Solo termografía","Análisis de aceite y radiografía","Vibrometría y ultrasonido industrial","Solo inspección visual"],ans:2},
+  {q:"La Búsqueda de Falla (Failure Finding) se aplica a equipos con:",opts:["Falla de desgaste acelerado","Función oculta o redundante","Alta criticidad operacional","Falla por mortalidad infantil"],ans:1},
+  {q:"El mantenimiento PROACTIVO, a diferencia del preventivo, busca:",opts:["Actuar justo después de la falla","Eliminar las causas raíz para que no vuelva a ocurrir","Inspeccionar a intervalos fijos","Solo lubricar los equipos"],ans:1},
+  {q:"Un UPS eléctrico que falla sin que nadie lo sepa es un ejemplo de:",opts:["Falla de desgaste progresivo","Mortalidad infantil","Función oculta","RTF válido"],ans:2},
+  {q:"¿Qué técnica predictiva detecta fugas de aire comprimido y gas?",opts:["Termografía","Análisis de aceite","Vibrometría","Ultrasonido industrial"],ans:3},
+  {q:"La norma SAE JA1011 define el proceso de:",opts:["Análisis de aceites lubricantes","RCM – Mantenimiento Centrado en Confiabilidad","Gestión estratégica de activos","Termografía industrial"],ans:1},
+  {q:"¿Qué tipo de mantenimiento interviene a intervalos de tiempo o ciclos FIJOS?",opts:["CBM (basado en condición)","Correctivo inmediato","TBM (basado en tiempo)","RTF"],ans:2},
+  {q:"Cuando β ≈ 1, las fallas del equipo son:",opts:["Progresivas, aumentan con la edad","Por mortalidad infantil al inicio","Aleatorias, no dependen de la edad","Predecibles por horómetro"],ans:2},
+  {q:"¿Qué norma guía los programas de monitoreo de condición y CBM?",opts:["EN 13306:2017","SAE JA1011","ISO 17359:2018","ISO 31000"],ans:2},
+  {q:"La criticidad de un activo industrial se calcula como:",opts:["Costo de reparación × tiempo de parada","Frecuencia de falla × Consecuencia","β de Weibull × MTBF","P-F interval × costo unitario"],ans:1},
+  {q:"Un compresor único en planta que falla detiene toda la instrumentación neumática. Su criticidad es:",opts:["Clase C – Baja","Clase B – Media","Clase A – Alta","No se clasifica"],ans:2},
+  {q:"¿Cuál es la función principal del análisis de aceite en mantenimiento predictivo?",opts:["Medir vibración del eje","Medir temperatura de cojinetes","Detectar metales de desgaste y contaminación","Identificar fugas de gas externo"],ans:2},
+  {q:"Un bombillo de pasillo sin impacto en producción ni seguridad. ¿Qué estrategia aplica?",opts:["Preventivo TBM mensual","Predictivo con cámara termográfica","RTF – Dejar fallar conscientemente","Análisis de causa raíz proactivo"],ans:2},
+  {q:"¿Qué norma colombiana regula los vasos a presión en plantas industriales?",opts:["RETIE","NFPA 10","ASME Sección VIII + NTC 2832","ISO 17359"],ans:2},
+  {q:"El correctivo DIFERIDO significa que la reparación:",opts:["No se realiza nunca","Se ejecuta de inmediato","Se postpone según reglas establecidas sin impacto crítico","Se programa ANTES de la falla"],ans:2},
+  {q:"¿Por qué el preventivo TBM NO reduce la probabilidad de falla en equipos con β≈1?",opts:["Es demasiado costoso de implementar","Porque las fallas son aleatorias e independientes de la edad","Requiere demasiados técnicos","Solo funciona en motores eléctricos"],ans:1},
+  {q:"¿Qué norma de gestión de activos exige análisis costo-beneficio en las decisiones de mantenimiento?",opts:["EN 13306:2017","SAE JA1011","ISO 55001:2014","ISO 14224"],ans:2},
+  {q:"La mortalidad infantil en equipos (β<1) se reduce principalmente mejorando:",opts:["La frecuencia de inspección rutinaria","El programa preventivo TBM","La calidad de instalación y recepción de equipos","El lubricante utilizado"],ans:2},
+  {q:"Si un equipo tiene consecuencias de SEGURIDAD y NO existe ninguna tarea factible que controle el riesgo, SAE JA1011 exige:",opts:["Aplicar RTF con redundancia","Rediseño obligatorio del sistema","Preventivo mensual como mínimo","Monitoreo continuo con cámara"],ans:1},
+  {q:"¿Qué es un análisis de vibraciones (FFT) y para qué sirve principalmente?",opts:["Mide la corrosión interna en tuberías","Detecta desbalance, desalineación y fallas en rodamientos por espectro de frecuencias","Analiza la calidad del lubricante","Verifica la resistencia de aislamiento eléctrico"],ans:1},
+];
+
+// ── GAME STATE ──
+let scoreA=0,scoreB=0,nameA='',nameB='';
+let questions=[], qIdx=0, buzzedTeam=null, secondChance=false;
+let timerInt=null, timeLeft=10;
+const WIN=10;
+
+function shuffle(arr){return arr.sort(()=>Math.random()-.5);}
+
+function startGame(){
+  nameA = document.getElementById('nameA').value.trim()||'Equipo A';
+  nameB = document.getElementById('nameB').value.trim()||'Equipo B';
+  scoreA=0; scoreB=0; qIdx=0;
+  questions = shuffle([...BANK]).slice(0,20); // pick 20 from 30 for variety
+
+  // Update labels
+  document.getElementById('labelA').textContent=nameA;
+  document.getElementById('labelB').textContent=nameB;
+  document.getElementById('buzLabelA').textContent=nameA.toUpperCase();
+  document.getElementById('buzLabelB').textContent=nameB.toUpperCase();
+  document.getElementById('wNameA').textContent=nameA;
+  document.getElementById('wNameB').textContent=nameB;
+
+  document.getElementById('setup').style.display='none';
+  document.getElementById('scoreboard').style.display='block';
+  document.getElementById('buzzers').style.display='block';
+
+  updateScore();
+  resetBuzzers();
+  showStatus('','');
+}
+
+function updateScore(){
+  document.getElementById('ptsA').textContent=scoreA;
+  document.getElementById('ptsB').textContent=scoreB;
+  document.getElementById('wPtsA').textContent=scoreA;
+  document.getElementById('wPtsB').textContent=scoreB;
+  document.getElementById('progA').style.width=(scoreA/WIN*100)+'%';
+  document.getElementById('progB').style.width=(scoreB/WIN*100)+'%';
+}
+
+function resetBuzzers(){
+  buzzedTeam=null; secondChance=false;
+  document.getElementById('buzA').disabled=false;
+  document.getElementById('buzB').disabled=false;
+  document.getElementById('question-area').style.display='none';
+  document.getElementById('btn-next').style.display='none';
+  const bb=document.getElementById('buzzBanner');
+  bb.style.display='none';
+  clearTimer();
+  // Reset active card highlight
+  document.getElementById('cardA').classList.remove('active');
+  document.getElementById('cardB').classList.remove('active');
+}
+
+function buzz(team){
+  if(buzzedTeam) return;
+  if(AC.state==='suspended') AC.resume();
+
+  buzzedTeam=team;
+  buzzSound();
+
+  // Disable other buzzer
+  document.getElementById(team==='A'?'buzB':'buzA').disabled=true;
+  document.getElementById('buz'+team).disabled=true;
+
+  // Highlight active team
+  document.getElementById('card'+team).classList.add('active');
+
+  // Show banner
+  const bb=document.getElementById('buzzBanner');
+  const tName=team==='A'?nameA:nameB;
+  bb.textContent=`⚡ ¡${tName} buzzeó primero!`;
+  bb.className='buzzed-banner b'+team.toLowerCase();
+  bb.style.display='block';
+
+  // Show question
+  showQuestion();
+}
+
+function showQuestion(){
+  if(qIdx >= questions.length){
+    // Ran out of questions — game set
+    endGame(); return;
+  }
+  const q=questions[qIdx];
+  document.getElementById('q-counter').textContent=`Pregunta ${qIdx+1} de ${Math.min(questions.length,20)}`;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('question-area').style.display='block';
+  showStatus('','');
+
+  const opts=document.getElementById('options');
+  opts.innerHTML='';
+  const letters=['A','B','C','D'];
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt-btn';
+    b.innerHTML=`<span class="opt-letter">${letters[i]}</span>${o}`;
+    b.onclick=()=>answer(i);
+    opts.appendChild(b);
+  });
+
+  startTimer();
+}
+
+function startTimer(){
+  clearTimer();
+  timeLeft=10;
+  updateTimer();
+  timerInt=setInterval(()=>{
+    timeLeft--;
+    updateTimer();
+    if(timeLeft<=0){clearTimer();timeUp();}
+  },1000);
+}
+
+function updateTimer(){
+  const n=document.getElementById('timer-num');
+  const p=document.getElementById('timer-progress');
+  n.textContent=timeLeft;
+  n.className='timer-num'+(timeLeft<=3?' urgent':'');
+  const pct=timeLeft/10*100;
+  const col=timeLeft>5?'var(--green)':timeLeft>3?'var(--gold)':'var(--red)';
+  p.style.width=pct+'%';
+  p.style.background=col;
+}
+
+function clearTimer(){clearInterval(timerInt);timerInt=null;}
+
+function timeUp(){
+  wrongSound();
+  disableOptions();
+  if(!secondChance){
+    secondChance=true;
+    const other=buzzedTeam==='A'?'B':'A';
+    const otherName=other==='A'?nameA:nameB;
+    showStatus(`⏱️ ¡Tiempo! Pasa al ${otherName}…`,'info');
+    setTimeout(()=>{
+      buzzedTeam=null;
+      buzz(other);
+    },1800);
+  } else {
+    // Both failed
+    revealAnswer();
+    showStatus('⚠️ Ningún equipo respondió. Respuesta revelada.','bad');
+    document.getElementById('btn-next').style.display='block';
+  }
+}
+
+function answer(idx){
+  clearTimer();
+  disableOptions();
+  const q=questions[qIdx];
+  const opts=document.getElementById('options').querySelectorAll('.opt-btn');
+  opts[q.ans].classList.add('correct');
+
+  if(idx===q.ans){
+    // Correct
+    correctSound();
+    opts[idx].classList.add('correct');
+    if(buzzedTeam==='A') scoreA++;
+    else scoreB++;
+    updateScore();
+    showStatus(`✅ ¡Correcto! +1 punto para ${buzzedTeam==='A'?nameA:nameB}`,'good');
+
+    // Check win
+    if(scoreA>=WIN || scoreB>=WIN){
+      setTimeout(endGame,1400); return;
+    }
+    qIdx++;
+    document.getElementById('btn-next').style.display='block';
+  } else {
+    // Wrong
+    wrongSound();
+    opts[idx].classList.add('wrong');
+    if(!secondChance){
+      secondChance=true;
+      const other=buzzedTeam==='A'?'B':'A';
+      const otherName=other==='A'?nameA:nameB;
+      showStatus(`❌ ¡Incorrecto! Pasa al ${otherName}…`,'bad');
+      setTimeout(()=>{
+        // Remove wrong marking, re-enable options, switch team
+        opts.forEach((b,i)=>{b.classList.remove('wrong','correct');b.disabled=false;});
+        buzzedTeam=null;
+        showStatus('','');
+        buzz(other);
+      },1800);
+    } else {
+      // Both wrong
+      revealAnswer();
+      showStatus('❌ Ambos equipos fallaron. Respuesta revelada.','bad');
+      qIdx++;
+      document.getElementById('btn-next').style.display='block';
+    }
+  }
+}
+
+function revealAnswer(){
+  const q=questions[qIdx];
+  const opts=document.getElementById('options').querySelectorAll('.opt-btn');
+  opts[q.ans].classList.add('correct');
+}
+
+function disableOptions(){
+  document.getElementById('options').querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+}
+
+function showStatus(msg, type){
+  const el=document.getElementById('status-msg');
+  el.textContent=msg;
+  el.className='status-msg'+(type?' '+type:'');
+  el.style.display=msg?'block':'none';
+}
+
+function nextQuestion(){
+  resetBuzzers();
+  showStatus('','');
+}
+
+function endGame(){
+  clearTimer();
+  document.getElementById('scoreboard').style.display='none';
+  document.getElementById('buzzers').style.display='none';
+  document.getElementById('question-area').style.display='none';
+
+  const winner = scoreA>=WIN ? nameA : scoreB>=WIN ? nameB : (scoreA>scoreB?nameA:scoreB>scoreA?nameB:'¡Empate!');
+  const winColor = scoreA>=scoreB ? 'var(--a)' : 'var(--a2)';
+  document.getElementById('win-team-name').innerHTML=`<span style="color:${winColor}">${winner}</span>`;
+
+  document.getElementById('win-screen').style.display='block';
+  winSound();
+  confetti();
+}
+
+function confetti(){
+  const emojis=['🎉','⭐','🏆','✨','🎊','💫','🟣','🔵'];
+  for(let i=0;i<40;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='conf';
+      el.textContent=emojis[~~(Math.random()*emojis.length)];
+      el.style.left=Math.random()*100+'vw';
+      el.style.animationDuration=(2+Math.random()*3)+'s';
+      el.style.animationDelay=(Math.random()*.5)+'s';
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),5500);
+    },i*60);
+  }
+}
+
+function restartGame(){
+  document.getElementById('win-screen').style.display='none';
+  document.getElementById('setup').style.display='block';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Simulador de Monitoreo de Condición — UNIPAZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Montserrat',sans-serif;background:#0a0f1a;color:#e0e0e0;min-height:100vh;}
+.header{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.5);}
+.header .logo{font-size:14px;font-weight:800;color:#fff;letter-spacing:2px;}
+.header .title{color:#daa520;font-size:13px;font-weight:600;}
+.container{max-width:1400px;margin:0 auto;padding:15px;}
+
+/* Equipment selector */
+.equip-bar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;align-items:center;}
+.equip-bar label{font-size:12px;color:#8aa;font-weight:600;}
+.equip-sel{background:#152238;border:1px solid rgba(218,165,32,0.3);border-radius:10px;padding:10px 14px;color:#daa520;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:600;min-width:250px;}
+.scenario-btns{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;}
+.sc-btn{padding:8px 14px;border:none;border-radius:8px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;cursor:pointer;min-height:38px;transition:all 0.2s;}
+.sc-btn.normal{background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;}
+.sc-btn.warning{background:linear-gradient(135deg,#f39c12,#d68910);color:#1a3a5c;}
+.sc-btn.critical{background:linear-gradient(135deg,#c0392b,#a93226);color:#fff;}
+.sc-btn.active{box-shadow:0 0 0 3px rgba(218,165,32,0.5);transform:scale(1.05);}
+
+/* Status bar */
+.status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px;}
+@media(max-width:800px){.status-bar{grid-template-columns:1fr 1fr;}}
+.status-card{background:linear-gradient(135deg,#152238,#1a2a42);border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(255,255,255,0.05);transition:border-color 0.3s;}
+.status-card .icon{font-size:24px;}
+.status-card .val{font-size:28px;font-weight:800;margin:4px 0;}
+.status-card .unit{font-size:10px;color:#8aa;}
+.status-card .lbl{font-size:10px;color:#8aa;text-transform:uppercase;letter-spacing:1px;}
+.status-card .indicator{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.st-ok{border-color:rgba(39,174,96,0.3);}.st-ok .val{color:#2ecc71;}.st-ok .indicator{background:#2ecc71;}
+.st-warn{border-color:rgba(243,156,18,0.3);}.st-warn .val{color:#f39c12;}.st-warn .indicator{background:#f39c12;}
+.st-crit{border-color:rgba(231,76,60,0.3);}.st-crit .val{color:#e74c3c;}.st-crit .indicator{background:#e74c3c;}
+
+/* Panels grid */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+@media(max-width:900px){.panels{grid-template-columns:1fr;}}
+.panel{background:linear-gradient(135deg,#0f1a2e,#152238);border-radius:14px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;}
+.panel-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.06);}
+.panel-header h3{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.panel-body{padding:16px;position:relative;min-height:220px;}
+
+/* Canvas */
+canvas{width:100%;border-radius:8px;background:#080d18;}
+
+/* Thermography grid */
+.thermo-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(8,1fr);gap:2px;border-radius:8px;overflow:hidden;aspect-ratio:12/8;}
+.thermo-cell{border-radius:2px;transition:background 0.5s;}
+
+/* Oil analysis bars */
+.oil-params{display:grid;gap:10px;}
+.oil-param{display:flex;align-items:center;gap:10px;}
+.oil-param .name{width:100px;font-size:11px;font-weight:600;text-align:right;flex-shrink:0;}
+.oil-bar-bg{flex:1;height:20px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;position:relative;}
+.oil-bar{height:100%;border-radius:10px;transition:width 0.8s ease,background 0.5s;}
+.oil-val{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;}
+.oil-bar.ok{background:linear-gradient(90deg,#27ae60,#2ecc71);}
+.oil-bar.warn{background:linear-gradient(90deg,#f39c12,#f1c40f);}
+.oil-bar.crit{background:linear-gradient(90deg,#c0392b,#e74c3c);}
+
+/* Ultrasound meter */
+.us-meter{text-align:center;}
+.us-arc{margin:0 auto;}
+.us-db{font-size:48px;font-weight:800;margin:10px 0;}
+.us-status{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block;}
+
+/* Alarm log */
+.alarm-log{margin-top:15px;background:linear-gradient(135deg,#0f1a2e,#152238);border-radius:14px;border:1px solid rgba(255,255,255,0.06);padding:14px 16px;max-height:150px;overflow-y:auto;}
+.alarm-log h3{font-size:13px;font-weight:700;color:#daa520;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.alarm-entry{font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;}
+.alarm-entry .time{color:#8aa;min-width:70px;}
+.alarm-entry.warn{color:#f39c12;}.alarm-entry.crit{color:#e74c3c;}.alarm-entry.ok{color:#2ecc71;}
+</style></head><body>
+<div class="header">
+<div class="logo">UNIPAZ</div>
+<div class="title">Simulador de Monitoreo de Condición</div>
+</div>
+<div class="container">
+
+<div class="equip-bar">
+<label>Equipo:</label>
+<select class="equip-sel" id="equipSelect" onchange="changeEquip()">
+<option value="pump">Bomba Centrífuga P-101 (500 HP)</option>
+<option value="compressor">Compresor Reciprocante C-201 (300 HP)</option>
+<option value="motor">Motor Eléctrico M-301 (200 HP)</option>
+</select>
+<div class="scenario-btns">
+<button class="sc-btn normal active" onclick="setScenario('normal')">✅ Normal</button>
+<button class="sc-btn warning" onclick="setScenario('warning')">⚠️ Alerta</button>
+<button class="sc-btn critical" onclick="setScenario('critical')">🚨 Crítico</button>
+</div>
+</div>
+
+<div class="status-bar" id="statusBar">
+<div class="status-card st-ok" id="sc-vib"><div class="icon">📳</div><div class="val" id="sv-vib">2.4</div><div class="unit">mm/s RMS</div><div class="lbl"><span class="indicator"></span>Vibración</div></div>
+<div class="status-card st-ok" id="sc-temp"><div class="icon">🌡️</div><div class="val" id="sv-temp">58</div><div class="unit">°C</div><div class="lbl"><span class="indicator"></span>Temperatura</div></div>
+<div class="status-card st-ok" id="sc-oil"><div class="icon">🛢️</div><div class="val" id="sv-oil">85</div><div class="unit">% vida útil</div><div class="lbl"><span class="indicator"></span>Aceite</div></div>
+<div class="status-card st-ok" id="sc-us"><div class="icon">🔊</div><div class="val" id="sv-us">22</div><div class="unit">dBμV</div><div class="lbl"><span class="indicator"></span>Ultrasonido</div></div>
+</div>
+
+<div class="panels">
+<!-- Vibration panel -->
+<div class="panel" id="pn-vib">
+<div class="panel-header"><h3 style="color:#9b59b6;">📳 Análisis de Vibración</h3><span id="vib-zone" style="font-size:10px;padding:3px 10px;border-radius:10px;background:#27ae60;color:#fff;font-weight:700;">ZONA A</span></div>
+<div class="panel-body"><canvas id="vibCanvas" height="190"></canvas></div>
+</div>
+<!-- Thermography panel -->
+<div class="panel" id="pn-thermo">
+<div class="panel-header"><h3 style="color:#e74c3c;">🌡️ Termografía Infrarroja</h3><span id="thermo-max" style="font-size:10px;color:#8aa;">Máx: 58°C</span></div>
+<div class="panel-body"><div class="thermo-grid" id="thermoGrid"></div>
+<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:#8aa;">
+<span>20°C</span><div style="flex:1;height:8px;margin:0 8px;border-radius:4px;background:linear-gradient(90deg,#1a237e,#1565c0,#2e7d32,#f9a825,#e65100,#b71c1c);"></div><span>120°C</span>
+</div></div>
+</div>
+<!-- Oil panel -->
+<div class="panel" id="pn-oil">
+<div class="panel-header"><h3 style="color:#27ae60;">🛢️ Análisis de Aceite</h3><span id="oil-status" style="font-size:10px;padding:3px 10px;border-radius:10px;background:#27ae60;color:#fff;font-weight:700;">NORMAL</span></div>
+<div class="panel-body"><div class="oil-params" id="oilParams"></div></div>
+</div>
+<!-- Ultrasound panel -->
+<div class="panel" id="pn-us">
+<div class="panel-header"><h3 style="color:#3498db;">🔊 Ultrasonido</h3><span id="us-freq" style="font-size:10px;color:#8aa;">38 kHz</span></div>
+<div class="panel-body"><canvas id="usCanvas" height="190"></canvas></div>
+</div>
+</div>
+
+<div class="alarm-log"><h3>🔔 Registro de Alarmas</h3><div id="alarmList"><div class="alarm-entry ok"><span class="time">--:--</span>Sistema iniciado. Sin alarmas activas.</div></div></div>
+</div>
+
+<script>
+const scenarios = {
+    normal: { vib:2.4, vibVar:0.3, temp:58, tempVar:3, oilLife:85, visc:98, water:80, particles:40, fe:25, us:22, usVar:3 },
+    warning: { vib:6.5, vibVar:1.2, temp:82, tempVar:5, oilLife:45, visc:72, water:180, particles:65, fe:55, us:38, usVar:5 },
+    critical: { vib:14.0, vibVar:3.0, temp:112, tempVar:8, oilLife:15, visc:55, water:350, particles:88, fe:85, us:58, usVar:8 }
+};
+let currentScenario = 'normal';
+let animId;
+
+function setScenario(s) {
+    currentScenario = s;
+    document.querySelectorAll('.sc-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.sc-btn.${s}`).classList.add('active');
+    updateAll();
+    const labels = {normal:'✅ Equipo en condición NORMAL',warning:'⚠️ Equipo en ALERTA — planificar intervención',critical:'🚨 Equipo CRÍTICO — detener y reparar'};
+    addAlarm(s, labels[s]);
+}
+
+function changeEquip() {
+    const names = {pump:'Bomba Centrífuga P-101',compressor:'Compresor C-201',motor:'Motor Eléctrico M-301'};
+    addAlarm('ok', 'Equipo seleccionado: ' + names[document.getElementById('equipSelect').value]);
+}
+
+function updateAll() {
+    const sc = scenarios[currentScenario];
+    updateStatusCards(sc);
+    updateOilPanel(sc);
+    initThermo(sc);
+}
+
+function updateStatusCards(sc) {
+    const v = sc.vib + (Math.random()-0.5)*sc.vibVar;
+    const t = sc.temp + (Math.random()-0.5)*sc.tempVar;
+    document.getElementById('sv-vib').textContent = v.toFixed(1);
+    document.getElementById('sv-temp').textContent = Math.round(t);
+    document.getElementById('sv-oil').textContent = sc.oilLife;
+    document.getElementById('sv-us').textContent = (sc.us + (Math.random()-0.5)*sc.usVar).toFixed(0);
+
+    // Vibration status
+    const vibCard = document.getElementById('sc-vib');
+    const vibZone = document.getElementById('vib-zone');
+    if(v<2.8){vibCard.className='status-card st-ok';vibZone.textContent='ZONA A';vibZone.style.background='#27ae60';}
+    else if(v<7.1){vibCard.className='status-card st-warn';vibZone.textContent='ZONA B';vibZone.style.background='#f39c12';}
+    else if(v<18){vibCard.className='status-card st-crit';vibZone.textContent='ZONA C';vibZone.style.background='#e67e22';}
+    else{vibCard.className='status-card st-crit';vibZone.textContent='ZONA D';vibZone.style.background='#c0392b';}
+
+    // Temp status
+    const tc = document.getElementById('sc-temp');
+    if(t<70) tc.className='status-card st-ok'; else if(t<95) tc.className='status-card st-warn'; else tc.className='status-card st-crit';
+    document.getElementById('thermo-max').textContent = 'Máx: '+Math.round(t+8)+'°C';
+
+    // Oil
+    const oc = document.getElementById('sc-oil');
+    const os = document.getElementById('oil-status');
+    if(sc.oilLife>60){oc.className='status-card st-ok';os.textContent='NORMAL';os.style.background='#27ae60';}
+    else if(sc.oilLife>30){oc.className='status-card st-warn';os.textContent='PRECAUCIÓN';os.style.background='#f39c12';}
+    else{oc.className='status-card st-crit';os.textContent='CAMBIAR';os.style.background='#c0392b';}
+
+    // US
+    const uc = document.getElementById('sc-us');
+    if(sc.us<30) uc.className='status-card st-ok'; else if(sc.us<45) uc.className='status-card st-warn'; else uc.className='status-card st-crit';
+}
+
+function updateOilPanel(sc) {
+    const params = [
+        {name:'Viscosidad',val:sc.visc,max:100,unit:'% nominal'},
+        {name:'Agua (ppm)',val:sc.water,max:500,unit:'ppm'},
+        {name:'Partículas',val:sc.particles,max:100,unit:'ISO 4406'},
+        {name:'Hierro (Fe)',val:sc.fe,max:100,unit:'ppm'},
+        {name:'Vida útil',val:sc.oilLife,max:100,unit:'%'},
+    ];
+    const el = document.getElementById('oilParams');
+    el.innerHTML = params.map(p => {
+        let cls='ok', pct=Math.min(100,p.val/p.max*100);
+        if(p.name==='Vida útil'||p.name==='Viscosidad'){if(p.val<60)cls='warn';if(p.val<30)cls='crit';}
+        else{if(pct>50)cls='warn';if(pct>75)cls='crit';}
+        return `<div class="oil-param"><div class="name">${p.name}</div><div class="oil-bar-bg"><div class="oil-bar ${cls}" style="width:${pct}%"></div><div class="oil-val">${p.val} ${p.unit}</div></div></div>`;
+    }).join('');
+}
+
+// Thermography
+function initThermo(sc) {
+    const grid = document.getElementById('thermoGrid');
+    grid.innerHTML = '';
+    const baseTemp = sc.temp - 20;
+    for(let r=0;r<8;r++){
+        for(let c=0;c<12;c++){
+            const cell = document.createElement('div');
+            cell.className = 'thermo-cell';
+            // Create hotspot pattern
+            let t = baseTemp + Math.random()*15;
+            const cx=6,cy=4; // center hotspot
+            const dist = Math.sqrt((c-cx)**2+(r-cy)**2);
+            if(dist<3) t = sc.temp + (3-dist)*8 + Math.random()*5;
+            if(currentScenario==='critical' && c>8 && r>5) t = sc.temp + 20 + Math.random()*10;
+            cell.style.background = tempToColor(t);
+            cell.title = Math.round(t)+'°C';
+            grid.appendChild(cell);
+        }
+    }
+}
+
+function tempToColor(t) {
+    t = Math.max(20,Math.min(120,t));
+    const pct = (t-20)/100;
+    if(pct<0.25) return `hsl(240,70%,${20+pct*120}%)`;
+    if(pct<0.5) return `hsl(${240-((pct-0.25)/0.25)*120},70%,45%)`;
+    if(pct<0.75) return `hsl(${120-((pct-0.5)/0.25)*80},80%,50%)`;
+    return `hsl(${40-((pct-0.75)/0.25)*40},90%,${50-pct*15}%)`;
+}
+
+// Vibration waveform animation
+const vibCanvas = document.getElementById('vibCanvas');
+const vibCtx = vibCanvas.getContext('2d');
+let vibTime = 0;
+
+function drawVibration() {
+    const sc = scenarios[currentScenario];
+    const W = vibCanvas.width = vibCanvas.offsetWidth * 2;
+    const H = vibCanvas.height = 380;
+    vibCtx.clearRect(0,0,W,H);
+
+    // Grid
+    vibCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+    vibCtx.lineWidth = 1;
+    for(let y=0;y<H;y+=H/8){vibCtx.beginPath();vibCtx.moveTo(0,y);vibCtx.lineTo(W,y);vibCtx.stroke();}
+    for(let x=0;x<W;x+=W/20){vibCtx.beginPath();vibCtx.moveTo(x,0);vibCtx.lineTo(x,H);vibCtx.stroke();}
+
+    // Waveform
+    vibCtx.strokeStyle = '#9b59b6';
+    vibCtx.lineWidth = 2;
+    vibCtx.beginPath();
+    const amp = sc.vib * 8;
+    const noise = sc.vibVar * 6;
+    for(let x=0;x<W;x++){
+        const t = vibTime + x*0.02;
+        let y = H/2;
+        y += Math.sin(t*2)*amp; // 1x RPM
+        y += Math.sin(t*4)*amp*0.3; // 2x
+        if(currentScenario!=='normal') y += Math.sin(t*6.5)*amp*0.25; // bearing freq
+        if(currentScenario==='critical') y += Math.sin(t*13)*amp*0.4; // harmonics
+        y += (Math.random()-0.5)*noise;
+        x===0?vibCtx.moveTo(x,y):vibCtx.lineTo(x,y);
+    }
+    vibCtx.stroke();
+
+    // Labels
+    vibCtx.fillStyle = '#8aa';
+    vibCtx.font = '18px Montserrat';
+    vibCtx.fillText('Señal de vibración (dominio del tiempo)', 10, 25);
+    vibCtx.fillStyle = '#9b59b6';
+    vibCtx.font = 'bold 22px Montserrat';
+    vibCtx.fillText(sc.vib.toFixed(1)+' mm/s', W-180, 30);
+
+    vibTime += 0.08;
+}
+
+// Ultrasound waveform
+const usCanvas = document.getElementById('usCanvas');
+const usCtx = usCanvas.getContext('2d');
+let usTime = 0;
+
+function drawUltrasound() {
+    const sc = scenarios[currentScenario];
+    const W = usCanvas.width = usCanvas.offsetWidth * 2;
+    const H = usCanvas.height = 380;
+    usCtx.clearRect(0,0,W,H);
+
+    // Grid
+    usCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+    usCtx.lineWidth = 1;
+    for(let y=0;y<H;y+=H/6){usCtx.beginPath();usCtx.moveTo(0,y);usCtx.lineTo(W,y);usCtx.stroke();}
+
+    // Spectrum bars
+    const barCount = 64;
+    const barW = W/barCount - 2;
+    for(let i=0;i<barCount;i++){
+        let h = 10 + Math.random()*15;
+        const freq = i/barCount*50; // 0-50 kHz
+        // Add peaks based on scenario
+        if(freq>20&&freq<25) h += sc.us*1.5 + Math.random()*sc.usVar*3;
+        if(currentScenario!=='normal'&&freq>35&&freq<42) h += sc.us + Math.random()*sc.usVar*2;
+        if(currentScenario==='critical'&&freq>10&&freq<15) h += 40 + Math.random()*20;
+        h = Math.min(h, H-40);
+
+        const pct = h/(H-40);
+        let color;
+        if(pct<0.3) color='#1abc9c'; else if(pct<0.6) color='#3498db'; else if(pct<0.8) color='#f39c12'; else color='#e74c3c';
+
+        usCtx.fillStyle = color;
+        usCtx.fillRect(i*(barW+2)+2, H-h-20, barW, h);
+        usCtx.fillStyle = color.replace(')',',0.3)').replace('rgb','rgba');
+        usCtx.fillRect(i*(barW+2)+2, H-h-30, barW, 10);
+    }
+
+    // Labels
+    usCtx.fillStyle = '#8aa';
+    usCtx.font = '18px Montserrat';
+    usCtx.fillText('Espectro de ultrasonido (0-50 kHz)', 10, 25);
+    usCtx.fillStyle = '#3498db';
+    usCtx.font = 'bold 22px Montserrat';
+    usCtx.fillText(sc.us+' dBμV', W-160, 30);
+    usCtx.fillStyle = '#556';
+    usCtx.font = '14px Montserrat';
+    usCtx.fillText('0 kHz', 4, H-4);
+    usCtx.fillText('50 kHz', W-80, H-4);
+
+    usTime += 0.05;
+}
+
+function addAlarm(type, msg) {
+    const list = document.getElementById('alarmList');
+    const now = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const entry = document.createElement('div');
+    entry.className = 'alarm-entry ' + type;
+    entry.innerHTML = `<span class="time">${now}</span>${msg}`;
+    list.prepend(entry);
+    if(list.children.length > 20) list.removeChild(list.lastChild);
+}
+
+function animate() {
+    drawVibration();
+    drawUltrasound();
+    const sc = scenarios[currentScenario];
+    // Update values with small random variation
+    document.getElementById('sv-vib').textContent = (sc.vib + (Math.random()-0.5)*sc.vibVar).toFixed(1);
+    document.getElementById('sv-us').textContent = Math.round(sc.us + (Math.random()-0.5)*sc.usVar);
+    document.getElementById('sv-temp').textContent = Math.round(sc.temp + (Math.random()-0.5)*sc.tempVar);
+    animId = requestAnimationFrame(animate);
+}
+
+updateAll();
+animate();
+</script></body></html>

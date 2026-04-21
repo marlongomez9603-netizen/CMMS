@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Técnicas de Análisis de Fallas - UNIPAZ</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+body { font-family:'Montserrat',sans-serif; background:#0d1b2a; }
+.slide { width:1280px; min-height:720px; margin:30px auto; background:#fff; position:relative; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18); border-radius:6px; page-break-after:always; }
+.slide::before { content:''; position:absolute; bottom:0; left:0; width:100%; height:120px; background:linear-gradient(135deg,rgba(26,58,92,0.07) 0%,rgba(26,58,92,0.03) 100%); clip-path:ellipse(80% 100% at 50% 100%); }
+.slide::after { content:''; position:absolute; top:0; right:0; width:200px; height:200px; background:radial-gradient(circle,rgba(218,165,32,0.08) 0%,transparent 70%); }
+.header-bar { background:linear-gradient(135deg,#1a3a5c 0%,#2a5a8c 100%); padding:18px 50px; display:flex; justify-content:space-between; align-items:center; }
+.header-bar .logo-text { color:#fff; font-size:14px; font-weight:700; letter-spacing:2px; }
+.header-bar .subject { color:rgba(255,255,255,0.85); font-size:12px; }
+.content { padding:35px 50px 40px; position:relative; z-index:1; }
+h1 { color:#1a3a5c; font-size:32px; font-weight:800; margin-bottom:8px; border-bottom:3px solid #daa520; padding-bottom:10px; display:inline-block; }
+h2 { color:#1a3a5c; font-size:26px; font-weight:700; margin:18px 0 10px; }
+h3 { color:#daa520; font-size:20px; font-weight:700; margin:14px 0 8px; }
+p, li { color:#2c2c2c; font-size:15px; line-height:1.7; }
+ul { margin-left:25px; }
+ul li { margin-bottom:6px; list-style:disc; }
+ul li::marker { color:#daa520; }
+.highlight { background:linear-gradient(135deg,#f0f4f8,#e8eef5); border-left:4px solid #1a3a5c; padding:15px 20px; border-radius:0 8px 8px 0; margin:12px 0; }
+.gold-box { background:linear-gradient(135deg,#fdf6e3,#fceabb); border-left:4px solid #daa520; padding:15px 20px; border-radius:0 8px 8px 0; margin:12px 0; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-top:10px; }
+.card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px; transition:transform 0.2s; }
+.card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+.card h3 { margin-top:0; }
+.tag { display:inline-block; background:#1a3a5c; color:#fff; padding:3px 10px; border-radius:12px; font-size:11px; margin:2px; }
+.tag-gold { background:#daa520; }
+.footer { position:absolute; bottom:0; left:0; width:100%; padding:8px 50px; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#888; }
+.footer .line { width:100%; height:2px; background:linear-gradient(90deg,#1a3a5c,#daa520,#1a3a5c); position:absolute; top:0; left:0; }
+.title-slide .content { display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:620px; text-align:center; }
+.title-slide h1 { font-size:38px; border-bottom:4px solid #daa520; margin-bottom:15px; }
+.title-slide .subtitle { color:#daa520; font-size:20px; font-weight:600; margin-bottom:25px; }
+.title-slide .info { color:#555; font-size:14px; line-height:2; }
+.ishikawa-svg { width:100%; margin:10px 0; }
+.norm-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+.norm-table th { background:#1a3a5c; color:#fff; padding:10px; text-align:left; }
+.norm-table td { padding:9px 10px; border-bottom:1px solid #e2e8f0; }
+.norm-table tr:nth-child(even) { background:#f8fafc; }
+.norm-table tr:hover { background:#eef2f7; }
+.example-num { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; background:#1a3a5c; color:#fff; border-radius:50%; font-weight:700; font-size:14px; margin-right:10px; }
+.step-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.step-item { background:#1a3a5c; color:#fff; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; }
+.step-arrow { color:#daa520; font-size:18px; font-weight:700; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="slide title-slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Técnicas de Análisis de Fallas</h1>
+<p class="subtitle">Diagnóstico, Normativas y Diagrama de Ishikawa</p>
+<div class="info">
+<strong>Unidad Formativa 2:</strong> Diagnóstico de Fallas<br>
+<strong>Programa:</strong> Tecnología en Operación y Sostenimiento<br> de Equipos Mecánicos (TOSEM)<br>
+<strong>Institución:</strong> Instituto Universitario de la Paz — UNIPAZ<br>
+<strong>Periodo:</strong> 2026-I
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 1</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>¿Qué son las Técnicas de Análisis de Fallas?</h1>
+<div class="highlight">
+<p><strong>Definición:</strong> Son metodologías sistemáticas que permiten identificar, clasificar y determinar las causas raíz de las fallas en equipos, componentes o sistemas, con el objetivo de prevenir su recurrencia y mejorar la confiabilidad operativa.</p>
+</div>
+<h3>Objetivos principales:</h3>
+<ul>
+<li><strong>Identificar</strong> el modo y mecanismo de falla</li>
+<li><strong>Determinar</strong> la causa raíz del problema</li>
+<li><strong>Proponer</strong> acciones correctivas y preventivas</li>
+<li><strong>Reducir</strong> costos de mantenimiento y tiempos de parada</li>
+<li><strong>Mejorar</strong> la seguridad y confiabilidad de los activos</li>
+</ul>
+<h3>Importancia en la industria:</h3>
+<p>Una falla no diagnosticada correctamente <strong>se repite</strong>. El análisis de fallas transforma los eventos negativos en <strong>oportunidades de mejora continua</strong>, alimentando los planes de mantenimiento preventivo y predictivo.</p>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 2</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Principales Técnicas de Análisis de Fallas</h1>
+<div class="two-col">
+<div class="card">
+<h3>1. Análisis de Causa Raíz (RCA)</h3>
+<p>Método estructurado para identificar las causas fundamentales de una falla y no solo los síntomas.</p>
+<div><span class="tag">5 Por qué</span><span class="tag">Árbol de fallas</span></div>
+</div>
+<div class="card">
+<h3>2. Diagrama de Ishikawa</h3>
+<p>Diagrama causa-efecto (espina de pescado) que organiza las posibles causas en categorías: Máquina, Método, Mano de obra, Material, Medio ambiente, Medición.</p>
+<div><span class="tag">6M</span><span class="tag">Causa-Efecto</span></div>
+</div>
+<div class="card">
+<h3>3. AMEF / FMEA</h3>
+<p>Análisis de Modos y Efectos de Falla. Evalúa modos potenciales de falla, su severidad, ocurrencia y detección (NPR).</p>
+<div><span class="tag">NPR</span><span class="tag">Severidad</span></div>
+</div>
+<div class="card">
+<h3>4. Análisis de Árbol de Fallas (FTA)</h3>
+<p>Diagrama lógico top-down que descompone un evento no deseado en sus causas usando compuertas AND/OR.</p>
+<div><span class="tag">Top-Down</span><span class="tag">Lógica booleana</span></div>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 3</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Más Técnicas de Análisis de Fallas</h1>
+<div class="two-col">
+<div class="card">
+<h3>5. Análisis de Pareto</h3>
+<p>Aplica la regla 80/20: el 80% de las fallas provienen del 20% de las causas. Prioriza esfuerzos en las causas más impactantes.</p>
+<div><span class="tag">80/20</span><span class="tag">Priorización</span></div>
+</div>
+<div class="card">
+<h3>6. Diagrama de Dispersión</h3>
+<p>Herramienta gráfica que muestra la correlación entre dos variables para identificar relaciones causa-efecto cuantitativas.</p>
+<div><span class="tag">Correlación</span><span class="tag">Variables</span></div>
+</div>
+<div class="card">
+<h3>7. Los 5 Por Qué</h3>
+<p>Técnica iterativa que pregunta "¿por qué?" sucesivamente (mínimo 5 veces) hasta llegar a la causa raíz. Simple pero poderosa.</p>
+<div><span class="tag">Iterativo</span><span class="tag">Toyota</span></div>
+</div>
+<div class="card">
+<h3>8. Análisis Metalúrgico de Falla</h3>
+<p>Examen físico-químico de componentes fallados: fractografía, microscopía, ensayos de dureza, composición química.</p>
+<div><span class="tag">Laboratorio</span><span class="tag">Materiales</span></div>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 4</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>¿En qué Equipos se Utilizan?</h1>
+<div class="three-col">
+<div class="card">
+<h3>⚙️ Equipos Rotativos</h3>
+<ul>
+<li>Bombas centrífugas</li>
+<li>Compresores</li>
+<li>Turbinas de gas/vapor</li>
+<li>Motores eléctricos</li>
+<li>Ventiladores industriales</li>
+</ul>
+<div><span class="tag tag-gold">RCA</span><span class="tag tag-gold">AMEF</span></div>
+</div>
+<div class="card">
+<h3>🔧 Equipos Estáticos</h3>
+<ul>
+<li>Recipientes a presión</li>
+<li>Intercambiadores de calor</li>
+<li>Tanques de almacenamiento</li>
+<li>Tuberías y válvulas</li>
+<li>Calderas</li>
+</ul>
+<div><span class="tag tag-gold">FTA</span><span class="tag tag-gold">Metalúrgico</span></div>
+</div>
+<div class="card">
+<h3>🔌 Equipos Eléctricos/Electrónicos</h3>
+<ul>
+<li>Transformadores</li>
+<li>PLCs y sistemas SCADA</li>
+<li>Variadores de frecuencia</li>
+<li>Sistemas de protección</li>
+<li>Instrumentación</li>
+</ul>
+<div><span class="tag tag-gold">Pareto</span><span class="tag tag-gold">Ishikawa</span></div>
+</div>
+</div>
+<div class="gold-box" style="margin-top:15px;">
+<p><strong>💡 Nota:</strong> Las técnicas de análisis de fallas se aplican a <strong>cualquier activo físico</strong> cuya falla tenga impacto en la seguridad, producción, costos o medio ambiente. Son especialmente críticas en industrias como: petróleo y gas, petroquímica, generación de energía, minería y manufactura.</p>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 5</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplos Cotidianos de Análisis de Fallas</h1>
+<h2><span class="example-num">1</span> El carro no enciende</h2>
+<div class="highlight">
+<p><strong>Problema:</strong> Al girar la llave, el motor no arranca.</p>
+</div>
+<h3>Aplicación de los 5 Por Qué:</h3>
+<div class="step-flow">
+<span class="step-item">¿Por qué no enciende?</span><span class="step-arrow">→</span>
+<span class="step-item">La batería está descargada</span><span class="step-arrow">→</span>
+<span class="step-item">El alternador no cargaba</span><span class="step-arrow">→</span>
+<span class="step-item">La correa estaba desgastada</span><span class="step-arrow">→</span>
+<span class="step-item">No se hizo mantenimiento preventivo</span>
+</div>
+<div class="gold-box">
+<p><strong>Causa raíz:</strong> Falta de mantenimiento preventivo del vehículo. <strong>Acción correctiva:</strong> Implementar un programa de revisión periódica de correas y sistema eléctrico.</p>
+</div>
+<h2 style="margin-top:20px;"><span class="example-num">2</span> La lavadora no centrifuga</h2>
+<div class="highlight">
+<p><strong>Problema:</strong> La lavadora lava pero no realiza el ciclo de centrifugado.</p>
+</div>
+<h3>Análisis de Causa Raíz:</h3>
+<ul>
+<li><strong>Síntoma:</strong> El tambor no gira a alta velocidad</li>
+<li><strong>Causa inmediata:</strong> La correa de transmisión está rota</li>
+<li><strong>Causa contribuyente:</strong> Sobrecarga constante de ropa</li>
+<li><strong>Causa raíz:</strong> Uso inadecuado del equipo (exceder la capacidad recomendada)</li>
+</ul>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 6</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplos Cotidianos de Análisis de Fallas</h1>
+<h2><span class="example-num">3</span> El aire acondicionado no enfría</h2>
+<div class="highlight">
+<p><strong>Problema:</strong> El aire acondicionado enciende pero el aire sale tibio.</p>
+</div>
+<h3>Aplicación del Diagrama de Ishikawa (simplificado):</h3>
+<ul>
+<li><strong>Máquina:</strong> Compresor dañado o filtros sucios</li>
+<li><strong>Material:</strong> Fuga de gas refrigerante</li>
+<li><strong>Mano de obra:</strong> Instalación incorrecta del equipo</li>
+<li><strong>Medio ambiente:</strong> Temperatura exterior extrema</li>
+<li><strong>Método:</strong> No se realizó mantenimiento de limpieza de filtros</li>
+</ul>
+<div class="gold-box">
+<p><strong>Causa raíz identificada:</strong> Fuga de refrigerante por conexión mal sellada durante la instalación.</p>
+</div>
+<h2 style="margin-top:18px;"><span class="example-num">4</span> El celular se apaga solo</h2>
+<div class="highlight">
+<p><strong>Problema:</strong> El teléfono se apaga frecuentemente sin motivo aparente, incluso con batería cargada.</p>
+</div>
+<h3>Análisis con 5 Por Qué:</h3>
+<div class="step-flow">
+<span class="step-item">¿Por qué se apaga?</span><span class="step-arrow">→</span>
+<span class="step-item">Se sobrecalienta</span><span class="step-arrow">→</span>
+<span class="step-item">Muchas apps en segundo plano</span><span class="step-arrow">→</span>
+<span class="step-item">No se cierran correctamente</span><span class="step-arrow">→</span>
+<span class="step-item">Falta de mantenimiento del software</span>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 7</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplos Industriales de Análisis de Fallas</h1>
+<h2><span class="example-num">1</span> Falla en bomba centrífuga — Refinería</h2>
+<div class="highlight">
+<p><strong>Evento:</strong> Bomba centrífuga de proceso pierde caudal progresivamente hasta detenerse por alta vibración.</p>
+</div>
+<h3>Técnica aplicada: AMEF + Análisis Metalúrgico</h3>
+<ul>
+<li><strong>Modo de falla:</strong> Desgaste erosivo del impulsor</li>
+<li><strong>Efecto:</strong> Pérdida de presión de descarga, paro no programado</li>
+<li><strong>Severidad:</strong> 8/10 — afecta producción directa</li>
+<li><strong>Causa raíz:</strong> Partículas abrasivas en el fluido por falla en filtro aguas arriba</li>
+<li><strong>Acción:</strong> Instalar filtro tipo Y adicional, cambiar material del impulsor a acero inoxidable 316L</li>
+</ul>
+<div class="gold-box">
+<p><strong>Resultado:</strong> Reducción del 85% en fallas de bombas centrífugas del área. Ahorro estimado: $45.000 USD/año en repuestos y producción perdida.</p>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 8</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplos Industriales de Análisis de Fallas</h1>
+<h2><span class="example-num">2</span> Rotura de eje en compresor — Planta de gas</h2>
+<div class="highlight">
+<p><strong>Evento:</strong> Compresor reciprocante sufre fractura del eje cigüeñal durante operación normal, causando parada total de la unidad de compresión.</p>
+</div>
+<h3>Técnica aplicada: FTA + Fractografía</h3>
+<ul>
+<li><strong>Análisis de fractura:</strong> Marcas de playa (fatiga) originadas en concentrador de esfuerzos</li>
+<li><strong>Causa inmediata:</strong> Fisura por fatiga en el chavetero del eje</li>
+<li><strong>Causa contribuyente:</strong> Desalineamiento de 0.15 mm (tolerancia: 0.05 mm)</li>
+<li><strong>Causa raíz:</strong> Procedimiento de alineación no seguido correctamente durante el último overhaul</li>
+</ul>
+<h3>Árbol de fallas simplificado:</h3>
+<div class="step-flow">
+<span class="step-item">Fractura del eje</span><span class="step-arrow">←</span>
+<span class="step-item">Fatiga cíclica</span><span class="step-arrow">←</span>
+<span class="step-item">Concentrador de esfuerzos</span><span class="step-arrow">←</span>
+<span class="step-item">Desalineamiento</span><span class="step-arrow">←</span>
+<span class="step-item">Error en procedimiento</span>
+</div>
+<div class="gold-box">
+<p><strong>Acción correctiva:</strong> Actualización del procedimiento de alineación con verificación doble (láser), capacitación al personal, checklist obligatorio post-overhaul.</p>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 9</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplos Industriales de Análisis de Fallas</h1>
+<h2><span class="example-num">3</span> Fuga en intercambiador de calor — Petroquímica</h2>
+<div class="highlight">
+<p><strong>Evento:</strong> Intercambiador de tubos y coraza presenta fuga interna, contaminando el producto con agua de enfriamiento.</p>
+</div>
+<h3>Técnica aplicada: RCA + Diagrama de Ishikawa</h3>
+<ul>
+<li><strong>Máquina:</strong> Corrosión por picadura en tubos de cobre-níquel</li>
+<li><strong>Material:</strong> Agua de enfriamiento con alto contenido de cloruros (>200 ppm)</li>
+<li><strong>Método:</strong> No se monitoreaba la calidad del agua de enfriamiento</li>
+<li><strong>Medición:</strong> Falta de análisis químico periódico del agua</li>
+<li><strong>Causa raíz:</strong> Ausencia de programa de tratamiento químico del agua de enfriamiento</li>
+</ul>
+<div class="gold-box">
+<p><strong>Acción:</strong> Implementación de programa de tratamiento químico, cambio de material de tubos a titanio Gr.2 y monitoreo semanal de cloruros. <strong>Resultado:</strong> Cero fugas en 3 años posteriores.</p>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 10</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Normativas Aplicables al Análisis de Fallas</h1>
+<table class="norm-table">
+<thead><tr><th>Norma</th><th>Nombre / Alcance</th><th>Aplicación</th></tr></thead>
+<tbody>
+<tr><td><strong>ISO 14224:2016</strong></td><td>Recopilación e intercambio de datos de confiabilidad y mantenimiento</td><td>Clasificación estándar de modos de falla en equipos de petróleo y gas</td></tr>
+<tr><td><strong>ISO 55000:2014</strong></td><td>Gestión de activos — Generalidades, principios y terminología</td><td>Marco general para la gestión integral de activos físicos</td></tr>
+<tr><td><strong>ISO 55001:2014</strong></td><td>Gestión de activos — Sistemas de gestión — Requisitos</td><td>Requisitos para implementar un sistema de gestión de activos</td></tr>
+<tr><td><strong>IEC 60812</strong></td><td>Técnicas de análisis de confiabilidad — AMEF/FMEA</td><td>Procedimiento estándar para realizar análisis AMEF</td></tr>
+<tr><td><strong>IEC 61025</strong></td><td>Análisis de Árbol de Fallas (FTA)</td><td>Metodología para construir y evaluar árboles de falla</td></tr>
+<tr><td><strong>SAE JA1011</strong></td><td>Criterios de evaluación para RCM</td><td>Requisitos para un proceso válido de Mantenimiento Centrado en Confiabilidad</td></tr>
+<tr><td><strong>SAE JA1012</strong></td><td>Guía para la norma RCM</td><td>Guía complementaria para implementar RCM correctamente</td></tr>
+<tr><td><strong>API 580/581</strong></td><td>Inspección Basada en Riesgo (RBI)</td><td>Evaluación de riesgo en equipos estáticos presurizados</td></tr>
+<tr><td><strong>NORSOK Z-008</strong></td><td>Risk Based Maintenance and Consequence Classification</td><td>Clasificación de criticidad y mantenimiento basado en riesgo</td></tr>
+</tbody>
+</table>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 11</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Detalle de Normativas Clave</h1>
+<div class="two-col">
+<div class="card">
+<h3>ISO 14224:2016</h3>
+<p>Estándar internacional para la <strong>recopilación de datos de falla</strong> en la industria de petróleo y gas. Define:</p>
+<ul>
+<li>Taxonomía jerárquica de equipos</li>
+<li>Clasificación de modos de falla</li>
+<li>Mecanismos de falla estandarizados</li>
+<li>Formatos para registrar datos de confiabilidad</li>
+</ul>
+<div class="gold-box"><p>Es la base para alimentar cualquier programa de análisis de fallas con datos estructurados y comparables.</p></div>
+</div>
+<div class="card">
+<h3>ISO 55000 / 55001 / 55002</h3>
+<p>Familia de normas para la <strong>gestión integral de activos</strong>:</p>
+<ul>
+<li><strong>55000:</strong> Principios y terminología</li>
+<li><strong>55001:</strong> Requisitos del sistema de gestión</li>
+<li><strong>55002:</strong> Directrices de aplicación</li>
+</ul>
+<p>Establece que el análisis de fallas es un <strong>componente esencial</strong> de la gestión del ciclo de vida de los activos.</p>
+<div class="gold-box"><p>Conecta el análisis de fallas con la toma de decisiones estratégicas sobre inversión, operación y disposición de activos.</p></div>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 12</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Diagrama de Ishikawa (Causa-Efecto)</h1>
+<div class="highlight">
+<p><strong>¿Qué es?</strong> El diagrama de Ishikawa, también llamado <em>diagrama de espina de pescado</em> o <em>diagrama causa-efecto</em>, fue creado por <strong>Kaoru Ishikawa</strong> en 1943. Es una herramienta gráfica que permite organizar y visualizar las posibles causas de un problema específico.</p>
+</div>
+<h3>Las 6M (Categorías estándar):</h3>
+<div class="three-col">
+<div class="card"><h3>🔧 Máquina</h3><p>Estado del equipo, desgaste, calibración, antigüedad, diseño</p></div>
+<div class="card"><h3>📋 Método</h3><p>Procedimientos operativos, secuencias, estándares de trabajo</p></div>
+<div class="card"><h3>👷 Mano de obra</h3><p>Capacitación, experiencia, fatiga, motivación, errores humanos</p></div>
+<div class="card"><h3>📦 Material</h3><p>Calidad de insumos, especificaciones, proveedores, almacenamiento</p></div>
+<div class="card"><h3>🌡️ Medio ambiente</h3><p>Temperatura, humedad, polvo, vibraciones, iluminación</p></div>
+<div class="card"><h3>📏 Medición</h3><p>Instrumentos, frecuencia de inspección, criterios de aceptación</p></div>
+</div>
+<h3>¿Cómo se construye?</h3>
+<div class="step-flow">
+<span class="step-item">1. Definir el problema</span><span class="step-arrow">→</span>
+<span class="step-item">2. Trazar la espina central</span><span class="step-arrow">→</span>
+<span class="step-item">3. Agregar las 6M como ramas</span><span class="step-arrow">→</span>
+<span class="step-item">4. Lluvia de ideas por categoría</span><span class="step-arrow">→</span>
+<span class="step-item">5. Identificar causa raíz</span>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 13</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplo 1: Diagrama de Ishikawa</h1>
+<h2>Falla recurrente en bomba centrífuga</h2>
+<div class="highlight"><p><strong>Problema (Efecto):</strong> La bomba centrífuga P-101 presenta paros no programados cada 45 días por alta vibración y pérdida de caudal.</p></div>
+<svg viewBox="0 0 1100 420" class="ishikawa-svg" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1a3a5c"/></marker></defs>
+<!-- Main spine -->
+<line x1="80" y1="210" x2="980" y2="210" stroke="#1a3a5c" stroke-width="3" marker-end="url(#ah1)"/>
+<!-- Effect box -->
+<rect x="980" y="175" width="110" height="70" rx="8" fill="#c0392b" stroke="#922b21" stroke-width="2"/>
+<text x="1035" y="205" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">FALLA EN</text>
+<text x="1035" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">BOMBA</text>
+<text x="1035" y="239" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">CENTRÍFUGA</text>
+<!-- Top branches -->
+<line x1="230" y1="50" x2="350" y2="210" stroke="#2a5a8c" stroke-width="2" marker-end="url(#ah1)"/>
+<rect x="130" y="25" width="130" height="35" rx="6" fill="#1a3a5c"/><text x="195" y="48" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MÁQUINA</text>
+<text x="200" y="80" fill="#333" font-size="10">• Desgaste de impulsor</text>
+<text x="200" y="95" fill="#333" font-size="10">• Rodamientos dañados</text>
+<text x="200" y="110" fill="#333" font-size="10">• Sello mecánico con fuga</text>
+
+<line x1="500" y1="50" x2="580" y2="210" stroke="#2a5a8c" stroke-width="2" marker-end="url(#ah1)"/>
+<rect x="410" y="25" width="130" height="35" rx="6" fill="#1a3a5c"/><text x="475" y="48" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MÉTODO</text>
+<text x="460" y="80" fill="#333" font-size="10">• Sin procedimiento de arranque</text>
+<text x="460" y="95" fill="#333" font-size="10">• Operación fuera de BEP</text>
+<text x="460" y="110" fill="#333" font-size="10">• No se purga antes de arrancar</text>
+
+<line x1="750" y1="50" x2="800" y2="210" stroke="#2a5a8c" stroke-width="2" marker-end="url(#ah1)"/>
+<rect x="670" y="25" width="140" height="35" rx="6" fill="#1a3a5c"/><text x="740" y="48" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MANO DE OBRA</text>
+<text x="710" y="80" fill="#333" font-size="10">• Falta de capacitación</text>
+<text x="710" y="95" fill="#333" font-size="10">• Error en alineación</text>
+<text x="710" y="110" fill="#333" font-size="10">• No sigue procedimiento</text>
+
+<!-- Bottom branches -->
+<line x1="230" y1="380" x2="350" y2="210" stroke="#b8860b" stroke-width="2" marker-end="url(#ah1)"/>
+<rect x="140" y="365" width="130" height="35" rx="6" fill="#daa520"/><text x="205" y="388" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MATERIAL</text>
+<text x="200" y="350" fill="#333" font-size="10">• Fluido con partículas abrasivas</text>
+<text x="200" y="335" fill="#333" font-size="10">• Corrosión por cloruros</text>
+<text x="200" y="320" fill="#333" font-size="10">• Lubricante incorrecto</text>
+
+<line x1="500" y1="380" x2="580" y2="210" stroke="#b8860b" stroke-width="2" marker-end="url(#ah1)"/>
+<rect x="390" y="365" width="160" height="35" rx="6" fill="#daa520"/><text x="470" y="388" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MEDIO AMBIENTE</text>
+<text x="460" y="350" fill="#333" font-size="10">• Alta temperatura ambiental</text>
+<text x="460" y="335" fill="#333" font-size="10">• Vibración de equipos cercanos</text>
+<text x="460" y="320" fill="#333" font-size="10">• Polvo y contaminación</text>
+
+<line x1="750" y1="380" x2="800" y2="210" stroke="#b8860b" stroke-width="2" marker-end="url(#ah1)"/>
+<rect x="680" y="365" width="130" height="35" rx="6" fill="#daa520"/><text x="745" y="388" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MEDICIÓN</text>
+<text x="710" y="350" fill="#333" font-size="10">• Sin monitoreo de vibración</text>
+<text x="710" y="335" fill="#333" font-size="10">• Manómetros descalibrados</text>
+<text x="710" y="320" fill="#333" font-size="10">• No se mide temperatura</text>
+</svg>
+<div class="gold-box"><p><strong>Causa raíz identificada:</strong> La combinación de <strong>fluido con partículas abrasivas</strong> (Material) y <strong>ausencia de monitoreo de vibración</strong> (Medición) genera desgaste acelerado del impulsor sin detección temprana.</p></div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 14</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplo 1: Plan de Acción</h1>
+<h2>Acciones derivadas del Diagrama de Ishikawa — Bomba P-101</h2>
+<table class="norm-table">
+<thead><tr><th>Categoría (M)</th><th>Causa identificada</th><th>Acción correctiva</th><th>Responsable</th></tr></thead>
+<tbody>
+<tr><td><strong>Material</strong></td><td>Partículas abrasivas en fluido</td><td>Instalar filtro tipo Y de 100 mesh aguas arriba</td><td>Ing. de Proceso</td></tr>
+<tr><td><strong>Máquina</strong></td><td>Impulsor de hierro fundido (baja resistencia a erosión)</td><td>Cambiar a impulsor de acero inoxidable 316L</td><td>Ing. Mecánico</td></tr>
+<tr><td><strong>Medición</strong></td><td>Sin monitoreo de vibración</td><td>Instalar sensor de vibración con alarma automática</td><td>Ing. de Confiabilidad</td></tr>
+<tr><td><strong>Método</strong></td><td>Sin procedimiento de arranque</td><td>Crear SOP de arranque con purga obligatoria</td><td>Supervisor de Operaciones</td></tr>
+<tr><td><strong>Mano de obra</strong></td><td>Error en alineación</td><td>Capacitación en alineación láser + checklist</td><td>Coord. de Mantenimiento</td></tr>
+<tr><td><strong>Medio ambiente</strong></td><td>Alta temperatura ambiental</td><td>Instalar ventilación forzada en cuarto de bombas</td><td>Ing. de Proyectos</td></tr>
+</tbody></table>
+<div class="gold-box"><p><strong>Resultado esperado:</strong> Incrementar el MTBF (Tiempo Medio Entre Fallas) de 45 días a más de 365 días, eliminando los paros no programados y reduciendo costos de mantenimiento en un 70%.</p></div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 15</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplo 2: Diagrama de Ishikawa</h1>
+<h2>Paradas no programadas en línea de producción</h2>
+<div class="highlight"><p><strong>Problema (Efecto):</strong> La línea de producción #3 de embotellado sufre en promedio 8 paradas no programadas por semana, generando pérdida del 15% de la producción diaria.</p></div>
+<svg viewBox="0 0 1100 420" class="ishikawa-svg" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1a3a5c"/></marker></defs>
+<line x1="80" y1="210" x2="980" y2="210" stroke="#1a3a5c" stroke-width="3" marker-end="url(#ah2)"/>
+<rect x="980" y="175" width="110" height="70" rx="8" fill="#c0392b" stroke="#922b21" stroke-width="2"/>
+<text x="1035" y="200" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">FALLA EN</text>
+<text x="1035" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">LÍNEA DE</text>
+<text x="1035" y="234" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">PRODUCCIÓN</text>
+
+<line x1="230" y1="50" x2="350" y2="210" stroke="#2a5a8c" stroke-width="2" marker-end="url(#ah2)"/>
+<rect x="130" y="25" width="130" height="35" rx="6" fill="#1a3a5c"/><text x="195" y="48" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MÁQUINA</text>
+<text x="200" y="80" fill="#333" font-size="10">• Motor sobrecalentado</text>
+<text x="200" y="95" fill="#333" font-size="10">• Banda transportadora desalineada</text>
+<text x="200" y="110" fill="#333" font-size="10">• Sensor de proximidad dañado</text>
+
+<line x1="500" y1="50" x2="580" y2="210" stroke="#2a5a8c" stroke-width="2" marker-end="url(#ah2)"/>
+<rect x="410" y="25" width="130" height="35" rx="6" fill="#1a3a5c"/><text x="475" y="48" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MÉTODO</text>
+<text x="460" y="80" fill="#333" font-size="10">• Cambio de turno sin supervisión</text>
+<text x="460" y="95" fill="#333" font-size="10">• Proceso no estandarizado</text>
+<text x="460" y="110" fill="#333" font-size="10">• Secuencia de arranque incorrecta</text>
+
+<line x1="750" y1="50" x2="800" y2="210" stroke="#2a5a8c" stroke-width="2" marker-end="url(#ah2)"/>
+<rect x="670" y="25" width="140" height="35" rx="6" fill="#1a3a5c"/><text x="740" y="48" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MANO DE OBRA</text>
+<text x="710" y="80" fill="#333" font-size="10">• Personal sin certificación</text>
+<text x="710" y="95" fill="#333" font-size="10">• Fatiga por turnos largos</text>
+<text x="710" y="110" fill="#333" font-size="10">• Falta de comunicación</text>
+
+<line x1="230" y1="380" x2="350" y2="210" stroke="#b8860b" stroke-width="2" marker-end="url(#ah2)"/>
+<rect x="140" y="365" width="130" height="35" rx="6" fill="#daa520"/><text x="205" y="388" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MATERIAL</text>
+<text x="200" y="350" fill="#333" font-size="10">• Materia prima fuera de especificación</text>
+<text x="200" y="335" fill="#333" font-size="10">• Lote defectuoso de proveedor</text>
+<text x="200" y="320" fill="#333" font-size="10">• Embalaje dañado en almacén</text>
+
+<line x1="500" y1="380" x2="580" y2="210" stroke="#b8860b" stroke-width="2" marker-end="url(#ah2)"/>
+<rect x="390" y="365" width="160" height="35" rx="6" fill="#daa520"/><text x="470" y="388" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MEDIO AMBIENTE</text>
+<text x="460" y="350" fill="#333" font-size="10">• Humedad excesiva en planta</text>
+<text x="460" y="335" fill="#333" font-size="10">• Temperatura fuera de rango</text>
+<text x="460" y="320" fill="#333" font-size="10">• Contaminación cruzada</text>
+
+<line x1="750" y1="380" x2="800" y2="210" stroke="#b8860b" stroke-width="2" marker-end="url(#ah2)"/>
+<rect x="680" y="365" width="130" height="35" rx="6" fill="#daa520"/><text x="745" y="388" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MEDICIÓN</text>
+<text x="710" y="350" fill="#333" font-size="10">• Calibración de básculas vencida</text>
+<text x="710" y="335" fill="#333" font-size="10">• Sin control estadístico</text>
+<text x="710" y="320" fill="#333" font-size="10">• Tolerancias no definidas</text>
+</svg>
+<div class="gold-box"><p><strong>Causa raíz identificada:</strong> La combinación de <strong>sensor de proximidad dañado</strong> (Máquina) con <strong>proceso no estandarizado</strong> (Método) y <strong>falta de calibración</strong> (Medición) genera detenciones falsas y reales no diferenciadas.</p></div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 16</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>Ejemplo 2: Plan de Acción</h1>
+<h2>Acciones derivadas del Diagrama de Ishikawa — Línea #3</h2>
+<table class="norm-table">
+<thead><tr><th>Categoría (M)</th><th>Causa identificada</th><th>Acción correctiva</th><th>Responsable</th></tr></thead>
+<tbody>
+<tr><td><strong>Máquina</strong></td><td>Sensor de proximidad dañado</td><td>Reemplazar sensores y crear plan de inspección mensual</td><td>Ing. Electrónico</td></tr>
+<tr><td><strong>Método</strong></td><td>Proceso no estandarizado entre turnos</td><td>Documentar y socializar SOP de operación por turno</td><td>Jefe de Producción</td></tr>
+<tr><td><strong>Medición</strong></td><td>Calibración de básculas vencida</td><td>Implementar programa de calibración con frecuencia trimestral</td><td>Control de Calidad</td></tr>
+<tr><td><strong>Mano de obra</strong></td><td>Fatiga por turnos largos de 12 horas</td><td>Reestructurar turnos a 8 horas con rotación adecuada</td><td>Recursos Humanos</td></tr>
+<tr><td><strong>Material</strong></td><td>Materia prima fuera de especificación</td><td>Implementar inspección de calidad de entrada al 100%</td><td>Compras + Calidad</td></tr>
+<tr><td><strong>Medio ambiente</strong></td><td>Humedad excesiva afecta electrónica</td><td>Instalar deshumidificador en panel de control</td><td>Ing. de Planta</td></tr>
+</tbody></table>
+<div class="gold-box"><p><strong>Resultado esperado:</strong> Reducir las paradas no programadas de 8/semana a máximo 1/semana, recuperando el 15% de producción perdida, equivalente a $120.000 USD/mes.</p></div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 17</span></div></div>
+<div class="slide title-slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">Técnicas de Análisis de Fallas · UF2</span></div>
+<div class="content">
+<h1>¡Gracias!</h1>
+<p class="subtitle">Técnicas de Análisis de Fallas y Diagrama de Ishikawa</p>
+<div class="info">
+<strong>Recuerde:</strong><br>
+"Una falla no analizada es una falla que se va a repetir"<br><br>
+<strong>Instituto Universitario de la Paz — UNIPAZ</strong><br>
+Tecnología en Operación y Sostenimiento de Equipos Mecánicos<br>
+Unidad Formativa 2 — Diagnóstico de Fallas<br>
+2026-I
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 18</span></div></div>
+
+</body>
+</html>

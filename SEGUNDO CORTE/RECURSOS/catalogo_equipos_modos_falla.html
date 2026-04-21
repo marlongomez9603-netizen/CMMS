@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Catálogo de Equipos Industriales – Modos de Falla y Actividades de Mantenimiento</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08060f;--surface:#0e0b1a;--card:#14102a;--border:#2d1f5e;
+  --accent:#7c3aed;--accent2:#06b6d4;--accent3:#f59e0b;
+  --green:#10b981;--red:#ef4444;--orange:#f97316;--text:#ede9fe;--muted:#8b7cb0;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;padding:5rem 1.5rem 3.5rem;text-align:center;overflow:hidden;border-bottom:1px solid var(--border)}
+.hero-glow{position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(ellipse,rgba(124,58,237,.2) 0%,transparent 70%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.4);color:var(--accent);font-size:.73rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.6rem;font-weight:700}
+.hero-title{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 15%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem}
+.hero-sub{color:var(--muted);font-size:.96rem;max-width:620px;margin:0 auto 1.8rem;line-height:1.8}
+.hero-chips{display:flex;justify-content:center;flex-wrap:wrap;gap:.8rem}
+.hero-chip{background:rgba(255,255,255,.04);border:1px solid var(--border);padding:.35rem 1rem;border-radius:8px;font-size:.78rem;color:var(--muted)}
+.hero-chip span{color:var(--text);font-weight:700}
+
+/* WRAPPER */
+.wrapper{max-width:1300px;margin:0 auto;padding:0 1.5rem}
+
+/* SEARCH & FILTER */
+.controls{padding:1.6rem 0;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;border-bottom:1px solid var(--border)}
+.search-box{flex:1;min-width:200px;position:relative}
+.search-box input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:.55rem 1rem .55rem 2.4rem;border-radius:9px;font-size:.87rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.search-box input:focus{border-color:var(--accent)}
+.search-box::before{content:'🔍';position:absolute;left:.7rem;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none}
+.cat-filters{display:flex;flex-wrap:wrap;gap:.5rem}
+.cat-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:.35rem .9rem;border-radius:8px;cursor:pointer;font-size:.78rem;font-family:'Inter',sans-serif;font-weight:600;transition:.2s}
+.cat-btn:hover,.cat-btn.active{border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent)}
+
+/* EQUIPMENT GRID */
+.equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;padding:2rem 0}
+.equip-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.2rem .8rem;text-align:center;cursor:pointer;transition:all .22s;user-select:none}
+.equip-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 28px rgba(124,58,237,.18)}
+.equip-card.selected{border-color:var(--accent);background:linear-gradient(135deg,rgba(124,58,237,.18),var(--card));box-shadow:0 0 0 3px rgba(124,58,237,.3)}
+.equip-icon{font-size:2.2rem;margin-bottom:.5rem;display:block}
+.equip-name{font-size:.78rem;font-weight:700;color:var(--text);line-height:1.3}
+.equip-tag{font-size:.65rem;color:var(--muted);margin-top:.3rem}
+
+/* DETAIL PANEL */
+#detail-panel{display:none;margin-bottom:4rem}
+#detail-panel.visible{display:block}
+.detail-header{background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.3);border-radius:var(--radius);padding:1.8rem 2rem;margin-bottom:1.6rem;display:flex;gap:1.5rem;align-items:flex-start;flex-wrap:wrap}
+.detail-icon-big{font-size:3.5rem;line-height:1;flex-shrink:0}
+.detail-title-group h2{font-size:1.5rem;font-weight:800;margin-bottom:.3rem}
+.detail-title-group p{color:var(--muted);font-size:.88rem;max-width:700px;line-height:1.7}
+.detail-stats{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:.9rem}
+.dstat{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);padding:.35rem .85rem;border-radius:8px;font-size:.75rem}
+.dstat-label{color:var(--muted);font-size:.68rem;display:block}
+.dstat-val{color:var(--accent);font-weight:700}
+
+/* TABS */
+.tabs{display:flex;gap:.4rem;margin-bottom:1.2rem;border-bottom:1px solid var(--border);padding-bottom:.4rem;flex-wrap:wrap}
+.tab-btn{background:transparent;border:none;color:var(--muted);padding:.5rem 1.1rem;border-radius:7px;cursor:pointer;font-size:.85rem;font-family:'Inter',sans-serif;font-weight:700;transition:.2s}
+.tab-btn.active,.tab-btn:hover{background:rgba(124,58,237,.12);color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* FAILURE MODES TABLE */
+.fm-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.fm-table th{background:rgba(239,68,68,.12);color:var(--red);padding:.55rem .9rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;border-bottom:1px solid rgba(239,68,68,.2)}
+.fm-table td{padding:.6rem .9rem;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.fm-table td:first-child{color:var(--text);font-weight:700;width:22%}
+.fm-table tr:hover td{background:rgba(239,68,68,.04)}
+.sev-chip{font-size:.68rem;font-weight:800;padding:.12rem .55rem;border-radius:5px;white-space:nowrap}
+.sev-A{background:rgba(239,68,68,.2);color:var(--red)}
+.sev-M{background:rgba(245,158,11,.2);color:var(--accent3)}
+.sev-B{background:rgba(16,185,129,.2);color:var(--green)}
+.det-chip{font-size:.68rem;font-weight:700;padding:.1rem .5rem;border-radius:5px}
+.det-alta{background:rgba(16,185,129,.15);color:var(--green)}
+.det-media{background:rgba(245,158,11,.15);color:var(--accent3)}
+.det-baja{background:rgba(239,68,68,.12);color:var(--red)}
+
+/* ACTIVITIES TABLE */
+.act-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.2rem}
+.act-filt-btn{border:1px solid var(--border);background:var(--surface);color:var(--muted);padding:.3rem .8rem;border-radius:7px;cursor:pointer;font-size:.75rem;font-family:'Inter',sans-serif;font-weight:700;transition:.2s}
+.act-filt-btn.active{color:#fff}
+.act-filt-btn[data-t="Todos"].active{background:var(--accent);border-color:var(--accent)}
+.act-filt-btn[data-t="Preventivo"].active{background:var(--green);border-color:var(--green)}
+.act-filt-btn[data-t="Predictivo"].active{background:var(--accent2);border-color:var(--accent2)}
+.act-filt-btn[data-t="Correctivo"].active{background:var(--orange);border-color:var(--orange)}
+.act-filt-btn[data-t="Proactivo"].active{background:var(--accent);border-color:var(--accent)}
+.act-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.act-table th{background:rgba(124,58,237,.12);color:var(--accent);padding:.55rem .9rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.act-table td{padding:.6rem .9rem;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.act-table td:nth-child(2){color:var(--text);font-weight:600;width:28%}
+.act-table tr:hover td{background:rgba(124,58,237,.04)}
+.act-table tr.hidden{display:none}
+.type-badge{font-size:.72rem;font-weight:800;padding:.2rem .65rem;border-radius:6px;white-space:nowrap;display:inline-block}
+.tb-Preventivo{background:rgba(16,185,129,.2);color:var(--green)}
+.tb-Predictivo{background:rgba(6,182,212,.2);color:var(--accent2)}
+.tb-Correctivo{background:rgba(249,115,22,.2);color:var(--orange)}
+.tb-Proactivo{background:rgba(124,58,237,.2);color:var(--accent)}
+.freq-mono{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent3);white-space:nowrap}
+
+/* DECISION CARD */
+.strategy-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.4rem}
+.ss-card{border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.2rem}
+.ss-card h4{font-size:.82rem;font-weight:800;margin-bottom:.4rem}
+.ss-bar{height:7px;border-radius:4px;margin-bottom:.4rem}
+.ss-pct{font-size:.75rem;color:var(--muted)}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:3rem;color:var(--muted);font-size:.9rem}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2rem 1.5rem;text-align:center;color:var(--muted);font-size:.82rem}
+footer strong{color:var(--accent)}
+
+@media(max-width:768px){.equip-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.detail-header{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="badge">📖 Guía de Referencia · Mantenimiento Industrial</div>
+  <h1 class="hero-title">Catálogo de Equipos Industriales<br/>Modos de Falla y Actividades de Mantenimiento</h1>
+  <p class="hero-sub">Consulta los modos de falla más frecuentes de los 10 equipos más comunes en la industria y todas las actividades de mantenimiento para gestionarlos.</p>
+  <div class="hero-chips">
+    <div class="hero-chip">👨‍🏫 <span>Ing. Marlon Gómez</span></div>
+    <div class="hero-chip">📘 <span>Asignatura 730502</span></div>
+    <div class="hero-chip">🔧 <span>10 Equipos</span></div>
+    <div class="hero-chip">⚠️ <span>58 Modos de Falla</span></div>
+    <div class="hero-chip">🛠️ <span>80+ Actividades</span></div>
+  </div>
+</section>
+
+<div class="wrapper">
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Buscar equipo o modo de falla..." oninput="filterEquipment(this.value)"/>
+    </div>
+    <div class="cat-filters">
+      <button class="cat-btn active" onclick="filterCat('Todos',this)">Todos</button>
+      <button class="cat-btn" onclick="filterCat('Rotativo',this)">⚙️ Rotativos</button>
+      <button class="cat-btn" onclick="filterCat('Electrico',this)">⚡ Eléctricos</button>
+      <button class="cat-btn" onclick="filterCat('Proceso',this)">🌡️ Proceso</button>
+      <button class="cat-btn" onclick="filterCat('Fluidos',this)">💧 Fluidos</button>
+      <button class="cat-btn" onclick="filterCat('Mecanico',this)">🔩 Mecánicos</button>
+    </div>
+  </div>
+
+  <!-- EQUIPMENT GRID -->
+  <div class="equip-grid" id="equip-grid"></div>
+
+  <!-- DETAIL PANEL -->
+  <div id="detail-panel">
+    <div class="detail-header" id="detail-header"></div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('tm-falla',this)">⚠️ Modos de Falla</button>
+      <button class="tab-btn" onclick="showTab('tm-activ',this)">🛠️ Actividades de Mantenimiento</button>
+      <button class="tab-btn" onclick="showTab('tm-strat',this)">📊 Estrategia Recomendada</button>
+    </div>
+    <div id="tm-falla" class="tab-content active"></div>
+    <div id="tm-activ" class="tab-content"></div>
+    <div id="tm-strat" class="tab-content"></div>
+  </div>
+</div>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Ing. Marlon Gómez · Referencia técnica basada en normas EN 13306, ISO 55001, ISO 17359, API 653</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA – 10 Equipos con modos de falla y actividades
+// ═══════════════════════════════════════════════════════
+const EQUIP = [
+  {
+    id:'motor', icon:'⚡', name:'Motor Eléctrico de Inducción', cat:'Rotativo,Electrico',
+    use:'Accionamiento principal de bombas, compresores, ventiladores, cintas transportadoras y equipos de proceso. Es el motor de trabajo más común en la industria.',
+    stats:{mtbf:'8.000–20.000 h',vida:'15–25 años',preventivo:'30%',predictivo:'50%',correctivo:'20%'},
+    fallas:[
+      {modo:'Falla de rodamientos',causa:'Fatiga por ciclos, lubricación insuficiente o excesiva, contaminación, sobrecarga axial o radial',consecuencia:'Vibración excesiva, ruido, temperatura elevada, parada del equipo',sev:'A',det:'Alta'},
+      {modo:'Degradación del aislamiento del bobinado',causa:'Sobrecalentamiento repetido, humedad, contaminantes, envejecimiento térmico',consecuencia:'Cortocircuito entre espiras, falla a tierra, combustión del bobinado',sev:'A',det:'Media'},
+      {modo:'Falla de barras del rotor',causa:'Ciclos térmicos por arranques frecuentes o sobrecarga, defecto de fundición',consecuencia:'Vibración a frecuencia de paso de polos, pérdida de par, calentamiento',sev:'M',det:'Media'},
+      {modo:'Desalineación eje-carga',causa:'Instalación incorrecta, dilatación térmica diferencial, desgaste de acoplamientos',consecuencia:'Vibración alta, desgaste acelerado de rodamientos y sellos, fatiga de eje',sev:'M',det:'Alta'},
+      {modo:'Desequilibrio del rotor',causa:'Acumulación de suciedad, corrosión, pérdida de material, reparación incorrecta',consecuencia:'Vibración sincrónica con velocidad de giro, carga excesiva en rodamientos',sev:'M',det:'Alta'},
+      {modo:'Sobrecalentamiento general',causa:'Sobrecarga eléctrica, ventilación obstruida, alta temperatura ambiente, tensión incorrecta',consecuencia:'Degradación acelerada del aislamiento, disparo por protección térmica',sev:'A',det:'Alta'},
+    ],
+    activ:[
+      {tipo:'Predictivo',act:'Análisis de vibraciones',freq:'Mensual',desc:'Medir velocidad de vibración (mm/s) en rodamientos. Umbral ISO 10816: Zona A<2.3, alarma>4.5 mm/s',modoFalla:'Rodamientos, desalineación, desequilibrio'},
+      {tipo:'Predictivo',act:'Termografía infrarroja',freq:'Trimestral',desc:'Inspeccionar conexiones eléctricas, carcasa y rodamientos. ΔT > 10°C requiere acción',modoFalla:'Conexiones flojas, sobrecalentamiento, rodamientos'},
+      {tipo:'Predictivo',act:'Análisis de corriente eléctrica (MCSA)',freq:'Semestral',desc:'Detectar barras de rotor rotas y excentricidad mediante espectro de corriente',modoFalla:'Barras del rotor, excentricidad'},
+      {tipo:'Preventivo',act:'Lubricación de rodamientos',freq:'Según fabricante (3–6 meses)',desc:'Aplicar grasa según tipo y cantidad especificada. Evitar sobre-lubricación',modoFalla:'Rodamientos'},
+      {tipo:'Preventivo',act:'Medición de resistencia de aislamiento (Megger)',freq:'Anual',desc:'Resistencia de aislamiento: fase-tierra. Mínimo aceptable: 100 MΩ. Evaluar índice de polarización',modoFalla:'Aislamiento de bobinado'},
+      {tipo:'Preventivo',act:'Limpieza de ventilación y carcasa',freq:'Trimestral',desc:'Despejar rejillas de ventilación, limpiar aspas del ventilador y filtros (si aplica)',modoFalla:'Sobrecalentamiento'},
+      {tipo:'Preventivo',act:'Verificación y corrección de alineación',freq:'Semestral',desc:'Usar reloj comparador o alineador láser. Tolerancia según fabricante',modoFalla:'Desalineación'},
+      {tipo:'Correctivo',act:'Revisión post-falla integral',freq:'Tras evento de falla',desc:'Inspección completa: bobinado, rodamientos, eje, ventilador, caja de conexiones',modoFalla:'Todos los modos'},
+      {tipo:'Proactivo',act:'Análisis de causa raíz (RCA) en fallas repetitivas',freq:'Tras 2da falla del mismo tipo',desc:'Investigar por qué la falla se repite. Modificar procedimientos de instalación, operación o PM',modoFalla:'Cualquier modo repetitivo'},
+    ]
+  },
+  {
+    id:'bomba', icon:'💧', name:'Bomba Centrífuga', cat:'Rotativo,Fluidos',
+    use:'Transporte de líquidos (agua, productos químicos, hidrocarburos) en sistemas de proceso, alimentación de calderas, enfriamiento y servicios generales.',
+    stats:{mtbf:'6.000–15.000 h',vida:'15–20 años',preventivo:'35%',predictivo:'40%',correctivo:'25%'},
+    fallas:[
+      {modo:'Falla de sello mecánico',causa:'Desgaste de caras de contacto, desalineación, vibración excesiva, fluido abrasivo o cálido',consecuencia:'Fuga de fluido del proceso, riesgo ambiental/seguridad, contaminación',sev:'A',det:'Alta'},
+      {modo:'Cavitación',causa:'NPSH disponible insuficiente, fluido cerca del punto de ebullición, válvulas de succión parcialmente cerradas',consecuencia:'Erosión del impulsor, vibración y ruido intesos, pérdida de caudal y presión',sev:'A',det:'Alta'},
+      {modo:'Falla de rodamientos',causa:'Vibración, desalineación, fuerzas hidráulicas desbalanceadas, lubricación inadecuada',consecuencia:'Vibración, temperatura elevada, posible gripado',sev:'A',det:'Alta'},
+      {modo:'Desgaste del impulsor',causa:'Fluidos abrasivos (arenas, sólidos), cavitación prolongada, corrosión',consecuencia:'Pérdida progresiva de caudal y presión, mayor consumo eléctrico',sev:'M',det:'Media'},
+      {modo:'Obstrucción o atasco del impulsor',causa:'Sólidos en suspensión, objetos extraños, formación de costras',consecuencia:'Parada súbita, sobrecarga eléctrica, daño a sellos y rodamientos',sev:'A',det:'Baja'},
+      {modo:'Corrosión interna de carcasa e impulsor',causa:'Fluido corrosivo, pH inadecuado, ausencia de recubrimiento protector',consecuencia:'Reducción de espesor de pared, fuga, pérdida de eficiencia',sev:'M',det:'Baja'},
+    ],
+    activ:[
+      {tipo:'Predictivo',act:'Análisis de vibraciones',freq:'Mensual',desc:'Medir en rodamientos (radial y axial). Detectar cavitación por banda de alta frecuencia',modoFalla:'Rodamientos, cavitación, desalineación'},
+      {tipo:'Predictivo',act:'Medición de caudal y presión (curva de la bomba)',freq:'Trimestral',desc:'Comparar caudal y cabeza actual vs. curva del fabricante. Desviación >15% indica desgaste',modoFalla:'Desgaste de impulsor'},
+      {tipo:'Predictivo',act:'Termografía en sellos y rodamientos',freq:'Trimestral',desc:'ΔT > 30°C en sello respecto al fluido es señal de desgaste avanzado',modoFalla:'Sello mecánico, rodamientos'},
+      {tipo:'Preventivo',act:'Lubricación de rodamientos',freq:'3–6 meses',desc:'Grasa según especificación. Cambio de aceite si son rodamientos de cartucho',modoFalla:'Rodamientos'},
+      {tipo:'Preventivo',act:'Inspección y reemplazo de sello mecánico',freq:'Anual o por condición',desc:'Revisar caras de contacto, fuelles, pasador anti-rotación y tolerancias',modoFalla:'Sello mecánico'},
+      {tipo:'Preventivo',act:'Verificación de alineación eje-motor',freq:'Semestral',desc:'Alineador láser o reloj comparador. Desalineación angular y paralela',modoFalla:'Sello, rodamientos, desalineación'},
+      {tipo:'Preventivo',act:'Limpieza e inspección del impulsor',freq:'Anual',desc:'Verificar desgaste de álabes, corrosión, erosión por cavitación',modoFalla:'Impulsor, cavitación'},
+      {tipo:'Preventivo',act:'Verificación del NPSH disponible',freq:'Semestral',desc:'Calcular NPSH disponible vs. requerido por el fabricante. Margen mínimo: 0.5–1 m',modoFalla:'Cavitación'},
+      {tipo:'Proactivo',act:'RCA de fallas repetitivas de sello',freq:'Tras 2da falla',desc:'Investigar desalineación, vibración, temperatura del fluido y tipo de sello',modoFalla:'Sello mecánico'},
+    ]
+  },
+  {
+    id:'compresor', icon:'🌬️', name:'Compresor de Aire (Alternativo)', cat:'Rotativo,Fluidos',
+    use:'Producción de aire comprimido para herramientas neumáticas, actuadores, instrumentación y procesos industriales. Es una de las utilidades más críticas de planta.',
+    stats:{mtbf:'4.000–10.000 h',vida:'15–25 años',preventivo:'50%',predictivo:'25%',correctivo:'25%'},
+    fallas:[
+      {modo:'Desgaste o falla de válvulas de succión/descarga',causa:'Ciclos de apertura/cierre, temperatura elevada, suciedad en el aire, contaminación de aceite',consecuencia:'Pérdida de eficiencia volumétrica, sobrecalentamiento, menor presión de descarga',sev:'A',det:'Media'},
+      {modo:'Desgaste de anillos de pistón',causa:'Temperatura, lubricación insuficiente, partículas en el aire', consecuencia:'Paso de aceite al aire comprimido, pérdida de presión',sev:'M',det:'Baja'},
+      {modo:'Obstrucción del filtro de entrada',causa:'Ambiente polvoriento, frecuencia de cambio insuficiente',consecuencia:'Menor caudal, mayor temperatura de descarga, sobrecarga del motor',sev:'M',det:'Alta'},
+      {modo:'Deslizamiento o rotura de correa de transmisión',causa:'Tensión incorrecta, alineación deficiente, desgaste por edad',consecuencia:'Parada del compresor, riesgo de proyección de la correa',sev:'A',det:'Alta'},
+      {modo:'Sobrecalentamiento',causa:'Refrigeración insuficiente, aceite degradado, obstrucción del radiador/postenfriador',consecuencia:'Disparo por alta temperatura, daño al lubricante, falla de válvulas',sev:'A',det:'Alta'},
+      {modo:'Fugas de aire en la red de distribución',causa:'Empalmes envejecidos, racores dañados, mangueras picadas, válvulas desgastadas',consecuencia:'Pérdida energética significativa (hasta 30% del caudal), menor presión en puntos de uso',sev:'M',det:'Media'},
+    ],
+    activ:[
+      {tipo:'Preventivo',act:'Cambio de filtro de entrada de aire',freq:'Mensual o según horómetro (250h)',desc:'Revisión y reemplazo según condición o caída de presión en el filtro',modoFalla:'Obstrucción de filtro'},
+      {tipo:'Preventivo',act:'Cambio de aceite lubricante',freq:'Cada 2.000h o anual',desc:'Drenar, limpiar cárter, cambiar filtro de aceite y rellenar con aceite especificado',modoFalla:'Lubricación, válvulas'},
+      {tipo:'Preventivo',act:'Inspección y limpieza de válvulas',freq:'Cada 4.000h o semestral',desc:'Desarmar cabezas, limpiar asientos, medir láminas, reemplazar empaque',modoFalla:'Válvulas de succión/descarga'},
+      {tipo:'Preventivo',act:'Verificación de tensión de correa',freq:'Trimestral',desc:'Medir deflexión según fabricante. Verificar alineación de poleas',modoFalla:'Correa de transmisión'},
+      {tipo:'Preventivo',act:'Limpieza del postenfriador / radiador',freq:'Trimestral',desc:'Soplado con aire seco o lavado según tipo. Verificar caudal de agua de refrigeración',modoFalla:'Sobrecalentamiento'},
+      {tipo:'Preventivo',act:'Prueba de válvula de seguridad',freq:'Semestral',desc:'Verificar apertura a la presión de ajuste. Registro obligatorio por normativa',modoFalla:'Sobrepresión'},
+      {tipo:'Predictivo',act:'Termografía en valvulería y cabezas',freq:'Semestral',desc:'ΔT entre cilindros indica válvula defectuosa. Temperatura de descarga > 180°C es alarma',modoFalla:'Válvulas, sobrecalentamiento'},
+      {tipo:'Predictivo',act:'Análisis de aceite lubricante',freq:'Semestral',desc:'Viscosidad, contenido de agua, partículas metálicas, acidez',modoFalla:'Lubricación interna'},
+      {tipo:'Predictivo',act:'Detección de fugas de aire (Ultrasónico)',freq:'Trimestral',desc:'Detector ultrasónico a lo largo de la red. Cuantificar caudal perdido en m³/min',modoFalla:'Fugas en red'},
+    ]
+  },
+  {
+    id:'reductor', icon:'⚙️', name:'Reductor de Velocidad (Caja de Engranajes)', cat:'Rotativo,Mecanico',
+    use:'Transmisión de potencia entre motor y máquina accionada con reducción de velocidad y aumento de par. Presente en cintas, molinos, agitadores, elevadores y grúas.',
+    stats:{mtbf:'10.000–30.000 h',vida:'20–30 años',preventivo:'40%',predictivo:'45%',correctivo:'15%'},
+    fallas:[
+      {modo:'Desgaste de dientes de engranaje',causa:'Lubricación insuficiente o aceite degradado, sobrecarga, contaminación con partículas abrasivas',consecuencia:'Ruido creciente, pérdida de eficiencia, eventual rotura de diente',sev:'A',det:'Media'},
+      {modo:'Falla de rodamientos internos',causa:'Contaminación del aceite, vibración, cargas inadecuadas, lubricación deficiente',consecuencia:'Ruido, calor, vibración, potencial bloqueo del reductor',sev:'A',det:'Alta'},
+      {modo:'Degradación del aceite lubricante',causa:'Oxidación por temperatura, contaminación con agua por condensación, vida útil superada',consecuencia:'Mayor desgaste de dientes y rodamientos, formación de barnices y lodos',sev:'M',det:'Media'},
+      {modo:'Falla de sello / retén de eje',causa:'Desgaste por fricción, temperatura, presión interna excesiva, envejecimiento del elastómero',consecuencia:'Fuga de aceite externo, contaminación ambiental, pérdida de nivel de aceite',sev:'M',det:'Alta'},
+      {modo:'Desalineación entre reductor y motor/carga',causa:'Instalación incorrecta, deformación de base, ausencia de alineación periódica',consecuencia:'Vibración, carga excesiva en rodamientos y sellos, fatiga de eje',sev:'M',det:'Alta'},
+    ],
+    activ:[
+      {tipo:'Preventivo',act:'Cambio de aceite lubricante',freq:'Cada 4.000h o anual',desc:'Drenar en caliente, limpiar carter, verificar sedimentos, rellenar con aceite ISO VG especificado',modoFalla:'Dientes, rodamientos internos'},
+      {tipo:'Preventivo',act:'Inspección y control de nivel de aceite',freq:'Mensual',desc:'Verificar visor de nivel. Nivel entre mínimo y máximo. Buscar cambio de color (agua)',modoFalla:'Lubricación'},
+      {tipo:'Preventivo',act:'Inspección visual de sellos y fugas',freq:'Mensual',desc:'Verificar manchas de aceite en base, sello de eje y tapa de inspección',modoFalla:'Sellos'},
+      {tipo:'Preventivo',act:'Verificación de alineación de acoplamientos',freq:'Semestral',desc:'Reloj comparador o láser. Tolerancias según tipo de acoplamiento',modoFalla:'Desalineación'},
+      {tipo:'Predictivo',act:'Análisis de aceite (ferrografía y propiedades)',freq:'Semestral',desc:'Partículas de desgaste (Fe, Cu, Cr), viscosidad, contenido de agua, acidez (TAN)',modoFalla:'Dientes, rodamientos'},
+      {tipo:'Predictivo',act:'Análisis de vibraciones',freq:'Mensual',desc:'Frecuencias de engramaje (GMF) y de paso de rodamientos. Detectar diente roto por sideband',modoFalla:'Dientes, rodamientos'},
+      {tipo:'Predictivo',act:'Termografía en carcasa y rodamientos',freq:'Trimestral',desc:'ΔT > 20°C vs. temperatura ambiente en puntos de cojinetes es señal de alarma',modoFalla:'Rodamientos, lubricación'},
+    ]
+  },
+  {
+    id:'banda', icon:'📦', name:'Banda / Correa Transportadora', cat:'Mecanico,Rotativo',
+    use:'Transporte horizontal o inclinado de materiales a granel (minerales, cemento, granos, carbón) o productos manufacturados entre puntos de proceso.',
+    stats:{mtbf:'Variable por tramo',vida:'5–15 años (banda)',preventivo:'55%',predictivo:'20%',correctivo:'25%'},
+    fallas:[
+      {modo:'Desalineación de la banda',causa:'Rodillos mal posicionados o sucios, carga descentrada, tensión desigual de lado a lado',consecuencia:'Desgaste lateral de la banda, daño en estructura, material derramado',sev:'M',det:'Alta'},
+      {modo:'Rotura o fatiga del empalme',causa:'Fatiga por ciclos de carga, tensión excesiva, objetos cortantes en la carga',consecuencia:'Parada total del transportador, pérdida de carga transportada',sev:'A',det:'Media'},
+      {modo:'Falla de rodillos portantes',causa:'Desgaste de rodamiento interno, jameo por material adherido, corrosión de eje',consecuencia:'Desgaste de banda en la zona del rodillo, ruido, daño progresivo de la banda',sev:'M',det:'Alta'},
+      {modo:'Corte o perforación de la banda',causa:'Material cortante (rocas con bordes vivos), sobrecargas puntuales, objeto ajeno caído',consecuencia:'Fuga del material transportado, reducción de vida de banda, parada',sev:'A',det:'Media'},
+      {modo:'Deslizamiento de banda en polea motriz',causa:'Tensión insuficiente, poleas sucias (barro, hielo, aceite), desgaste del recubrimiento de polea',consecuencia:'Pérdida de tracción, sobrecalentamiento de la banda y la polea, slip',sev:'M',det:'Alta'},
+      {modo:'Acumulación de material en rodillos y estructura',causa:'Material fino y húmedo adherido a rodillos y ramazones, limpieza insuficiente',consecuencia:'Desalineación progresiva, mayor resistencia al giro, desgaste de banda',sev:'B',det:'Alta'},
+    ],
+    activ:[
+      {tipo:'Preventivo',act:'Inspección de alineación de la banda',freq:'Semanal',desc:'Verificar que la banda esté centrada en todas las poleas y rodillos (ancho libre > 50mm de orilla)',modoFalla:'Desalineación'},
+      {tipo:'Preventivo',act:'Inspección visual de empalmes',freq:'Semanal',desc:'Revisar grapas o vulcanizado en cada empalme. Buscar grapas sueltas o cortes',modoFalla:'Rotura de empalme'},
+      {tipo:'Preventivo',act:'Revisión de rodillos portantes',freq:'Mensual',desc:'Girar a mano: debe rotar libremente y sin ruido. Reemplazar si está atascado',modoFalla:'Falla de rodillos'},
+      {tipo:'Preventivo',act:'Ajuste de tensión de la banda',freq:'Mensual o según condición',desc:'Verificar flecha máxima en vano libre. Ajustar tornillos de tensor hasta especificación',modoFalla:'Deslizamiento'},
+      {tipo:'Preventivo',act:'Lubricación de cojinetes de rodillos',freq:'Trimestral',desc:'Greasing de cojinetes de polea motriz, polea de retorno y polea de tensión',modoFalla:'Rodillos, poleas'},
+      {tipo:'Predictivo',act:'Termografía en polea motriz y cojinetes',freq:'Trimestral',desc:'ΔT > 15°C sobre temperatura ambiente en cojinetes requiere intervención',modoFalla:'Cojinetes de poleas'},
+      {tipo:'Preventivo',act:'Limpieza de rodillos y estructura (retiro de material)',freq:'Semanal',desc:'Limpiar rodillos portantes del ramal de retorno. Retirar acumulaciones en chutes',modoFalla:'Acumulación de material'},
+      {tipo:'Proactivo',act:'Instalación/mantenimiento de limpiadores de banda (scrapers)',freq:'Ajuste trimestral',desc:'Verificar presión de contacto del limpiador primario y secundario contra la banda',modoFalla:'Acumulación de material, desalineación'},
+    ]
+  },
+  {
+    id:'intercambiador', icon:'🌡️', name:'Intercambiador de Calor (Carcasa y Tubos)', cat:'Proceso,Fluidos',
+    use:'Transferencia de calor entre dos fluidos sin mezclarlos. Calentamiento o enfriamiento de fluidos de proceso, recuperación de calor y condensación en industria química, petroquímica y alimentaria.',
+    stats:{mtbf:'Variable por fouling',vida:'20–30 años',preventivo:'45%',predictivo:'35%',correctivo:'20%'},
+    fallas:[
+      {modo:'Incrustación / Fouling en superficies de transferencia',causa:'Precipitación de sales, producto de corrosión, crecimiento biológico, polimerización',consecuencia:'Disminución de eficiencia térmica, aumento de caída de presión, reducción de caudal',sev:'M',det:'Alta'},
+      {modo:'Corrosión o perforación de tubos',causa:'Fluido corrosivo, erosión-corrosión en curvas, picadura por cloruros, MIC (corrosión microbiológica)',consecuencia:'Mezcla de fluidos de carcasa y tubo, contaminación cruzada, pérdida del proceso',sev:'A',det:'Media'},
+      {modo:'Falla de junta de cabezal o brida',causa:'Ciclos térmicos repetidos, envejecimiento del material de junta, torque insuficiente',consecuencia:'Fuga externa de fluido, riesgo de incendio si es inflamable, pérdida del proceso',sev:'A',det:'Alta'},
+      {modo:'Vibración de las tuberías internas',causa:'Alta velocidad de flujo, resonancia con frecuencias de la corriente de fluido',consecuencia:'Fatiga de tubos en soporte, colisión entre tubos, rotura',sev:'M',det:'Baja'},
+      {modo:'Corrosión de carcasa exterior',causa:'Ambiente húmedo, aislamiento mojado, depósito de cloruros en superficie exterior',consecuencia:'Pérdida de espesor de pared, eventual perforación después de años',sev:'M',det:'Media'},
+    ],
+    activ:[
+      {tipo:'Preventivo',act:'Limpieza química de tubos (CIP / hidrojetting)',freq:'Semestral o según ΔP',desc:'Circulación de limpiador ácido o alcalino según el tipo de incrustación. Verificar ΔP antes y después',modoFalla:'Fouling/incrustaciones'},
+      {tipo:'Preventivo',act:'Inspección visual de tubuladura, bridas y carcasa',freq:'Anual',desc:'Buscar corrosión exterior, fugas pequeñas, daño en aislamiento',modoFalla:'Junta, corrosión exterior'},
+      {tipo:'Preventivo',act:'Apriete de bridas y torque de juntas',freq:'Anual o tras limpieza',desc:'Verificar torque según especificación y tipo de junta (espirometálica, teflon, etc.)',modoFalla:'Juntas de brida'},
+      {tipo:'Predictivo',act:'Medición de caída de presión en carcasa y tubos',freq:'Semanal / Mensual',desc:'Registrar ΔP vs. línea base. Aumento >25% indica fouling significativo',modoFalla:'Fouling'},
+      {tipo:'Predictivo',act:'Control de eficiencia térmica (ΔT real vs. diseño)',freq:'Semanal',desc:'Calcular LMTD y U actual. Reducción >20% del coeficiente U indica fouling',modoFalla:'Fouling, corrosión de tubos'},
+      {tipo:'Predictivo',act:'Medición de espesores por ultrasonido',freq:'Anual',desc:'Escanear zonas críticas de carcasa y cabezales. Tasa de corrosión anual calculada',modoFalla:'Corrosión de carcasa y tubos'},
+      {tipo:'Proactivo',act:'Análisis y control de química del agua de enfriamiento',freq:'Mensual',desc:'pH, conductividad, cloruros, inhibidores, biocida. Evitar escala y corrosión biológica',modoFalla:'Fouling, corrosión microbiológica'},
+    ]
+  },
+  {
+    id:'valvula', icon:'🔩', name:'Válvula de Control (Control Valve)', cat:'Proceso,Fluidos',
+    use:'Regulación dinámica del caudal, presión y temperatura en procesos continuos. Elemento final de control en lazos PID. Crítica para seguridad en sistemas de relevo.',
+    stats:{mtbf:'15.000–25.000 h',vida:'15–20 años',preventivo:'45%',predictivo:'30%',correctivo:'25%'},
+    fallas:[
+      {modo:'Fuga en empaquetadura del vástago',causa:'Desgaste del material de empaquetadura, temperatura, vibración, falta de reapriete periódico',consecuencia:'Fuga de fluido del proceso al exterior, riesgo ambiental y de seguridad',sev:'A',det:'Alta'},
+      {modo:'Desgaste de asiento y obturador',causa:'Fluido abrasivo, alta velocidad de fluido en estrangulamiento, cavitación, arrastre de sólidos',consecuencia:'Fuga interna (leakage), incapacidad de cerrar la válvula al 100%',sev:'A',det:'Media'},
+      {modo:'Falla del actuador neumático',causa:'Rotura de la membrana, fugas de aire en diafragma, resorte de retorno fatigado',consecuencia:'Pérdida de capacidad de posicionamiento, válvula en posición de falla',sev:'A',det:'Alta'},
+      {modo:'Mal funcionamiento del posicionador',causa:'Señal de entrada incorrecta, contaminación de la señal de aire, calibración desajustada',consecuencia:'Histéresis excesiva, oscilación (stiction), desfase entre señal y posición real',sev:'M',det:'Alta'},
+      {modo:'Obstrucción del obturador o asiento',causa:'Polímeros, sólidos precipitados del proceso, corrosión, incrustaciones',consecuencia:'Válvula trabada en posición parcial o cerrada, pérdida de control del proceso',sev:'A',det:'Media'},
+    ],
+    activ:[
+      {tipo:'Preventivo',act:'Reemplazo programado de empaquetadura de vástago',freq:'Anual o por condición',desc:'Reemplazar teflón o grafito según tipo. Verificar torque de seguros. Prueba de estanqueidad',modoFalla:'Fuga en empaquetadura'},
+      {tipo:'Preventivo',act:'Stroke test – recorrido completo de la válvula',freq:'Semestral (o según SIL)',desc:'Ejercitar la válvula al 100% de apertura y cierre. Verificar tiempo de respuesta y posición',modoFalla:'Obstrucción, actuador'},
+      {tipo:'Preventivo',act:'Calibración y ajuste del posicionador',freq:'Semestral',desc:'Ajustar punto cero, span y linealidad. Verificar señal 4-20mA y respuesta',modoFalla:'Posicionador'},
+      {tipo:'Preventivo',act:'Inspección del actuador neumático',freq:'Anual',desc:'Revisar integridad de membrana, presión de suministro de aire, resorte y accesorios',modoFalla:'Actuador'},
+      {tipo:'Preventivo',act:'Prueba de válvulas de alivio y seguridad (PSV)',freq:'Anual (normativo)',desc:'Ajuste de presión de apertura, cierre y estanqueidad posterior. Registro obligatorio',modoFalla:'Todos los modos'},
+      {tipo:'Predictivo',act:'Diagnóstico inteligente con smart positioner (curva diagnóstica)',freq:'Anual',desc:'Curva F vs. posición: detectar stiction, desequilibrio, desgaste de asiento sin desmontar',modoFalla:'Asiento, actuador, stiction'},
+      {tipo:'Correctivo',act:'Rectificado o reemplazo de asiento y obturador',freq:'Tras detección de fuga interna',desc:'Desmontar, medir asiento, rectificar o reemplazar. Prueba de estanqueidad clase IV o V',modoFalla:'Desgaste de asiento'},
+      {tipo:'Proactivo',act:'Inyección de sealant en empaquetadura (live loading)',freq:'Ante detección de fuga menor',desc:'Inyección de grasa de sellado sin desmontar la válvula. Solución temporal mientras se programa overhaul',modoFalla:'Fuga en empaquetadura'},
+    ]
+  },
+  {
+    id:'tanque', icon:'🛢️', name:'Tanque de Almacenamiento (API 650)', cat:'Proceso,Mecanico',
+    use:'Almacenamiento de líquidos (crudo, productos refinados, agua, productos químicos). Activo de larga vida que requiere inspección periódica según norma API 653.',
+    stats:{mtbf:'No aplica',vida:'30–50 años',preventivo:'50%',predictivo:'40%',correctivo:'10%'},
+    fallas:[
+      {modo:'Corrosión interna de fondo de tanque',causa:'Agua de fondo sedimentada, microorganismos (MIC), fluido corrosivo, ausencia de recubrimiento',consecuencia:'Perforación del fondo, fuga al subsuelo, contaminación ambiental',sev:'A',det:'Baja'},
+      {modo:'Corrosión exterior de cuerpo y cimentación',causa:'Humedad atmosférica, suelo corrosivo, desprendimiento del recubrimiento, soldaduras expuestas',consecuencia:'Reducción de espesor de pared, perforación eventual',sev:'M',det:'Media'},
+      {modo:'Asentamiento diferencial de la cimentación',causa:'Suelo inadecuado, sobrepeso del contenido, consolidación diferencial del suelo',consecuencia:'Deformación del fondo, tensiones en columna shell, fuga',sev:'A',det:'Media'},
+      {modo:'Falla del sello del techo flotante',causa:'Desgaste del sello de zapata, objeto en la pared del tanque, pandeo por viento',consecuencia:'Evaporación de vapores, riesgo de incendio, pérdida de producto',sev:'A',det:'Media'},
+      {modo:'Falla en instrumentación de nivel',causa:'Sensor de flotador atascado, radar obstruido, acumulación en camisa de guía',consecuencia:'Lectura de nivel incorrecta, riesgo de desbordamiento u operación deficiente',sev:'M',det:'Alta'},
+    ],
+    activ:[
+      {tipo:'Predictivo',act:'Medición de espesores por ultrasonido (UT)',freq:'Anual externo / 5-10 años interno',desc:'Escanear fondo, cuerpo y zona de corrosión. Calcular tasa de corrosión anual (mm/año)',modoFalla:'Corrosión interna y exterior'},
+      {tipo:'Preventivo',act:'Inspección interna completa (API 653)',freq:'Cada 5–10 años según RBI',desc:'Inspección de fondo, paredes, escalera, soldaduras. Prueba hidrostática si aplica',modoFalla:'Todos los modos'},
+      {tipo:'Preventivo',act:'Inspección externa visual y de recubrimiento',freq:'Semestral',desc:'Buscar ampollas, descascaramiento, manchas de corrosión, daño mecánico en recubrimiento',modoFalla:'Corrosión exterior'},
+      {tipo:'Predictivo',act:'Monitoreo de protección catódica de fondo',freq:'Mensual',desc:'Medir potencial de protección catódica. Mínimo aceptable: -0.85V vs. Cu/CuSO4',modoFalla:'Corrosión de fondo'},
+      {tipo:'Preventivo',act:'Calibración de instrumentos de nivel (radar, float)',freq:'Semestral',desc:'Verificar en puntos conocidos. Ajustar cero y span. Limpiar camisa de guía',modoFalla:'Instrumentación de nivel'},
+      {tipo:'Preventivo',act:'Inspección de techo flotante, sellos y soportes',freq:'Trimestral',desc:'Inspección visual de sello de zapata, pontones, descansaderos. Verificar drenajes del techo',modoFalla:'Sello del techo'},
+      {tipo:'Proactivo',act:'Aplicación de recubrimiento interno epoxi',freq:'Según condición en inspección',desc:'Limpieza abrasiva Sa2.5, aplicar epoxi de amplio espesor (DFT > 400μm)',modoFalla:'Corrosión interna'},
+    ]
+  },
+  {
+    id:'tablero', icon:'⚡', name:'Tablero Eléctrico / Switchgear', cat:'Electrico',
+    use:'Distribución, protección y maniobra de circuitos eléctricos de baja y media tensión. Contiene interruptores, contactores, relés de protección, barras de cobre y dispositivos de medición.',
+    stats:{mtbf:'Alto (>50.000h)',vida:'25–40 años',preventivo:'45%',predictivo:'45%',correctivo:'10%'},
+    fallas:[
+      {modo:'Calentamiento por conexiones flojas o de alto contacto',causa:'Vibración, oxidación, torque insuficiente en apriete, contracción-expansión térmica cíclica',consecuencia:'Punto caliente, arco eléctrico, incendio, falla de la conexión',sev:'A',det:'Alta'},
+      {modo:'Degradación del aislamiento eléctrico',causa:'Humedad, polvo conductor, temperatura excesiva, envejecimiento, roedores',consecuencia:'Fuga a tierra, arco eléctrico, disparo de protección, riesgo de incendio',sev:'A',det:'Media'},
+      {modo:'Desgaste de contactos de contactor e interruptor',causa:'Corriente de arco en operaciones de apertura/cierre, ciclos excesivos',consecuencia:'Mayor resistencia de contacto, calentamiento, eventual falla de maniobra',sev:'M',det:'Media'},
+      {modo:'Sobrecalentamiento de barra de cobre (busbar)',causa:'Sobrecarga sostenida, conexión floja en empalmes, temperatura ambiente alta',consecuencia:'Daño al aislamiento de la barra, falla eléctrica, incendio',sev:'A',det:'Alta'},
+      {modo:'Falla o mal ajuste de relé de protección',causa:'Ajuste incorrecto de parámetros, envejecimiento del relé electromecánico, polvo',consecuencia:'Disparo prematuro (selectividad incorrecta) o ausencia de protección ante falla',sev:'A',det:'Media'},
+    ],
+    activ:[
+      {tipo:'Predictivo',act:'Termografía infrarroja del tablero',freq:'Semestral',desc:'Con carga nominal. ΔT > 10°C en conexión = acción inmediata. ΔT > 3°C = programar',modoFalla:'Conexiones, busbar, contactos'},
+      {tipo:'Preventivo',act:'Verificación de torque en terminales y barras',freq:'Anual (desenergizado)',desc:'Apretar según tabla de torque del fabricante. Aplicar inhibidor de oxidación en barras de Cu',modoFalla:'Conexiones flojas'},
+      {tipo:'Preventivo',act:'Prueba de resistencia de aislamiento (Megger)',freq:'Anual',desc:'Entre fases, fase-tierra y entre bornes. Mínimo 1 MΩ/kV de tensión nominal',modoFalla:'Aislamiento eléctrico'},
+      {tipo:'Preventivo',act:'Limpieza y soplado del tablero (desenergizado)',freq:'Trimestral',desc:'Aspirar polvo, limpiar platinas, verificar ventilación y filtros de aire',modoFalla:'Aislamiento, calentamiento'},
+      {tipo:'Preventivo',act:'Prueba funcional de interruptores y relés de protección',freq:'Anual',desc:'Prueba de disparo por inyección de corriente secundaria. Verificar tiempos y corrientes de disparo',modoFalla:'Relés de protección, interruptores'},
+      {tipo:'Preventivo',act:'Revisión de contactos de contactores y relés auxiliares',freq:'Semestral',desc:'Inspección visual, limpieza con abrillantador de contactos. Medir resistencia de contacto',modoFalla:'Contactos'},
+      {tipo:'Predictivo',act:'Medición de resistencia de contacto (microóhmetro)',freq:'Anual',desc:'Valores altos (>100 μΩ en bornes) indican contaminación u oxidación de contactos',modoFalla:'Contactos, barras'},
+    ]
+  },
+  {
+    id:'hidraulico', icon:'💪', name:'Sistema Hidráulico', cat:'Mecanico,Fluidos',
+    use:'Transmisión de potencia mediante fluido a presión para accionar cilindros, motores y válvulas en prensas, inyectoras, equipos móviles y brazos robotizados.',
+    stats:{mtbf:'Variable',vida:'15–25 años',preventivo:'45%',predictivo:'30%',correctivo:'25%'},
+    fallas:[
+      {modo:'Contaminación del aceite hidráulico',causa:'Partículas de desgaste, entrada de agua por condensación, contaminación en mantenimiento',consecuencia:'Desgaste acelerado de bomba, válvulas y cilindros – causa del 80% de fallas hidráulicas',sev:'A',det:'Media'},
+      {modo:'Desgaste de la bomba hidráulica',causa:'Contaminación, sobrecarga, cavitación por filtro obstruido, aceite degradado',consecuencia:'Pérdida de caudal y presión, mayor temperatura del sistema, ruido',sev:'A',det:'Media'},
+      {modo:'Fuga interna en válvulas hidráulicas',causa:'Desgaste del carrete, temperatura excesiva del aceite, contaminación abrasiva',consecuencia:'Deriva de posición de cilindros, pérdida de potencia, mayor temperatura',sev:'M',det:'Baja'},
+      {modo:'Falla de sellos en cilindros hidráulicos',causa:'Temperatura excesiva, contaminación, presión superior a la nominal, envejecimiento',consecuencia:'Fuga interna (drift) y externa (visible), pérdida de fuerza, contaminación',sev:'M',det:'Alta'},
+      {modo:'Obstrucción de filtro hidráulico',causa:'Contaminación acumulada, intervalo de cambio superado',consecuencia:'Cavitación de bomba, menor enfriamiento, alarma de ΔP',sev:'M',det:'Alta'},
+      {modo:'Deterioro de mangueras hidráulicas',causa:'Presión cíclica (fatiga), temperatura, abrasión exterior, envejecimiento del elastómero',consecuencia:'Rotura repentina, pérdida total de presión, riesgo de inyección de fluido',sev:'A',det:'Media'},
+    ],
+    activ:[
+      {tipo:'Preventivo',act:'Cambio de aceite hidráulico',freq:'Cada 2.000–4.000h o anual',desc:'Drenar, limpiar depósito, cambiar todos los filtros, rellenar con aceite ISO VG especificado',modoFalla:'Contaminación, degradación'},
+      {tipo:'Preventivo',act:'Cambio de filtros (alta presión y retorno)',freq:'Cada 500–1.000h o por indicador ΔP',desc:'Cambiar cuando el indicador ΔP señale obstrucción o por programa según fabricante',modoFalla:'Obstrucción de filtro'},
+      {tipo:'Predictivo',act:'Análisis de aceite hidráulico (ISO 4406)',freq:'Trimestral',desc:'Conteo de partículas (ISO 4406), contenido de agua (KF), viscosidad cinemática, TAN',modoFalla:'Contaminación – todos los componentes'},
+      {tipo:'Preventivo',act:'Inspección visual de mangueras y racores',freq:'Semestral',desc:'Buscar ampollas, grietas, abrasión, corrosión en racores. Verificar radio de curvatura',modoFalla:'Mangueras'},
+      {tipo:'Predictivo',act:'Prueba de eficiencia de la bomba hidráulica',freq:'Anual',desc:'Medir caudal y presión bajo carga conocida. Eficiencia volumétrica < 85% → reemplazar',modoFalla:'Bomba hidráulica'},
+      {tipo:'Preventivo',act:'Verificación de presión de gas en acumuladores',freq:'Semestral',desc:'Medir precarga de nitrógeno en frío. Tolerancia: ±10% del valor de diseño',modoFalla:'Acumuladores'},
+      {tipo:'Proactivo',act:'Control de contaminación ISO 4406 en línea',freq:'Continuo / revisión mensual',desc:'Instalar contador de partículas en línea. Target: 16/14/11 para sistemas servo',modoFalla:'Contaminación – causa raíz'},
+      {tipo:'Preventivo',act:'Prueba de fuga interna en cilindros y válvulas',freq:'Anual',desc:'Medir deriva de posición del cilindro con presión aplicada. Cuantificar caudal de fuga en válvulas',modoFalla:'Sellos de cilindros, válvulas'},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let selectedEquip = null;
+let currentActFilter = 'Todos';
+let currentCat = 'Todos';
+
+// ═══════════════════════════════════════════════════════
+// BUILD GRID
+// ═══════════════════════════════════════════════════════
+function buildGrid(data){
+  const grid = document.getElementById('equip-grid');
+  grid.innerHTML = '';
+  data.forEach(eq => {
+    const card = document.createElement('div');
+    card.className = 'equip-card' + (selectedEquip && selectedEquip.id === eq.id ? ' selected' : '');
+    card.dataset.cats = eq.cat;
+    card.innerHTML = `<span class="equip-icon">${eq.icon}</span><div class="equip-name">${eq.name}</div><div class="equip-tag">${eq.fallas.length} modos · ${eq.activ.length} activ.</div>`;
+    card.onclick = () => selectEquip(eq);
+    grid.appendChild(card);
+  });
+}
+
+function filterCat(cat, btn){
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat === 'Todos' ? EQUIP : EQUIP.filter(e => e.cat.includes(cat));
+  buildGrid(filtered);
+}
+
+function filterEquipment(q){
+  const query = q.toLowerCase();
+  const filtered = EQUIP.filter(e =>
+    e.name.toLowerCase().includes(query) ||
+    e.fallas.some(f => f.modo.toLowerCase().includes(query)) ||
+    e.activ.some(a => a.act.toLowerCase().includes(query))
+  );
+  buildGrid(filtered);
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER DETAIL
+// ═══════════════════════════════════════════════════════
+function selectEquip(eq){
+  selectedEquip = eq;
+  currentActFilter = 'Todos';
+  document.querySelectorAll('.equip-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  // Render header
+  const pct = s => eq.stats[s]||'—';
+  document.getElementById('detail-header').innerHTML = `
+    <div class="detail-icon-big">${eq.icon}</div>
+    <div class="detail-title-group">
+      <h2>${eq.name}</h2>
+      <p>${eq.use}</p>
+      <div class="detail-stats">
+        <div class="dstat"><span class="dstat-label">MTBF típico</span><span class="dstat-val">${pct('mtbf')}</span></div>
+        <div class="dstat"><span class="dstat-label">Vida útil</span><span class="dstat-val">${pct('vida')}</span></div>
+        <div class="dstat"><span class="dstat-label">Mix Preventivo</span><span class="dstat-val">${pct('preventivo')}</span></div>
+        <div class="dstat"><span class="dstat-label">Mix Predictivo</span><span class="dstat-val">${pct('predictivo')}</span></div>
+        <div class="dstat"><span class="dstat-label">Mix Correctivo</span><span class="dstat-val">${pct('correctivo')}</span></div>
+      </div>
+    </div>`;
+  renderFallas(eq);
+  renderActividades(eq, 'Todos');
+  renderEstrategia(eq);
+  // Show tabs, reset to fallas
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('.tab-btn').classList.add('active');
+  document.getElementById('tm-falla').classList.add('active');
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+  gsap.from('#detail-panel', {opacity:0, y:20, duration:.4, ease:'power2.out'});
+}
+
+function renderFallas(eq){
+  const sevLabel = s => ({A:'<span class="sev-chip sev-A">ALTA</span>',M:'<span class="sev-chip sev-M">MEDIA</span>',B:'<span class="sev-chip sev-B">BAJA</span>'}[s]||s);
+  const detLabel = d => ({Alta:'<span class="det-chip det-alta">Alta</span>',Media:'<span class="det-chip det-media">Media</span>',Baja:'<span class="det-chip det-baja">Baja</span>'}[d]||d);
+  let html = `<div style="overflow-x:auto"><table class="fm-table">
+    <thead><tr><th>Modo de Falla</th><th>Causas Frecuentes</th><th>Consecuencia</th><th>Severidad</th><th>Detectabilidad</th></tr></thead><tbody>`;
+  eq.fallas.forEach(f => {
+    html += `<tr><td>${f.modo}</td><td>${f.causa}</td><td>${f.consecuencia}</td><td>${sevLabel(f.sev)}</td><td>${detLabel(f.det)}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  html += `<div style="margin-top:1.2rem;padding:.8rem 1.1rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:10px;font-size:.82rem;color:var(--muted)">
+    <strong style="color:var(--text)">🔑 Leyenda de Severidad:</strong> 
+    <span class="sev-chip sev-A">ALTA</span> Puede detener la producción o representar riesgo de seguridad &nbsp;
+    <span class="sev-chip sev-M">MEDIA</span> Reduce eficiencia o implica riesgo de escalada &nbsp;
+    <span class="sev-chip sev-B">BAJA</span> Impacto menor, requiere seguimiento<br/>
+    <strong style="color:var(--text)">🔍 Detectabilidad:</strong> 
+    <span class="det-chip det-alta">Alta</span> Fácilmente observable o medible &nbsp;
+    <span class="det-chip det-media">Media</span> Requiere instrumento o técnica específica &nbsp;
+    <span class="det-chip det-baja">Baja</span> Difícil de detectar antes de la falla funcional
+  </div>`;
+  document.getElementById('tm-falla').innerHTML = html;
+}
+
+function renderActividades(eq, filterType){
+  currentActFilter = filterType;
+  const types = ['Todos','Preventivo','Predictivo','Correctivo','Proactivo'];
+  let filtersHtml = '<div class="act-filters">' + types.map(t =>
+    `<button class="act-filt-btn${t===filterType?' active':''}" data-t="${t}" onclick="renderActividades(selectedEquip,'${t}')">${t}</button>`
+  ).join('') + '</div>';
+  let html = filtersHtml + `<div style="overflow-x:auto"><table class="act-table">
+    <thead><tr><th>Tipo</th><th>Actividad</th><th>Frecuencia</th><th>Qué verificar / Parámetros</th><th>Modos que gestiona</th></tr></thead><tbody>`;
+  eq.activ.forEach(a => {
+    const hide = filterType !== 'Todos' && a.tipo !== filterType ? ' hidden' : '';
+    html += `<tr class="${hide}"><td><span class="type-badge tb-${a.tipo}">${a.tipo}</span></td><td>${a.act}</td><td><span class="freq-mono">${a.freq}</span></td><td>${a.desc}</td><td style="font-size:.75rem;color:var(--muted)">${a.modoFalla}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  const total = eq.activ.length;
+  const shown = filterType === 'Todos' ? total : eq.activ.filter(a => a.tipo === filterType).length;
+  html += `<p style="margin-top:.7rem;font-size:.78rem;color:var(--muted)">Mostrando ${shown} de ${total} actividades</p>`;
+  document.getElementById('tm-activ').innerHTML = html;
+}
+
+function renderEstrategia(eq){
+  const s = eq.stats;
+  const bars = [
+    {label:'Preventivo (TBM/PM)',pct:parseInt(s.preventivo),color:'#10b981'},
+    {label:'Predictivo (CBM)',pct:parseInt(s.predictivo),color:'#06b6d4'},
+    {label:'Correctivo planificado',pct:parseInt(s.correctivo),color:'#f97316'},
+  ];
+  const sumAlt = eq.fallas.filter(f=>f.sev==='A').length;
+  const sumMed = eq.fallas.filter(f=>f.sev==='M').length;
+  const sumBaj = eq.fallas.filter(f=>f.sev==='B').length;
+  let html = `<div class="strategy-summary">
+    ${bars.map(b=>`<div class="ss-card"><h4 style="color:${b.color}">${b.label}</h4>
+      <div class="ss-bar" style="background:rgba(255,255,255,.08)">
+        <div class="ss-bar" style="background:${b.color};width:${b.pct}%;min-width:4px;margin:0"></div>
+      </div>
+      <div class="ss-pct">${b.pct}% del esfuerzo de mantenimiento</div></div>`).join('')}
+  </div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem 1.6rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.2rem">
+    <div>
+      <strong style="font-size:.88rem">⚠️ Perfil de riesgo de fallas</strong>
+      <div style="margin-top:.6rem;display:flex;flex-direction:column;gap:.4rem">
+        <div style="display:flex;align-items:center;gap:.6rem"><span class="sev-chip sev-A">ALTA</span><span style="font-size:.82rem;color:var(--muted)">${sumAlt} modos de falla</span></div>
+        <div style="display:flex;align-items:center;gap:.6rem"><span class="sev-chip sev-M">MEDIA</span><span style="font-size:.82rem;color:var(--muted)">${sumMed} modos de falla</span></div>
+        <div style="display:flex;align-items:center;gap:.6rem"><span class="sev-chip sev-B">BAJA</span><span style="font-size:.82rem;color:var(--muted)">${sumBaj} modos de falla</span></div>
+      </div>
+    </div>
+    <div>
+      <strong style="font-size:.88rem">📋 Actividades por tipo</strong>
+      <div style="margin-top:.6rem;display:flex;flex-direction:column;gap:.4rem">
+        ${['Preventivo','Predictivo','Correctivo','Proactivo'].map(t=>{
+          const n=eq.activ.filter(a=>a.tipo===t).length;
+          if(!n) return '';
+          return `<div style="display:flex;align-items:center;gap:.6rem"><span class="type-badge tb-${t}">${t}</span><span style="font-size:.82rem;color:var(--muted)">${n} actividad${n>1?'es':''}</span></div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div>
+      <strong style="font-size:.88rem">💡 Consideración clave</strong>
+      <p style="margin-top:.5rem;font-size:.82rem;color:var(--muted);line-height:1.65">${getKeyConsideration(eq.id)}</p>
+    </div>
+  </div>`;
+  document.getElementById('tm-strat').innerHTML = html;
+}
+
+function getKeyConsideration(id){
+  const map = {
+    motor:'El predictivo (vibraciones + termografía + Megger) detecta el 90% de las fallas antes de que ocurran. Invertir en estas técnicas reduce significativamente el correctivo.',
+    bomba:'El sello mecánico es la pieza más vulnerable. Un programa de alineación riguroso y control de vibración puede triplicar la vida del sello.',
+    compresor:'El 70% de los problemas provienen de aceite degradado o contaminación. El cambio oportuno de filtros y aceite es la acción de mayor impacto.',
+    reductor:'El análisis de aceite es el indicador más temprano de desgaste de engranajes. Cada punto de análisis detectado ahorra un overhaul completo.',
+    banda:'La alineación semanal y el mantenimiento de rodillos evitan el desgaste prematuro de la banda, que es el componente más costoso del sistema.',
+    intercambiador:'El control de química del agua de enfriamiento y el monitoreo de ΔP son las acciones preventivas de mayor ROI para evitar limpiezas de emergencia.',
+    valvula:'Las válvulas de control son el elemento final de control: su mantenimiento impacta directamente la calidad del producto y la seguridad del proceso.',
+    tanque:'La tasa de corrosión determina el intervalo de inspección API 653. El monitoreo rutinario de espesores permite planificar sin salir de operación.',
+    tablero:'La termografía semestral detecta el 95% de los puntos calientes antes de que produzcan un arco eléctrico o incendio. Es la actividad de mayor impacto en tableros.',
+    hidraulico:'La contaminación del aceite causa el 80% de las fallas hidráulicas. El análisis ISO 4406 trimestral y la disciplina en mantenimiento de filtros es la clave.'
+  };
+  return map[id] || '—';
+}
+
+function showTab(tabId, btn){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+buildGrid(EQUIP);
+</script>
+</body>
+</html>

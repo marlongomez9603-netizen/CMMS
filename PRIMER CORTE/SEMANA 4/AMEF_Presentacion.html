@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMEF - Análisis de Modos y Efectos de Falla - UNIPAZ</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+body { font-family:'Montserrat',sans-serif; background:#0d1b2a; }
+.slide { width:1280px; min-height:720px; margin:30px auto; background:#fff; position:relative; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18); border-radius:6px; page-break-after:always; }
+.slide::before { content:''; position:absolute; bottom:0; left:0; width:100%; height:120px; background:linear-gradient(135deg,rgba(26,58,92,0.07) 0%,rgba(26,58,92,0.03) 100%); clip-path:ellipse(80% 100% at 50% 100%); }
+.slide::after { content:''; position:absolute; top:0; right:0; width:200px; height:200px; background:radial-gradient(circle,rgba(218,165,32,0.08) 0%,transparent 70%); }
+.header-bar { background:linear-gradient(135deg,#1a3a5c 0%,#2a5a8c 100%); padding:18px 50px; display:flex; justify-content:space-between; align-items:center; }
+.header-bar .logo-text { color:#fff; font-size:14px; font-weight:700; letter-spacing:2px; }
+.header-bar .subject { color:rgba(255,255,255,0.85); font-size:12px; }
+.content { padding:30px 50px 40px; position:relative; z-index:1; }
+h1 { color:#1a3a5c; font-size:30px; font-weight:800; margin-bottom:8px; border-bottom:3px solid #daa520; padding-bottom:10px; display:inline-block; }
+h2 { color:#1a3a5c; font-size:24px; font-weight:700; margin:14px 0 8px; }
+h3 { color:#daa520; font-size:18px; font-weight:700; margin:12px 0 6px; }
+p, li { color:#2c2c2c; font-size:14px; line-height:1.65; }
+ul { margin-left:25px; }
+ul li { margin-bottom:5px; list-style:disc; }
+ul li::marker { color:#daa520; }
+.highlight { background:linear-gradient(135deg,#f0f4f8,#e8eef5); border-left:4px solid #1a3a5c; padding:14px 18px; border-radius:0 8px 8px 0; margin:10px 0; }
+.gold-box { background:linear-gradient(135deg,#fdf6e3,#fceabb); border-left:4px solid #daa520; padding:14px 18px; border-radius:0 8px 8px 0; margin:10px 0; }
+.red-box { background:linear-gradient(135deg,#fde8e8,#fcc); border-left:4px solid #c0392b; padding:14px 18px; border-radius:0 8px 8px 0; margin:10px 0; }
+.green-box { background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-left:4px solid #27ae60; padding:14px 18px; border-radius:0 8px 8px 0; margin:10px 0; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:8px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-top:8px; }
+.card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:15px; }
+.card h3 { margin-top:0; }
+.tag { display:inline-block; background:#1a3a5c; color:#fff; padding:3px 10px; border-radius:12px; font-size:11px; margin:2px; }
+.tag-gold { background:#daa520; }
+.tag-red { background:#c0392b; }
+.tag-green { background:#27ae60; }
+.tag-orange { background:#e67e22; }
+.footer { position:absolute; bottom:0; left:0; width:100%; padding:8px 50px; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#888; }
+.footer .line { width:100%; height:2px; background:linear-gradient(90deg,#1a3a5c,#daa520,#1a3a5c); position:absolute; top:0; left:0; }
+.title-slide .content { display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:620px; text-align:center; }
+.title-slide h1 { font-size:36px; border-bottom:4px solid #daa520; margin-bottom:15px; }
+.title-slide .subtitle { color:#daa520; font-size:20px; font-weight:600; margin-bottom:25px; }
+.title-slide .info { color:#555; font-size:14px; line-height:2; }
+.scale-table { width:100%; border-collapse:collapse; margin:8px 0; font-size:12px; }
+.scale-table th { background:#1a3a5c; color:#fff; padding:8px; text-align:center; }
+.scale-table td { padding:7px 8px; border-bottom:1px solid #e2e8f0; text-align:center; }
+.scale-table tr:nth-child(even) { background:#f8fafc; }
+.scale-table .low { background:#e8f5e9; color:#1b5e20; font-weight:700; }
+.scale-table .med { background:#fff3e0; color:#e65100; font-weight:700; }
+.scale-table .high { background:#fde8e8; color:#b71c1c; font-weight:700; }
+.norm-table { width:100%; border-collapse:collapse; margin:8px 0; font-size:12px; }
+.norm-table th { background:#1a3a5c; color:#fff; padding:8px; text-align:left; }
+.norm-table td { padding:7px 8px; border-bottom:1px solid #e2e8f0; }
+.norm-table tr:nth-child(even) { background:#f8fafc; }
+.step-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.step-item { background:#1a3a5c; color:#fff; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; }
+.step-arrow { color:#daa520; font-size:18px; font-weight:700; }
+.formula-box { background:#1a3a5c; color:#fff; padding:20px 30px; border-radius:12px; text-align:center; margin:15px 0; font-size:22px; font-weight:700; letter-spacing:2px; }
+.formula-box span { color:#daa520; }
+.example-num { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; background:#1a3a5c; color:#fff; border-radius:50%; font-weight:700; font-size:13px; margin-right:8px; }
+</style>
+</head>
+<body>
+<div class="slide title-slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>AMEF</h1>
+<p class="subtitle">Análisis de Modos y Efectos de Falla<br>(FMEA — Failure Mode and Effects Analysis)</p>
+<div class="info">
+<strong>Unidad Formativa 2:</strong> Diagnóstico de Fallas<br>
+<strong>Programa:</strong> Tecnología en Operación y Sostenimiento<br>de Equipos Mecánicos (TOSEM)<br>
+<strong>Institución:</strong> Instituto Universitario de la Paz — UNIPAZ<br>
+<strong>Periodo:</strong> 2026-I
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 1</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>¿Qué es el AMEF?</h1>
+<div class="highlight">
+<p><strong>Definición:</strong> El AMEF (Análisis de Modos y Efectos de Falla) es una metodología sistemática y proactiva que identifica los <strong>modos potenciales de falla</strong> de un producto, proceso o sistema, evalúa sus <strong>efectos</strong>, determina sus <strong>causas</strong> y asigna un <strong>nivel de riesgo</strong> para priorizar acciones correctivas y preventivas.</p>
+</div>
+<h3>Origen histórico:</h3>
+<ul>
+<li>Desarrollado en los <strong>años 1940s</strong> por las Fuerzas Armadas de EE.UU. (MIL-P-1629)</li>
+<li>Adoptado por la <strong>NASA</strong> en los años 1960s para las misiones Apollo</li>
+<li>La industria automotriz lo popularizó en los <strong>años 1970s</strong> (Ford Motor Company)</li>
+<li>Hoy es requisito en normas como <strong>IATF 16949, ISO 9001, IEC 60812</strong></li>
+</ul>
+<h3>¿Para qué sirve?</h3>
+<div class="two-col">
+<div class="card">
+<h3>✅ Objetivos principales</h3>
+<ul>
+<li>Identificar fallas antes de que ocurran</li>
+<li>Evaluar el riesgo de cada modo de falla</li>
+<li>Priorizar acciones según nivel de riesgo</li>
+<li>Documentar el conocimiento del equipo</li>
+<li>Mejorar la confiabilidad y seguridad</li>
+</ul>
+</div>
+<div class="card">
+<h3>🎯 Beneficios clave</h3>
+<ul>
+<li>Reduce costos de garantía y reprocesos</li>
+<li>Previene accidentes y daños ambientales</li>
+<li>Mejora la satisfacción del cliente</li>
+<li>Cumple requisitos normativos</li>
+<li>Alimenta planes de mantenimiento</li>
+</ul>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 2</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Tipos de AMEF</h1>
+<div class="two-col">
+<div class="card" style="border-top:4px solid #1a3a5c;">
+<h3>📐 AMEF de Diseño (DFMEA)</h3>
+<p>Se aplica durante la fase de <strong>diseño del producto</strong> o componente, antes de la manufactura.</p>
+<ul>
+<li>Analiza fallas potenciales del diseño</li>
+<li>Evalúa si el diseño cumple con los requisitos funcionales</li>
+<li>Considera: geometría, materiales, tolerancias, interfaces</li>
+<li>Responsable: <strong>Ingeniería de Diseño</strong></li>
+</ul>
+<div class="highlight">
+<p><strong>Ejemplo:</strong> Al diseñar un eje de transmisión, se evalúa si el diámetro seleccionado soportará los esfuerzos de torsión en las peores condiciones de operación.</p>
+</div>
+</div>
+<div class="card" style="border-top:4px solid #daa520;">
+<h3>⚙️ AMEF de Proceso (PFMEA)</h3>
+<p>Se aplica al <strong>proceso de manufactura o mantenimiento</strong>, analizando cómo el proceso podría fallar.</p>
+<ul>
+<li>Analiza fallas potenciales del proceso productivo</li>
+<li>Evalúa cada paso o estación del proceso</li>
+<li>Considera: herramientas, procedimientos, operadores</li>
+<li>Responsable: <strong>Ingeniería de Proceso / Mantenimiento</strong></li>
+</ul>
+<div class="gold-box">
+<p><strong>Ejemplo:</strong> En el ensamble de una bomba, se evalúa si el torque de apriete de los pernos del cuerpo podría ser insuficiente y causar fuga.</p>
+</div>
+</div>
+</div>
+<div class="gold-box" style="margin-top:12px;">
+<p><strong>💡 En mantenimiento industrial</strong> (como en TOSEM), el más utilizado es el <strong>AMEF de Proceso</strong>, aplicado a los procedimientos de mantenimiento, reparación y operación de equipos.</p>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 3</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Terminología Clave del AMEF</h1>
+<div class="three-col">
+<div class="card">
+<h3>🔴 Modo de Falla</h3>
+<p><strong>¿Qué puede salir mal?</strong></p>
+<p>Es la forma en que un componente, sistema o proceso puede <strong>dejar de cumplir</strong> su función prevista.</p>
+<div class="highlight"><p><em>Ejemplo: "El rodamiento se traba", "La válvula no cierra", "El sello tiene fuga"</em></p></div>
+</div>
+<div class="card">
+<h3>⚡ Efecto de la Falla</h3>
+<p><strong>¿Qué consecuencia tiene?</strong></p>
+<p>Es el <strong>impacto</strong> que el modo de falla produce en el sistema, proceso, producto o usuario final.</p>
+<div class="highlight"><p><em>Ejemplo: "Paro de producción", "Contaminación del producto", "Riesgo de lesión"</em></p></div>
+</div>
+<div class="card">
+<h3>🔍 Causa de la Falla</h3>
+<p><strong>¿Por qué ocurre?</strong></p>
+<p>Es la <strong>razón raíz</strong> que origina el modo de falla. Puede ser de diseño, proceso, material o humana.</p>
+<div class="highlight"><p><em>Ejemplo: "Lubricación insuficiente", "Material incorrecto", "Operador no capacitado"</em></p></div>
+</div>
+</div>
+<h2 style="margin-top:15px;">Los 3 Criterios de Evaluación</h2>
+<div class="three-col">
+<div class="card" style="border-top:3px solid #c0392b;">
+<h3>S — Severidad</h3>
+<p>¿Qué tan <strong>grave</strong> es el efecto de la falla? Escala de <strong>1 a 10</strong>.</p>
+<p>10 = Catastrófico (riesgo de muerte)<br>1 = Sin efecto perceptible</p>
+</div>
+<div class="card" style="border-top:3px solid #e67e22;">
+<h3>O — Ocurrencia</h3>
+<p>¿Qué tan <strong>probable</strong> es que ocurra la causa? Escala de <strong>1 a 10</strong>.</p>
+<p>10 = Muy frecuente (inevitable)<br>1 = Improbable (casi imposible)</p>
+</div>
+<div class="card" style="border-top:3px solid #2980b9;">
+<h3>D — Detección</h3>
+<p>¿Qué tan fácil es <strong>detectar</strong> la falla antes de que llegue al usuario? Escala de <strong>1 a 10</strong>.</p>
+<p>10 = Imposible de detectar<br>1 = Detección segura (100%)</p>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 4</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>El Número de Prioridad de Riesgo (NPR)</h1>
+<div class="highlight">
+<p>El <strong>NPR</strong> (también llamado RPN en inglés — Risk Priority Number) es el indicador numérico que permite <strong>priorizar</strong> los modos de falla según su nivel de riesgo combinado.</p>
+</div>
+<div class="formula-box">
+NPR = <span>S</span>everidad × <span>O</span>currencia × <span>D</span>etección
+</div>
+<div class="two-col">
+<div class="card">
+<h3>📊 Rangos del NPR</h3>
+<table class="scale-table">
+<thead><tr><th>Rango NPR</th><th>Nivel de Riesgo</th><th>Acción Requerida</th></tr></thead>
+<tbody>
+<tr class="high"><td>500 — 1000</td><td>MUY ALTO</td><td>Acción correctiva INMEDIATA</td></tr>
+<tr class="high"><td>200 — 499</td><td>ALTO</td><td>Acción correctiva prioritaria</td></tr>
+<tr class="med"><td>100 — 199</td><td>MEDIO</td><td>Acción preventiva recomendada</td></tr>
+<tr class="low"><td>40 — 99</td><td>BAJO</td><td>Monitoreo y seguimiento</td></tr>
+<tr class="low"><td>1 — 39</td><td>MUY BAJO</td><td>Aceptable, documentar</td></tr>
+</tbody>
+</table>
+</div>
+<div class="card">
+<h3>⚠️ Consideraciones importantes</h3>
+<ul>
+<li>El NPR <strong>máximo posible</strong> es: 10 × 10 × 10 = <strong>1000</strong></li>
+<li>El NPR <strong>mínimo posible</strong> es: 1 × 1 × 1 = <strong>1</strong></li>
+<li>Un NPR alto NO siempre significa mayor riesgo real. Siempre analice la <strong>Severidad por separado</strong></li>
+<li>Si la Severidad es ≥ 9, se debe actuar <strong>independientemente del NPR</strong></li>
+<li>Después de implementar acciones, se recalcula el NPR para verificar la <strong>reducción del riesgo</strong></li>
+</ul>
+<div class="red-box">
+<p><strong>Regla de oro:</strong> Si Severidad ≥ 9, el modo de falla requiere acción correctiva obligatoria, sin importar el valor de O o D.</p>
+</div>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 5</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Escala de Severidad (S)</h1>
+<div class="highlight"><p>La severidad evalúa <strong>qué tan grave es el efecto</strong> de la falla sobre el usuario final, el proceso o la seguridad. <strong>No se puede reducir</strong> modificando controles; solo se reduce <strong>cambiando el diseño</strong>.</p></div>
+<table class="scale-table">
+<thead><tr><th>Valor</th><th>Nivel</th><th>Criterio</th><th>Ejemplo en Mantenimiento Industrial</th></tr></thead>
+<tbody>
+<tr class="high"><td>10</td><td>Peligroso sin aviso</td><td>Falla que pone en riesgo la vida sin señal previa</td><td>Explosión de recipiente a presión sin alarma</td></tr>
+<tr class="high"><td>9</td><td>Peligroso con aviso</td><td>Falla que pone en riesgo la vida con señal previa</td><td>Fuga tóxica de H₂S con detector activado</td></tr>
+<tr class="high"><td>8</td><td>Muy alto</td><td>Equipo inoperable, paro total de planta</td><td>Falla de turbina principal, paro de generación</td></tr>
+<tr class="med"><td>7</td><td>Alto</td><td>Equipo inoperable, afecta producción significativamente</td><td>Bomba de proceso fuera de servicio, producción al 50%</td></tr>
+<tr class="med"><td>6</td><td>Moderado</td><td>Equipo operable con degradación funcional importante</td><td>Compresor con vibración alta, operando con restricción</td></tr>
+<tr class="med"><td>5</td><td>Bajo-moderado</td><td>Equipo operable con degradación menor</td><td>Intercambiador con eficiencia reducida un 15%</td></tr>
+<tr class="low"><td>4</td><td>Bajo</td><td>Defecto menor detectado por la mayoría de usuarios</td><td>Ruido anormal en ventilador, no afecta función</td></tr>
+<tr class="low"><td>3</td><td>Muy bajo</td><td>Defecto menor detectado por algunos usuarios</td><td>Vibración leve, solo detectable con instrumento</td></tr>
+<tr class="low"><td>2</td><td>Mínimo</td><td>Efecto casi imperceptible</td><td>Leve variación de temperatura sin impacto</td></tr>
+<tr class="low"><td>1</td><td>Ninguno</td><td>Sin efecto</td><td>Falla en componente redundante sin consecuencia</td></tr>
+</tbody>
+</table>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 6</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Escala de Ocurrencia (O)</h1>
+<div class="highlight"><p>La ocurrencia evalúa <strong>la probabilidad de que la causa de la falla se presente</strong>. Se basa en datos históricos de falla, registros de mantenimiento o estimaciones del equipo de trabajo.</p></div>
+<table class="scale-table">
+<thead><tr><th>Valor</th><th>Nivel</th><th>Probabilidad</th><th>Frecuencia aproximada</th><th>Ejemplo</th></tr></thead>
+<tbody>
+<tr class="high"><td>10</td><td>Muy alta</td><td>> 1 en 2</td><td>Más de 1 vez por semana</td><td>Fallo por obstrucción en filtro sin plan de limpieza</td></tr>
+<tr class="high"><td>9</td><td>Muy alta</td><td>1 en 3</td><td>Cada 2 semanas</td><td>Fuga de sello en bomba con fluido abrasivo</td></tr>
+<tr class="high"><td>8</td><td>Alta</td><td>1 en 8</td><td>Una vez al mes</td><td>Sobrecalentamiento de motor sin ventilación</td></tr>
+<tr class="med"><td>7</td><td>Alta</td><td>1 en 20</td><td>Cada 2 meses</td><td>Desalineación post-mantenimiento</td></tr>
+<tr class="med"><td>6</td><td>Moderada</td><td>1 en 80</td><td>Cada 6 meses</td><td>Corrosión en ambiente costero</td></tr>
+<tr class="med"><td>5</td><td>Moderada</td><td>1 en 400</td><td>Una vez al año</td><td>Falla eléctrica por tormenta</td></tr>
+<tr class="low"><td>4</td><td>Baja</td><td>1 en 2.000</td><td>Cada 2-3 años</td><td>Fractura por fatiga en eje bien dimensionado</td></tr>
+<tr class="low"><td>3</td><td>Baja</td><td>1 en 15.000</td><td>Cada 5 años</td><td>Falla de PLC por firmware</td></tr>
+<tr class="low"><td>2</td><td>Muy baja</td><td>1 en 150.000</td><td>Cada 10+ años</td><td>Rotura de carcasa de hierro fundido</td></tr>
+<tr class="low"><td>1</td><td>Remota</td><td>< 1 en 1.500.000</td><td>Casi imposible</td><td>Falla simultánea de sistemas redundantes</td></tr>
+</tbody>
+</table>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 7</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Escala de Detección (D)</h1>
+<div class="highlight"><p>La detección evalúa <strong>la capacidad de los controles actuales para detectar</strong> la causa o el modo de falla antes de que el efecto llegue al usuario final o al proceso siguiente. <strong>A menor capacidad de detección, mayor es el valor.</strong></p></div>
+<table class="scale-table">
+<thead><tr><th>Valor</th><th>Nivel</th><th>Capacidad de Detección</th><th>Ejemplo de Control</th></tr></thead>
+<tbody>
+<tr class="high"><td>10</td><td>Imposible</td><td>No existe ningún control de detección</td><td>Sin instrumentación ni inspección</td></tr>
+<tr class="high"><td>9</td><td>Muy remota</td><td>Control muy improbable de detectar</td><td>Solo inspección visual ocasional</td></tr>
+<tr class="high"><td>8</td><td>Remota</td><td>Control con baja probabilidad</td><td>Inspección visual programada mensual</td></tr>
+<tr class="med"><td>7</td><td>Muy baja</td><td>Control detecta ocasionalmente</td><td>Medición manual periódica (sin tendencia)</td></tr>
+<tr class="med"><td>6</td><td>Baja</td><td>Control detecta a veces</td><td>Análisis de aceite trimestral</td></tr>
+<tr class="med"><td>5</td><td>Moderada</td><td>Control detecta ~50% de las veces</td><td>Ruta de vibración mensual con tendencia</td></tr>
+<tr class="low"><td>4</td><td>Moderada-alta</td><td>Buena probabilidad de detección</td><td>Monitoreo de condición con alarma</td></tr>
+<tr class="low"><td>3</td><td>Alta</td><td>Control muy probable de detectar</td><td>Sensor en línea con alarma automática</td></tr>
+<tr class="low"><td>2</td><td>Muy alta</td><td>Control casi seguro de detectar</td><td>Doble sensor con trip automático</td></tr>
+<tr class="low"><td>1</td><td>Casi cierta</td><td>Detección garantizada (100%)</td><td>Protección física + interlock + alarma</td></tr>
+</tbody>
+</table>
+<div class="gold-box"><p><strong>💡 Nota:</strong> Para reducir D, se deben mejorar los <strong>controles de detección</strong>: agregar sensores, implementar monitoreo de condición, crear rutas de inspección, instalar sistemas de protección automática.</p></div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 8</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>¿Cómo se Elabora un AMEF? — Paso a Paso</h1>
+<div class="step-flow">
+<span class="step-item">1. Definir sistema</span><span class="step-arrow">→</span>
+<span class="step-item">2. Funciones</span><span class="step-arrow">→</span>
+<span class="step-item">3. Modos de falla</span><span class="step-arrow">→</span>
+<span class="step-item">4. Efectos</span><span class="step-arrow">→</span>
+<span class="step-item">5. Causas</span><span class="step-arrow">→</span>
+<span class="step-item">6. Controles</span><span class="step-arrow">→</span>
+<span class="step-item">7. S, O, D</span><span class="step-arrow">→</span>
+<span class="step-item">8. NPR</span><span class="step-arrow">→</span>
+<span class="step-item">9. Acciones</span>
+</div>
+<div class="two-col" style="margin-top:10px;">
+<div>
+<div class="card">
+<h3>Paso 1: Definir el sistema/proceso</h3>
+<p>Delimitar el alcance del análisis: qué equipo, subsistema o proceso se va a analizar.</p>
+</div>
+<div class="card" style="margin-top:10px;">
+<h3>Paso 2: Identificar funciones</h3>
+<p>Listar qué debe hacer cada componente o paso del proceso. Usar verbo + sustantivo: "Bombear fluido", "Sellar presión".</p>
+</div>
+<div class="card" style="margin-top:10px;">
+<h3>Paso 3: Identificar modos de falla</h3>
+<p>Para cada función, preguntarse: ¿de qué formas puede dejar de cumplirse? Listar todos los modos posibles.</p>
+</div>
+<div class="card" style="margin-top:10px;">
+<h3>Paso 4: Determinar efectos</h3>
+<p>¿Qué pasa si ocurre ese modo de falla? Describir el impacto en el sistema, producción, seguridad.</p>
+</div>
+</div>
+<div>
+<div class="card">
+<h3>Paso 5: Identificar causas</h3>
+<p>Determinar la causa raíz de cada modo de falla. Usar herramientas como Ishikawa o 5 Por Qué.</p>
+</div>
+<div class="card" style="margin-top:10px;">
+<h3>Paso 6: Controles actuales</h3>
+<p>Listar qué controles existen actualmente para prevenir o detectar la falla (inspecciones, sensores, etc.).</p>
+</div>
+<div class="card" style="margin-top:10px;">
+<h3>Paso 7: Asignar S, O y D</h3>
+<p>Usar las escalas de 1-10 para calificar cada criterio según las tablas estandarizadas.</p>
+</div>
+<div class="card" style="margin-top:10px;">
+<h3>Pasos 8-9: Calcular NPR y actuar</h3>
+<p>Multiplicar S×O×D. Priorizar los NPR más altos. Definir acciones correctivas con responsable y fecha.</p>
+</div>
+</div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 9</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Estructura de la Matriz AMEF</h1>
+<div class="highlight"><p>La matriz AMEF es la herramienta documental donde se registra todo el análisis. Cada fila representa un <strong>modo de falla</strong> con su evaluación completa.</p></div>
+<table class="norm-table" style="font-size:11px;">
+<thead><tr>
+<th style="width:5%">#</th>
+<th style="width:10%">Componente / Paso</th>
+<th style="width:10%">Función</th>
+<th style="width:10%">Modo de Falla</th>
+<th style="width:12%">Efecto</th>
+<th style="width:4%">S</th>
+<th style="width:10%">Causa</th>
+<th style="width:4%">O</th>
+<th style="width:10%">Control Actual</th>
+<th style="width:4%">D</th>
+<th style="width:5%;background:#c0392b;">NPR</th>
+<th style="width:12%">Acción Recomendada</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1</td><td>Rodamiento</td><td>Soportar carga radial</td><td>Desgaste prematuro</td><td>Vibración alta, paro</td>
+<td style="background:#fde8e8;font-weight:700;">8</td><td>Lubricación insuficiente</td>
+<td style="background:#fff3e0;font-weight:700;">6</td><td>Ruta de vibración mensual</td>
+<td style="background:#fff3e0;font-weight:700;">5</td>
+<td style="background:#fde8e8;font-weight:700;text-align:center;">240</td>
+<td>Implementar lubricación automática</td>
+</tr>
+<tr>
+<td>2</td><td>Sello mecánico</td><td>Sellar fluido</td><td>Fuga externa</td><td>Derrame, contaminación</td>
+<td style="background:#fff3e0;font-weight:700;">7</td><td>Desgaste por abrasión</td>
+<td style="background:#fff3e0;font-weight:700;">5</td><td>Inspección visual semanal</td>
+<td style="background:#fff3e0;font-weight:700;">7</td>
+<td style="background:#fde8e8;font-weight:700;text-align:center;">245</td>
+<td>Cambiar a sello doble + flush</td>
+</tr>
+<tr>
+<td>3</td><td>Impulsor</td><td>Generar presión</td><td>Erosión</td><td>Pérdida de caudal</td>
+<td style="background:#fff3e0;font-weight:700;">6</td><td>Partículas en fluido</td>
+<td style="background:#e8f5e9;font-weight:700;">4</td><td>Medición de presión</td>
+<td style="background:#fff3e0;font-weight:700;">6</td>
+<td style="background:#fff3e0;font-weight:700;text-align:center;">144</td>
+<td>Instalar filtro aguas arriba</td>
+</tr>
+</tbody>
+</table>
+<div class="two-col" style="margin-top:12px;">
+<div class="gold-box">
+<p><strong>📌 Lectura de la fila 1:</strong> El rodamiento tiene como función soportar carga radial. Puede fallar por desgaste prematuro (modo), causando vibración alta y paro (efecto, S=8). La causa es lubricación insuficiente (O=6). El control actual es una ruta de vibración mensual (D=5). NPR = 8×6×5 = <strong>240 (Alto)</strong>. Acción: lubricación automática.</p>
+</div>
+<div class="red-box">
+<p><strong>⚠️ Priorización:</strong> Los modos con NPR más alto se atienden primero. En este ejemplo, tanto el Rodamiento (240) como el Sello (245) requieren acción prioritaria. El impulsor (144) requiere acción preventiva.</p></div>
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 10</span></div></div>
+<div class="slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>Ejemplo Completo: AMEF de Compresor Reciprocante</h1>
+<div class="highlight"><p><strong>Sistema:</strong> Compresor reciprocante de gas natural, 2 etapas, 500 HP — Estación de compresión</p></div>
+<table class="norm-table" style="font-size:10.5px;">
+<thead><tr><th>#</th><th>Componente</th><th>Función</th><th>Modo de Falla</th><th>Efecto</th><th>S</th><th>Causa</th><th>O</th><th>Control</th><th>D</th><th style="background:#c0392b;">NPR</th><th>Acción</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Válvula de succión</td><td>Permitir entrada de gas</td><td>No abre completamente</td><td>Pérdida de capacidad 30%</td>
+<td style="font-weight:700;">7</td><td>Resorte fatigado</td><td style="font-weight:700;">6</td><td>Análisis de presión</td><td style="font-weight:700;">5</td>
+<td style="background:#fde8e8;font-weight:700;">210</td><td>Cambiar resortes cada 8000 hrs</td></tr>
+<tr><td>2</td><td>Empaquetadura pistón</td><td>Sellar compresión</td><td>Fuga de gas entre etapas</td><td>Baja eficiencia, recalentamiento</td>
+<td style="font-weight:700;">8</td><td>Desgaste normal</td><td style="font-weight:700;">7</td><td>Monitoreo de temperatura</td><td style="font-weight:700;">4</td>
+<td style="background:#fde8e8;font-weight:700;">224</td><td>Reemplazo preventivo a 6000 hrs</td></tr>
+<tr><td>3</td><td>Sistema de lubricación</td><td>Lubricar cilindros</td><td>Obstrucción de línea</td><td>Desgaste acelerado, rotura</td>
+<td style="font-weight:700;">9</td><td>Contaminación del aceite</td><td style="font-weight:700;">4</td><td>Presión de aceite con alarma</td><td style="font-weight:700;">3</td>
+<td style="background:#fff3e0;font-weight:700;">108</td><td>Filtración de aceite + análisis mensual</td></tr>
+<tr><td>4</td><td>Cigüeñal</td><td>Convertir rotación</td><td>Fractura por fatiga</td><td>PARO TOTAL, daño catastrófico</td>
+<td style="font-weight:700;">10</td><td>Desalineamiento</td><td style="font-weight:700;">3</td><td>Vibración mensual</td><td style="font-weight:700;">5</td>
+<td style="background:#fff3e0;font-weight:700;">150</td><td>Alineación láser + inspección NDT anual</td></tr>
+<tr><td>5</td><td>Enfriador inter-etapa</td><td>Enfriar gas comprimido</td><td>Fuga interna</td><td>Contaminación, baja eficiencia</td>
+<td style="font-weight:700;">6</td><td>Corrosión por humedad</td><td style="font-weight:700;">5</td><td>Análisis de gas</td><td style="font-weight:700;">6</td>
+<td style="background:#fff3e0;font-weight:700;">180</td><td>Tratamiento anticorrosivo + inspección UT</td></tr>
+</tbody>
+</table>
+<div class="gold-box"><p><strong>📊 Priorización:</strong> Aunque el cigüeñal tiene NPR=150 (menor que válvula=210), su <strong>Severidad=10</strong> lo convierte en prioridad máxima por regla de seguridad. Los 5 modos requieren acción, priorizados: Cigüeñal → Empaquetadura → Válvula → Enfriador → Lubricación.</p></div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 11</span></div></div>
+<div class="slide title-slide"><div class="header-bar"><span class="logo-text">UNIPAZ</span><span class="subject">AMEF — Análisis de Modos y Efectos de Falla · UF2</span></div>
+<div class="content">
+<h1>¡Gracias!</h1>
+<p class="subtitle">AMEF — Análisis de Modos y Efectos de Falla</p>
+<div class="info">
+<strong>Recuerde:</strong><br>
+"El AMEF no es un formato que se llena una vez.<br>Es un documento vivo que se actualiza continuamente."<br><br>
+<strong>Practique con el Simulador AMEF interactivo</strong><br>
+(archivo: Simulador_AMEF.html)<br><br>
+<strong>Instituto Universitario de la Paz — UNIPAZ</strong><br>
+Tecnología en Operación y Sostenimiento de Equipos Mecánicos<br>
+Unidad Formativa 2 — Diagnóstico de Fallas · 2026-I
+</div>
+</div><div class="footer"><div class="line"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 12</span></div></div>
+
+</body>
+</html>

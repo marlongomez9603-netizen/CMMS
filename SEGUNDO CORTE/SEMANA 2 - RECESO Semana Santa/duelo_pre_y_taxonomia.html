@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ Trivia Duelo — El PRE y Taxonomía del Mantenimiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --red:#e74c3c;--red-bg:rgba(231,76,60,.13);--red-glow:rgba(231,76,60,.45);
+    --blue:#3498db;--blue-bg:rgba(52,152,219,.13);--blue-glow:rgba(52,152,219,.45);
+    --gold:#f1c40f;--green:#2ecc71;--purple:#9b59b6;--warn:#f39c12;
+    --bg:#07070f;--card:#0f0f22;--border:rgba(255,255,255,.07);
+    --text:#e2e2ee;--muted:#8888aa;
+  }
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(1px 1px at 8% 12%,rgba(255,255,255,.55) 0%,transparent 100%),
+      radial-gradient(1px 1px at 22% 38%,rgba(255,255,255,.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 55% 18%,rgba(255,255,255,.45) 0%,transparent 100%),
+      radial-gradient(1px 1px at 78% 68%,rgba(255,255,255,.35) 0%,transparent 100%),
+      radial-gradient(2px 2px at 44% 82%,rgba(255,255,255,.2) 0%,transparent 100%),
+      radial-gradient(1px 1px at 92% 9%,rgba(255,255,255,.5) 0%,transparent 100%),
+      radial-gradient(1px 1px at 35% 55%,rgba(255,255,255,.25) 0%,transparent 100%),
+      radial-gradient(1px 1px at 67% 45%,rgba(255,255,255,.2) 0%,transparent 100%),
+      radial-gradient(2px 2px at 15% 72%,rgba(255,255,255,.15) 0%,transparent 100%);
+  }
+
+  .screen{display:none;position:relative;z-index:1}
+  .screen.active{display:flex}
+
+  /* ══ INTRO ══ */
+  #screen-intro{min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+  .intro-badge{display:inline-block;padding:6px 20px;background:rgba(241,196,15,.1);border:1px solid rgba(241,196,15,.3);border-radius:50px;color:var(--gold);font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px}
+  .intro-title{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,6vw,4.5rem);font-weight:900;line-height:1.1;margin-bottom:10px;background:linear-gradient(135deg,var(--red) 0%,#ff6b6b 30%,var(--blue) 70%,#74b9ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .intro-sub{font-size:.9rem;color:var(--muted);margin-bottom:32px;max-width:560px;line-height:1.6}
+  .topic-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:36px}
+  .topic-pill{padding:4px 14px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+  .tp-pre{background:rgba(155,89,182,.1);border:1px solid rgba(155,89,182,.3);color:var(--purple)}
+  .tp-tax{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:var(--green)}
+  .team-setup{display:flex;gap:20px;margin-bottom:32px;flex-wrap:wrap;justify-content:center}
+  .team-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px 28px;text-align:center;min-width:200px}
+  .team-box.red{border-top:3px solid var(--red)}
+  .team-box.blue{border-top:3px solid var(--blue)}
+  .team-box h3{font-size:1rem;font-weight:700;margin-bottom:14px}
+  .team-box.red h3{color:var(--red)}
+  .team-box.blue h3{color:var(--blue)}
+  .team-input{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.9rem;font-family:'Inter',sans-serif;width:100%;outline:none;transition:border-color .2s}
+  #inp-red:focus{border-color:var(--red)}
+  #inp-blue:focus{border-color:var(--blue)}
+  .intro-key-hint{display:flex;gap:14px;margin-bottom:32px;flex-wrap:wrap;justify-content:center}
+  .key-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:.82rem}
+  .key-badge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;font-weight:800;font-size:.82rem}
+  .key-red{background:var(--red-bg);border:1px solid var(--red-glow);color:var(--red)}
+  .key-blue{background:var(--blue-bg);border:1px solid var(--blue-glow);color:var(--blue)}
+  .timer-info{display:inline-flex;align-items:center;gap:8px;background:rgba(241,196,15,.08);border:1px solid rgba(241,196,15,.25);border-radius:10px;padding:8px 18px;font-size:.82rem;color:var(--gold);margin-bottom:32px;font-weight:600}
+  .btn-start{padding:16px 52px;border-radius:50px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;background:linear-gradient(135deg,var(--gold),#e67e22);color:#000;transition:transform .3s,box-shadow .3s;letter-spacing:1px}
+  .btn-start:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(241,196,15,.4)}
+
+  /* ══ GAME ══ */
+  #screen-game{flex-direction:column;min-height:100vh;padding:0}
+
+  .top-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 20px;background:rgba(7,7,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+  .score-side{display:flex;align-items:center;gap:10px}
+  .score-side.right{justify-content:flex-end}
+  .score-name{font-weight:700;font-size:.95rem}
+  .score-name.red{color:var(--red)}
+  .score-name.blue{color:var(--blue)}
+  .score-val{font-family:'Orbitron',sans-serif;font-size:1.7rem;font-weight:900}
+  .score-val.red{color:var(--red)}
+  .score-val.blue{color:var(--blue)}
+  .top-center{text-align:center}
+  .q-counter{font-size:.68rem;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+
+  .timer-outer{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;position:relative}
+  .timer-svg{position:absolute;inset:0;transform:rotate(-90deg)}
+  .timer-track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:4}
+  .timer-fill{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .9s linear,stroke .5s}
+  .timer-num{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.95rem;z-index:2;position:relative;transition:color .5s}
+  .timer-outer.urgent .timer-num{color:var(--red);animation:pulse-t .5s infinite}
+  .timer-outer.urgent .timer-fill{stroke:var(--red)}
+  @keyframes pulse-t{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+  .game-area{flex:1;display:grid;grid-template-columns:180px 1fr 180px;min-height:0}
+
+  .buzzer-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 12px;gap:16px}
+  .buzzer-panel.red{background:linear-gradient(to right,rgba(231,76,60,.07),transparent)}
+  .buzzer-panel.blue{background:linear-gradient(to left,rgba(52,152,219,.07),transparent)}
+  .buzzer-btn{width:110px;height:110px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;transition:.15s;user-select:none}
+  .buzzer-btn.red{background:radial-gradient(circle at 35% 35%,#ff6b6b,#c0392b);box-shadow:0 7px 0 #7b241c,0 10px 28px rgba(231,76,60,.5)}
+  .buzzer-btn.red:active{box-shadow:0 2px 0 #7b241c,0 4px 16px rgba(231,76,60,.5);transform:translateY(5px) scale(.95)}
+  .buzzer-btn.blue{background:radial-gradient(circle at 35% 35%,#5dade2,#1a6da8);box-shadow:0 7px 0 #154360,0 10px 28px rgba(52,152,219,.5)}
+  .buzzer-btn.blue:active{box-shadow:0 2px 0 #154360,0 4px 16px rgba(52,152,219,.5);transform:translateY(5px) scale(.95)}
+  .buzzer-btn.disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+  .buzzer-btn.glow-r{animation:glow-pulse-r .4s ease-out}
+  .buzzer-btn.glow-b{animation:glow-pulse-b .4s ease-out}
+  @keyframes glow-pulse-r{0%{box-shadow:0 0 0 0 rgba(231,76,60,.9),0 7px 0 #7b241c}100%{box-shadow:0 0 30px 20px rgba(231,76,60,0),0 7px 0 #7b241c}}
+  @keyframes glow-pulse-b{0%{box-shadow:0 0 0 0 rgba(52,152,219,.9),0 7px 0 #154360}100%{box-shadow:0 0 30px 20px rgba(52,152,219,0),0 7px 0 #154360}}
+  .buzzer-label{font-size:.72rem;color:var(--muted);text-align:center;letter-spacing:1px;text-transform:uppercase}
+  .buzzer-key{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700}
+  .buzzer-key.red{color:var(--red)}
+  .buzzer-key.blue{color:var(--blue)}
+  .ans-btns-wrap{display:flex;flex-direction:column;gap:8px;width:100%}
+  .ans-btn{padding:9px 12px;border-radius:10px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;font-family:'Inter',sans-serif;transition:.2s;display:none}
+  .ans-btn.show{display:block}
+  .ans-btn.correct{background:linear-gradient(135deg,var(--green),#1e8449);color:#fff}
+  .ans-btn.wrong{background:linear-gradient(135deg,var(--red),#c0392b);color:#fff}
+
+  .q-center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+  .q-cat{display:inline-block;padding:4px 14px;border-radius:50px;font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+  .cat-pre{background:rgba(155,89,182,.1);border:1px solid rgba(155,89,182,.3);color:var(--purple)}
+  .cat-tax{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:var(--green)}
+
+  .buzzed-banner{padding:8px 20px;border-radius:50px;font-size:.82rem;font-weight:700;margin-bottom:14px;opacity:0;transition:opacity .3s;letter-spacing:.5px;min-height:38px;display:flex;align-items:center;justify-content:center}
+  .buzzed-banner.show{opacity:1}
+  .buzzed-banner.red{background:var(--red-bg);border:1px solid var(--red-glow);color:var(--red)}
+  .buzzed-banner.blue{background:var(--blue-bg);border:1px solid var(--blue-glow);color:var(--blue)}
+
+  .q-text{font-size:clamp(.95rem,2.2vw,1.3rem);font-weight:700;line-height:1.5;margin-bottom:24px;max-width:620px}
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:600px}
+  .opt-btn{padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:.82rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:.2s;text-align:left;line-height:1.4;pointer-events:none}
+  .opt-letter{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;font-size:.68rem;font-weight:800;margin-right:7px;background:rgba(255,255,255,.08);flex-shrink:0;vertical-align:middle}
+  .opt-btn.enabled{pointer-events:auto}
+  .opt-btn.enabled:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);transform:translateY(-2px)}
+  .opt-btn.correct-ans{background:rgba(46,204,113,.2);border-color:rgba(46,204,113,.6);color:var(--green);animation:pop .3s ease}
+  .opt-btn.wrong-ans{background:rgba(231,76,60,.15);border-color:rgba(231,76,60,.5);color:var(--red)}
+  @keyframes pop{0%{transform:scale(.95)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+  .waiting-hint{font-size:.72rem;color:rgba(255,255,255,.2);margin-top:14px;letter-spacing:1px}
+  .btn-next{margin-top:20px;padding:12px 36px;border-radius:50px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.78rem;font-weight:700;background:linear-gradient(135deg,#2ecc71,#1a9c54);color:#fff;transition:.2s;display:none;letter-spacing:1px}
+  .btn-next.show{display:block}
+  .btn-next:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(46,204,113,.4)}
+
+  .steal-msg{font-size:.8rem;color:var(--gold);background:rgba(241,196,15,.08);border:1px solid rgba(241,196,15,.25);border-radius:10px;padding:7px 16px;margin-top:10px;display:none}
+  .steal-msg.show{display:block}
+
+  .q-progress{height:3px;background:rgba(255,255,255,.05);position:relative;overflow:hidden}
+  .q-progress-fill{height:100%;background:linear-gradient(to right,var(--red),var(--purple),var(--blue));transition:width .6s ease;width:0%}
+
+  /* ══ FEEDBACK ══ */
+  .feedback-overlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .feedback-blast{font-family:'Orbitron',sans-serif;font-size:6rem;font-weight:900;opacity:0;transform:scale(.3);transition:all .25s cubic-bezier(.175,.885,.32,1.275);text-shadow:0 0 80px currentColor}
+  .feedback-blast.show{opacity:1;transform:scale(1)}
+  .feedback-blast.hide{opacity:0;transform:scale(1.6);transition:all .3s ease-in}
+  .feedback-blast.fb-ok{color:var(--green)}
+  .feedback-blast.fb-no{color:var(--red)}
+
+  .score-flash{position:fixed;font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;z-index:600;opacity:0;pointer-events:none;animation:sfanim 1.3s ease forwards}
+  .score-flash.red{color:var(--red);top:80px;left:60px}
+  .score-flash.blue{color:var(--blue);top:80px;right:60px}
+  @keyframes sfanim{0%{opacity:0;transform:translateY(0) scale(.8)}20%{opacity:1;transform:translateY(-20px) scale(1.15)}70%{opacity:1;transform:translateY(-44px) scale(1)}100%{opacity:0;transform:translateY(-64px) scale(.9)}}
+
+  /* ══ WINNER ══ */
+  #screen-winner{min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+  .winner-crown{font-size:5rem;margin-bottom:14px;animation:float-c 2s ease-in-out infinite}
+  @keyframes float-c{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+  .winner-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+  .winner-name{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,3.8rem);font-weight:900;margin-bottom:8px}
+  .winner-name.red{color:var(--red);text-shadow:0 0 60px var(--red-glow)}
+  .winner-name.blue{color:var(--blue);text-shadow:0 0 60px var(--blue-glow)}
+  .winner-name.tie{color:var(--gold);text-shadow:0 0 60px rgba(241,196,15,.4)}
+  .winner-score-txt{font-size:1.1rem;color:var(--muted);margin-bottom:36px}
+  .final-scores{display:flex;gap:20px;margin-bottom:40px;flex-wrap:wrap;justify-content:center}
+  .fs-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px 36px;text-align:center;min-width:160px}
+  .fs-card.red{border-top:3px solid var(--red)}
+  .fs-card.blue{border-top:3px solid var(--blue)}
+  .fs-name{font-size:.8rem;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .fs-name.red{color:var(--red)}
+  .fs-name.blue{color:var(--blue)}
+  .fs-val{font-family:'Orbitron',sans-serif;font-size:3rem;font-weight:900}
+  .fs-val.red{color:var(--red)}
+  .fs-val.blue{color:var(--blue)}
+  .btn-replay{padding:14px 44px;border-radius:50px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,var(--gold),#e67e22);color:#000;transition:.3s;letter-spacing:1px}
+  .btn-replay:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(241,196,15,.4)}
+
+  .confetti-piece{position:fixed;border-radius:2px;pointer-events:none;z-index:700;animation:confetti-fall 3s linear forwards}
+  @keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  @media(max-width:768px){
+    .game-area{grid-template-columns:72px 1fr 72px}
+    .buzzer-btn{width:60px;height:60px;font-size:1.3rem}
+    .options-grid{grid-template-columns:1fr}
+    .top-bar{gap:6px;padding:10px 12px}
+    .score-val{font-size:1.2rem}
+    .q-text{font-size:.9rem}
+  }
+</style>
+</head>
+<body>
+
+<div class="feedback-overlay"><div class="feedback-blast" id="feedbackBlast"></div></div>
+
+<!-- ══ INTRO ══ -->
+<div class="screen active" id="screen-intro">
+  <span class="intro-badge">⚡ Programación y Control del Mantenimiento · 730502</span>
+  <h1 class="intro-title">TRIVIA<br>DUELO</h1>
+  <p class="intro-sub">10 preguntas · El PRE del Plan + Taxonomía EN 13306:2017 · Gana el mayor puntaje</p>
+
+  <div class="topic-pills">
+    <span class="topic-pill tp-pre">🧩 El PRE del Plan de Mantenimiento</span>
+    <span class="topic-pill tp-tax">📚 Taxonomía EN 13306:2017</span>
+  </div>
+
+  <div class="team-setup">
+    <div class="team-box red">
+      <h3>🔴 Equipo Rojo</h3>
+      <input class="team-input" id="inp-red" type="text" placeholder="Nombre del equipo..." maxlength="22" value="Equipo Rojo">
+    </div>
+    <div class="team-box blue">
+      <h3>🔵 Equipo Azul</h3>
+      <input class="team-input" id="inp-blue" type="text" placeholder="Nombre del equipo..." maxlength="22" value="Equipo Azul">
+    </div>
+  </div>
+
+  <div class="intro-key-hint">
+    <div class="key-chip"><span class="key-badge key-red">Q</span>Buzz Equipo Rojo</div>
+    <div class="key-chip"><span class="key-badge key-blue">P</span>Buzz Equipo Azul</div>
+    <div class="key-chip">↵ Siguiente pregunta</div>
+  </div>
+
+  <div class="timer-info">⏱️ 45 segundos por pregunta · El que buzzea tiene 20 s para responder · Robo si falla</div>
+
+  <button class="btn-start" onclick="startGame()">⚡ INICIAR DUELO</button>
+</div>
+
+<!-- ══ GAME ══ -->
+<div class="screen" id="screen-game" style="flex-direction:column;">
+  <div class="q-progress"><div class="q-progress-fill" id="qProgress"></div></div>
+
+  <div class="top-bar">
+    <div class="score-side">
+      <div>
+        <div class="score-name red" id="name-red">Equipo Rojo</div>
+        <div class="score-val red" id="score-red">0</div>
+      </div>
+    </div>
+    <div class="top-center">
+      <div class="q-counter" id="qCounter">PREGUNTA 1 / 10</div>
+      <div class="timer-outer" id="timerOuter">
+        <svg class="timer-svg" viewBox="0 0 54 54" width="54" height="54">
+          <circle class="timer-track" cx="27" cy="27" r="23"/>
+          <circle class="timer-fill" id="timerFill" cx="27" cy="27" r="23"
+            stroke="#2ecc71"
+            stroke-dasharray="144.51"
+            stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="timerNum">45</div>
+      </div>
+    </div>
+    <div class="score-side right">
+      <div>
+        <div class="score-name blue" id="name-blue">Equipo Azul</div>
+        <div class="score-val blue" id="score-blue">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-area">
+    <!-- RED BUZZER -->
+    <div class="buzzer-panel red">
+      <button class="buzzer-btn red" id="buzz-red" onclick="buzz('red')">🔴</button>
+      <div class="buzzer-label">Presiona <span class="buzzer-key red">Q</span></div>
+      <div class="ans-btns-wrap" id="ansBtns-red">
+        <button class="ans-btn correct" id="ans-ok-red"  onclick="givePoint('red',false)">✅ Correcto</button>
+        <button class="ans-btn wrong"   id="ans-no-red"  onclick="givePoint('red',true)">❌ Incorrecto</button>
+      </div>
+    </div>
+
+    <!-- QUESTION CENTER -->
+    <div class="q-center">
+      <span class="q-cat" id="qCat">El PRE</span>
+      <div class="buzzed-banner" id="buzzedBanner"></div>
+      <p class="q-text" id="qText">Cargando...</p>
+      <div class="options-grid" id="optGrid"></div>
+      <p class="waiting-hint" id="waitHint">Presiona Q o P para buzzear</p>
+      <div class="steal-msg" id="stealMsg"></div>
+      <button class="btn-next" id="btnNext" onclick="nextQuestion()">SIGUIENTE PREGUNTA →</button>
+    </div>
+
+    <!-- BLUE BUZZER -->
+    <div class="buzzer-panel blue">
+      <button class="buzzer-btn blue" id="buzz-blue" onclick="buzz('blue')">🔵</button>
+      <div class="buzzer-label">Presiona <span class="buzzer-key blue">P</span></div>
+      <div class="ans-btns-wrap" id="ansBtns-blue">
+        <button class="ans-btn correct" id="ans-ok-blue" onclick="givePoint('blue',false)">✅ Correcto</button>
+        <button class="ans-btn wrong"   id="ans-no-blue" onclick="givePoint('blue',true)">❌ Incorrecto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WINNER ══ -->
+<div class="screen" id="screen-winner" style="flex-direction:column;">
+  <div class="winner-crown">🏆</div>
+  <div class="winner-label">¡Campeón del Trivia Duelo!</div>
+  <div class="winner-name" id="winnerName">—</div>
+  <div class="winner-score-txt" id="winnerScoreTxt"></div>
+  <div class="final-scores">
+    <div class="fs-card red">
+      <div class="fs-name red" id="fs-name-red">Equipo Rojo</div>
+      <div class="fs-val red" id="fs-val-red">0</div>
+    </div>
+    <div class="fs-card blue">
+      <div class="fs-name blue" id="fs-name-blue">Equipo Azul</div>
+      <div class="fs-val blue" id="fs-val-blue">0</div>
+    </div>
+  </div>
+  <button class="btn-replay" onclick="restartGame()">🔄 JUGAR DE NUEVO</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  BANCO — 10 preguntas · Secciones 1 y 2
+// ═══════════════════════════════════════
+const BANK = [
+
+  // ── SECCIÓN 1 · EL PRE DEL PLAN DE MANTENIMIENTO ──
+
+  {
+    cat:'pre', catLabel:'El PRE del Plan',
+    q:'¿Por qué es un ERROR aplicar mantenimiento preventivo a TODOS los equipos sin análisis previo?',
+    opts:[
+      'Porque la norma EN 13306 lo prohíbe expresamente',
+      'Porque puede generar fallas inducidas por el mantenimiento mismo al intervenir equipos que funcionaban bien',
+      'Porque el preventivo siempre cuesta más que el correctivo',
+      'Porque solo el mantenimiento proactivo está permitido en industria'
+    ],
+    ans:1
+  },
+  {
+    cat:'pre', catLabel:'El PRE del Plan',
+    q:'¿Qué se denomina "falla inducida por mantenimiento"?',
+    opts:[
+      'Una falla que ocurre porque no se hizo ningún mantenimiento',
+      'Una falla que el fabricante no puede cubrir con garantía',
+      'Una falla causada por errores cometidos durante una intervención de mantenimiento (mal ensamble, contaminación, tornillo olvidado)',
+      'Una falla que ocurre en equipos nuevos en los primeros meses'
+    ],
+    ans:2
+  },
+  {
+    cat:'pre', catLabel:'El PRE del Plan',
+    q:'¿Cuál es el objetivo principal del análisis PRE-plan de mantenimiento?',
+    opts:[
+      'Reducir el número de técnicos en la planta',
+      'Determinar qué tipo de mantenimiento es más adecuado para cada activo y cada modo de falla, con base técnica y normativa',
+      'Elaborar el cronograma de mantenimiento preventivo mensual',
+      'Calcular el costo anual del presupuesto de mantenimiento'
+    ],
+    ans:1
+  },
+  {
+    cat:'pre', catLabel:'El PRE del Plan',
+    q:'Si una planta tiene 200 equipos y aplica preventivo mensual a todos sin análisis, ¿cuál es el principal riesgo?',
+    opts:[
+      'Que los técnicos se aburran por exceso de trabajo rutinario',
+      'Gasto innecesario + fallas inducidas por desmontaje de equipos que estaban funcionando bien',
+      'Que los fabricantes anulen la garantía de los equipos',
+      'Que el equipo quede sin lubricante y se oxide más rápido'
+    ],
+    ans:1
+  },
+
+  // ── SECCIÓN 2 · TAXONOMÍA EN 13306:2017 ──
+
+  {
+    cat:'tax', catLabel:'Taxonomía EN 13306',
+    q:'¿Qué norma define la terminología y clasificación oficial de los tipos de mantenimiento a nivel mundial?',
+    opts:['SAE JA1011:1999','ISO 55001:2014','EN 13306:2017','ISO 17359:2018'],
+    ans:2
+  },
+  {
+    cat:'tax', catLabel:'Mantenimiento Correctivo',
+    q:'¿Cuál es la diferencia entre mantenimiento correctivo INMEDIATO y DIFERIDO?',
+    opts:[
+      'El inmediato usa repuestos originales; el diferido usa repuestos genéricos',
+      'El inmediato se ejecuta sin demora porque la falla es crítica; el diferido se postpone según reglas cuando la falla no es urgente',
+      'El diferido nunca se realiza; el inmediato siempre se ejecuta',
+      'Ambos son iguales en la norma, solo difieren en el nombre comercial'
+    ],
+    ans:1
+  },
+  {
+    cat:'tax', catLabel:'Mantenimiento Preventivo',
+    q:'¿Qué diferencia al TBM del CBM dentro del mantenimiento preventivo?',
+    opts:[
+      'TBM actúa después de la falla; CBM actúa antes',
+      'TBM interviene a intervalos de tiempo fijos independientemente del estado del equipo; CBM interviene cuando una variable medida supera un umbral',
+      'TBM usa termografía; CBM usa vibrometría exclusivamente',
+      'TBM es para equipos eléctricos; CBM para equipos mecánicos'
+    ],
+    ans:1
+  },
+  {
+    cat:'tax', catLabel:'Mantenimiento Proactivo',
+    q:'¿Qué hace el mantenimiento PROACTIVO que lo diferencia completamente del preventivo?',
+    opts:[
+      'Actúa exactamente igual al preventivo pero con mayor frecuencia',
+      'Se aplica solo a equipos con fallas aleatorias (β≈1)',
+      'Busca eliminar las causas raíz de la falla para que no vuelva a ocurrir usando RCA o rediseño',
+      'Solo lubrica y limpia los equipos sin intervenir en partes internas'
+    ],
+    ans:2
+  },
+  {
+    cat:'tax', catLabel:'RTF Run-To-Failure',
+    q:'¿Cuándo es técnicamente válido y correcto aplicar RTF (Run-To-Failure)?',
+    opts:[
+      'Cuando el equipo es antiguo y el presupuesto está agotado',
+      'Cuando no hay consecuencias de seguridad, hay redundancia disponible, y el costo de las fallas esperadas es menor al costo de un programa preventivo',
+      'Cuando el fabricante no ha publicado el manual de mantenimiento',
+      'Cuando el equipo lleva menos de 1 año de operación'
+    ],
+    ans:1
+  },
+  {
+    cat:'tax', catLabel:'Taxonomía EN 13306',
+    q:'¿Cuál de las siguientes NO es un tipo de mantenimiento reconocido en la norma EN 13306:2017?',
+    opts:[
+      'Mantenimiento correctivo diferido',
+      'Mantenimiento basado en condición (CBM)',
+      'Mantenimiento especulativo',
+      'Mantenimiento proactivo'
+    ],
+    ans:2
+  }
+];
+
+// ═══════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════
+const G = {
+  nameRed:'Equipo Rojo', nameBlue:'Equipo Azul',
+  scoreRed:0, scoreBlue:0,
+  qIndex:0, shuffled:[],
+  buzzed:null,
+  answered:false,
+  penalized:null,
+  timer:null, timeLeft:45, maxTime:45,
+  CIRC: 2 * Math.PI * 23
+};
+
+// ═══════════════════════════════════════
+//  PANTALLAS
+// ═══════════════════════════════════════
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+}
+
+// ═══════════════════════════════════════
+//  INICIO
+// ═══════════════════════════════════════
+function startGame(){
+  G.nameRed  = document.getElementById('inp-red').value.trim()||'Equipo Rojo';
+  G.nameBlue = document.getElementById('inp-blue').value.trim()||'Equipo Azul';
+  G.scoreRed = G.scoreBlue = G.qIndex = 0;
+  G.shuffled = shuffle([...BANK]);
+
+  document.getElementById('name-red').textContent  = G.nameRed;
+  document.getElementById('name-blue').textContent = G.nameBlue;
+  document.getElementById('fs-name-red').textContent  = G.nameRed;
+  document.getElementById('fs-name-blue').textContent = G.nameBlue;
+  updateScoreUI('red'); updateScoreUI('blue');
+
+  showScreen('game');
+  loadQuestion();
+}
+
+function restartGame(){ confettiStop(); showScreen('intro'); }
+
+// ═══════════════════════════════════════
+//  PREGUNTAS
+// ═══════════════════════════════════════
+function loadQuestion(){
+  const total = G.shuffled.length;
+  if(G.qIndex >= total){ endGame(); return; }
+
+  const q = G.shuffled[G.qIndex];
+  G.buzzed = null; G.answered = false; G.penalized = null;
+
+  resetBuzzers();
+  setBanner('','');
+  document.getElementById('waitHint').style.display='';
+  document.getElementById('waitHint').textContent='Presiona Q o P para buzzear';
+  document.getElementById('stealMsg').className='steal-msg';
+  document.getElementById('btnNext').className='btn-next';
+
+  const catEl = document.getElementById('qCat');
+  catEl.className='q-cat '+(q.cat==='pre'?'cat-pre':'cat-tax');
+  catEl.textContent = q.catLabel;
+
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('qCounter').textContent = `PREGUNTA ${G.qIndex+1} / ${total}`;
+  document.getElementById('qProgress').style.width = `${(G.qIndex/total)*100}%`;
+
+  const grid = document.getElementById('optGrid');
+  grid.innerHTML = '';
+  ['A','B','C','D'].forEach((ltr,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.id = 'opt-'+i;
+    btn.innerHTML = `<span class="opt-letter">${ltr}</span>${q.opts[i]}`;
+    grid.appendChild(btn);
+  });
+
+  startTimer(G.maxTime);
+}
+
+function nextQuestion(){ G.qIndex++; loadQuestion(); }
+
+// ═══════════════════════════════════════
+//  BUZZER
+// ═══════════════════════════════════════
+function buzz(team){
+  if(G.answered) return;
+  if(G.penalized===team) return;
+  if(G.buzzed && G.buzzed===team) return;
+  if(G.buzzed && !G.penalized) return;
+
+  stopTimer();
+  G.buzzed = team;
+
+  const btn = document.getElementById('buzz-'+team);
+  btn.classList.add(team==='red'?'glow-r':'glow-b');
+  setTimeout(()=>btn.classList.remove(team==='red'?'glow-r':'glow-b'),450);
+
+  document.getElementById('buzz-red').classList.add('disabled');
+  document.getElementById('buzz-blue').classList.add('disabled');
+
+  showAnsBtns(team);
+
+  const name = team==='red'?G.nameRed:G.nameBlue;
+  setBanner(`⚡ ${name} está respondiendo...`, team);
+  document.getElementById('waitHint').style.display='none';
+  document.getElementById('stealMsg').className='steal-msg';
+
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.add('enabled'));
+  startTimer(20);
+}
+
+function showAnsBtns(team){
+  hideAllAnsBtns();
+  document.getElementById('ans-ok-'+team).classList.add('show');
+  document.getElementById('ans-no-'+team).classList.add('show');
+}
+function hideAllAnsBtns(){
+  ['red','blue'].forEach(t=>{
+    document.getElementById('ans-ok-'+t).className='ans-btn correct';
+    document.getElementById('ans-no-'+t).className='ans-btn wrong';
+  });
+}
+function resetBuzzers(){
+  stopTimer();
+  hideAllAnsBtns();
+  document.getElementById('buzz-red').classList.remove('disabled');
+  document.getElementById('buzz-blue').classList.remove('disabled');
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('enabled'));
+}
+
+// ═══════════════════════════════════════
+//  PUNTUACIÓN
+// ═══════════════════════════════════════
+function givePoint(team, wrong){
+  stopTimer();
+  hideAllAnsBtns();
+
+  const q = G.shuffled[G.qIndex];
+  document.querySelectorAll('.opt-btn').forEach((b,i)=>{
+    b.classList.remove('enabled');
+    if(i===q.ans) b.classList.add('correct-ans');
+  });
+
+  if(!wrong){
+    if(team==='red') G.scoreRed++;
+    else G.scoreBlue++;
+    updateScoreUI(team);
+    G.answered = true;
+    showFeedback('✓',true);
+    showScoreFlash(team,'+1');
+    setTimeout(()=>{ document.getElementById('btnNext').className='btn-next show'; },800);
+  } else {
+    G.penalized = team;
+    G.buzzed = null;
+    const other = team==='red'?'blue':'red';
+    const otherName = other==='red'?G.nameRed:G.nameBlue;
+    showFeedback('✗',false);
+    document.getElementById('buzz-'+other).classList.remove('disabled');
+    setBanner('','');
+    document.getElementById('waitHint').style.display='';
+    document.getElementById('waitHint').textContent='';
+    const stealEl = document.getElementById('stealMsg');
+    stealEl.textContent = `🎯 ${otherName} puede ROBAR el punto`;
+    stealEl.className = 'steal-msg show';
+    document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('enabled'));
+    startTimer(20);
+  }
+}
+
+function updateScoreUI(team){
+  if(team==='red') document.getElementById('score-red').textContent=G.scoreRed;
+  else document.getElementById('score-blue').textContent=G.scoreBlue;
+}
+
+function setBanner(text,team){
+  const el = document.getElementById('buzzedBanner');
+  el.textContent = text;
+  el.className = 'buzzed-banner'+(team?' show '+team:'');
+}
+
+// ═══════════════════════════════════════
+//  TIMER CIRCULAR SVG
+// ═══════════════════════════════════════
+function startTimer(seconds){
+  stopTimer();
+  G.timeLeft = seconds;
+  const numEl  = document.getElementById('timerNum');
+  const fillEl = document.getElementById('timerFill');
+  const outer  = document.getElementById('timerOuter');
+  const CIRC   = G.CIRC;
+
+  function tick(){
+    numEl.textContent = G.timeLeft;
+    const pct = G.timeLeft/seconds;
+    fillEl.style.strokeDashoffset = CIRC*(1-pct);
+    if(pct>0.5){ fillEl.style.stroke='#2ecc71'; outer.className='timer-outer'; }
+    else if(pct>0.25){ fillEl.style.stroke='#f39c12'; outer.className='timer-outer'; }
+    else { fillEl.style.stroke='#e74c3c'; outer.className='timer-outer urgent'; }
+  }
+  tick();
+  G.timer = setInterval(()=>{
+    G.timeLeft--;
+    tick();
+    if(G.timeLeft<=0){ stopTimer(); onTimeOut(); }
+  },1000);
+}
+
+function stopTimer(){
+  if(G.timer){ clearInterval(G.timer); G.timer=null; }
+  const outer = document.getElementById('timerOuter');
+  if(outer) outer.className='timer-outer';
+}
+
+function onTimeOut(){
+  if(G.answered) return;
+  if(G.buzzed||G.penalized){
+    givePoint(G.buzzed||G.penalized, true);
+  } else {
+    G.answered = true;
+    const q = G.shuffled[G.qIndex];
+    document.querySelectorAll('.opt-btn').forEach((b,i)=>{ if(i===q.ans) b.classList.add('correct-ans'); });
+    const banner = document.getElementById('buzzedBanner');
+    banner.textContent = '⏱️ ¡Tiempo! Nadie buzzeó — aquí la respuesta correcta';
+    banner.className = 'buzzed-banner show';
+    banner.style.cssText='background:rgba(241,196,15,.09);border:1px solid rgba(241,196,15,.3);color:var(--gold);opacity:1';
+    hideAllAnsBtns();
+    setTimeout(()=>{ document.getElementById('btnNext').className='btn-next show'; },700);
+  }
+}
+
+// ═══════════════════════════════════════
+//  FIN DE JUEGO
+// ═══════════════════════════════════════
+function endGame(){
+  showScreen('winner');
+  document.getElementById('fs-val-red').textContent  = G.scoreRed;
+  document.getElementById('fs-val-blue').textContent = G.scoreBlue;
+  const nameEl   = document.getElementById('winnerName');
+  const scoreTxt = document.getElementById('winnerScoreTxt');
+  if(G.scoreRed>G.scoreBlue){
+    nameEl.textContent=G.nameRed; nameEl.className='winner-name red';
+    scoreTxt.textContent=`${G.scoreRed} vs ${G.scoreBlue} puntos`;
+    launchConfetti(['#e74c3c','#ff6b6b','#c0392b','#f1c40f','#fff']);
+  } else if(G.scoreBlue>G.scoreRed){
+    nameEl.textContent=G.nameBlue; nameEl.className='winner-name blue';
+    scoreTxt.textContent=`${G.scoreBlue} vs ${G.scoreRed} puntos`;
+    launchConfetti(['#3498db','#5dade2','#1a6da8','#f1c40f','#fff']);
+  } else {
+    nameEl.textContent='¡EMPATE!'; nameEl.className='winner-name tie';
+    scoreTxt.textContent=`${G.scoreRed} - ${G.scoreBlue} puntos`;
+    launchConfetti(['#f1c40f','#e67e22','#fff','#3498db','#e74c3c','#2ecc71']);
+  }
+}
+
+// ═══════════════════════════════════════
+//  FX
+// ═══════════════════════════════════════
+function showFeedback(sym,ok){
+  const el = document.getElementById('feedbackBlast');
+  el.textContent = sym;
+  el.className = `feedback-blast ${ok?'fb-ok':'fb-no'} show`;
+  setTimeout(()=>el.classList.add('hide'),700);
+  setTimeout(()=>el.className='feedback-blast',1050);
+}
+function showScoreFlash(team,txt){
+  const el = document.createElement('div');
+  el.className = `score-flash ${team}`;
+  el.textContent = txt;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1400);
+}
+let confettiInt=null;
+function launchConfetti(colors){
+  confettiStop();
+  let n=0;
+  confettiInt=setInterval(()=>{
+    if(n++>90){confettiStop();return}
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-20px;width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*.5}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4500);
+  },55);
+}
+function confettiStop(){if(confettiInt){clearInterval(confettiInt);confettiInt=null}}
+
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// ═══════════════════════════════════════
+//  TECLADO
+// ═══════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  const game  = document.getElementById('screen-game').classList.contains('active');
+  const intro = document.getElementById('screen-intro').classList.contains('active');
+  if(game){
+    if(e.key==='q'||e.key==='Q') buzz('red');
+    if(e.key==='p'||e.key==='P') buzz('blue');
+    if(e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      const btn=document.getElementById('btnNext');
+      if(btn.classList.contains('show')) nextQuestion();
+    }
+  }
+  if(intro&&e.key==='Enter') startGame();
+});
+</script>
+</body>
+</html>

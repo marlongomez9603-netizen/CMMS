@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Simulador AMEF — UNIPAZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Montserrat',sans-serif;background:#0d1b2a;color:#e0e0e0;min-height:100vh;padding-bottom:80px;}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);padding:14px 16px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.4);}
+.header .top{display:flex;justify-content:space-between;align-items:center;}
+.header .logo{font-size:14px;font-weight:800;color:#fff;letter-spacing:2px;}
+.header .badge{background:#daa520;color:#1a3a5c;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;}
+.header .title{color:#daa520;font-size:13px;font-weight:600;margin-top:4px;}
+
+/* Dashboard */
+.dashboard{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 0;}
+.dash-card{background:linear-gradient(135deg,#1e3454,#253d5e);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(218,165,32,0.12);}
+.dash-card .val{font-size:28px;font-weight:800;color:#daa520;}
+.dash-card .lbl{font-size:9px;color:#8aa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+.dash-card.danger .val{color:#e74c3c;}
+.dash-card.warning .val{color:#f39c12;}
+.dash-card.ok .val{color:#2ecc71;}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.toolbar::-webkit-scrollbar{display:none;}
+.btn{padding:10px 16px;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;min-height:44px;flex-shrink:0;}
+.btn-primary{background:linear-gradient(135deg,#daa520,#c9941a);color:#1a3a5c;}
+.btn-secondary{background:linear-gradient(135deg,#2a5a8c,#1a3a5c);color:#fff;border:1px solid rgba(218,165,32,0.3);}
+.btn-danger{background:linear-gradient(135deg,#c0392b,#a93226);color:#fff;}
+.btn-success{background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;}
+
+/* System name */
+.system-bar{padding:0 14px 10px;}
+.system-bar input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px;color:#fff;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:600;}
+.system-bar input:focus{border-color:#daa520;outline:none;background:rgba(218,165,32,0.06);}
+
+/* Cards container */
+.cards{padding:0 14px;display:flex;flex-direction:column;gap:14px;}
+
+/* Failure card */
+.fcard{background:linear-gradient(135deg,#152238,#1a2a42);border-radius:16px;border:1px solid rgba(218,165,32,0.1);overflow:hidden;transition:box-shadow 0.2s;}
+.fcard.expanded{box-shadow:0 4px 24px rgba(218,165,32,0.12);}
+.fcard-header{display:flex;align-items:center;padding:14px;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.fcard-num{background:#1a3a5c;color:#daa520;min-width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.fcard-summary{flex:1;min-width:0;}
+.fcard-summary .name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fcard-summary .mode{font-size:11px;color:#8aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fcard-npr{min-width:52px;height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;}
+.fcard-npr .npr-val{font-size:18px;}
+.fcard-npr .npr-lbl{font-size:7px;text-transform:uppercase;letter-spacing:1px;opacity:0.8;}
+.npr-vhigh{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;}
+.npr-high{background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;}
+.npr-med{background:linear-gradient(135deg,#f39c12,#f1c40f);color:#1a3a5c;}
+.npr-low{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;}
+.npr-vlow{background:linear-gradient(135deg,#1abc9c,#16a085);color:#fff;}
+
+.fcard-body{display:none;padding:0 14px 14px;}
+.fcard.expanded .fcard-body{display:block;}
+.fcard-toggle{color:#daa520;font-size:18px;transition:transform 0.2s;flex-shrink:0;}
+.fcard.expanded .fcard-toggle{transform:rotate(180deg);}
+
+/* Form fields */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:10px;font-weight:700;color:#daa520;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.field input,.field textarea{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px;color:#e0e0e0;font-family:'Montserrat',sans-serif;font-size:13px;}
+.field input:focus,.field textarea:focus{border-color:#daa520;outline:none;background:rgba(218,165,32,0.06);}
+.field textarea{min-height:60px;resize:vertical;}
+
+/* SOD row */
+.sod-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+.sod-item{text-align:center;}
+.sod-item label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.sod-item .s-label{color:#e74c3c;}
+.sod-item .o-label{color:#f39c12;}
+.sod-item .d-label{color:#3498db;}
+.sod-select{width:100%;background:#1e3454;border:2px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 8px;color:#fff;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;text-align:center;appearance:none;-webkit-appearance:none;}
+.sod-select:focus{outline:none;}
+.sod-select.s-sel{border-color:rgba(231,76,60,0.4);}
+.sod-select.o-sel{border-color:rgba(243,156,18,0.4);}
+.sod-select.d-sel{border-color:rgba(52,152,219,0.4);}
+.sod-select.s-sel:focus{border-color:#e74c3c;}
+.sod-select.o-sel:focus{border-color:#f39c12;}
+.sod-select.d-sel:focus{border-color:#3498db;}
+
+/* NPR result in card */
+.npr-result{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;}
+.npr-result .formula{font-size:11px;color:#8aa;margin-bottom:4px;}
+.npr-result .npr-big{font-size:36px;font-weight:800;}
+.npr-result .risk-text{font-size:12px;font-weight:700;margin-top:4px;padding:4px 14px;border-radius:20px;display:inline-block;}
+
+/* Delete in card */
+.fcard-delete{width:100%;padding:12px;border:1px solid rgba(231,76,60,0.3);background:none;color:#e74c3c;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;cursor:pointer;min-height:44px;}
+.fcard-delete:active{background:rgba(231,76,60,0.15);}
+
+/* Scales modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal{background:#152238;border-radius:20px 20px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px 16px;animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 16px;}
+.modal h3{color:#daa520;font-size:16px;margin-bottom:14px;}
+.modal .tab-btns{display:flex;gap:8px;margin-bottom:14px;}
+.modal .tab-btn{flex:1;padding:10px;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;min-height:44px;}
+.modal .tab-btn.active{color:#fff;}
+.modal .tab-btn.s-tab{background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);}
+.modal .tab-btn.s-tab.active{background:#e74c3c;}
+.modal .tab-btn.o-tab{background:rgba(243,156,18,0.15);color:#f39c12;border:1px solid rgba(243,156,18,0.3);}
+.modal .tab-btn.o-tab.active{background:#f39c12;color:#1a3a5c;}
+.modal .tab-btn.d-tab{background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.3);}
+.modal .tab-btn.d-tab.active{background:#3498db;}
+.modal .scale-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.modal .scale-tbl th{background:#1a3a5c;color:#fff;padding:8px;text-align:center;}
+.modal .scale-tbl td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.06);text-align:center;}
+.modal .scale-tbl .hi{color:#e74c3c;font-weight:700;}
+.modal .scale-tbl .mi{color:#f39c12;font-weight:700;}
+.modal .scale-tbl .lo{color:#2ecc71;font-weight:700;}
+.modal-close{width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#2a5a8c);border:none;color:#fff;border-radius:12px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:14px;min-height:48px;}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:#556;}
+.empty-state .icon{font-size:48px;margin-bottom:12px;}
+.empty-state p{font-size:13px;line-height:1.6;}
+
+/* FAB */
+.fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#daa520,#c9941a);color:#1a3a5c;border:none;font-size:28px;font-weight:700;box-shadow:0 4px 16px rgba(218,165,32,0.4);cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center;}
+.fab:active{transform:scale(0.92);}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="top">
+        <div class="logo">UNIPAZ</div>
+        <div class="badge">AMEF · UF2</div>
+    </div>
+    <div class="title">Simulador AMEF Interactivo</div>
+</div>
+
+<div class="dashboard">
+    <div class="dash-card"><div class="val" id="d-total">0</div><div class="lbl">Modos de Falla</div></div>
+    <div class="dash-card danger"><div class="val" id="d-crit">0</div><div class="lbl">Riesgo Alto+</div></div>
+    <div class="dash-card warning"><div class="val" id="d-avg">0</div><div class="lbl">NPR Promedio</div></div>
+    <div class="dash-card ok"><div class="val" id="d-max">0</div><div class="lbl">NPR Máximo</div></div>
+</div>
+
+<div class="toolbar">
+    <button class="btn btn-primary" onclick="addCard()">➕ Agregar</button>
+    <button class="btn btn-secondary" onclick="showScales()">📊 Escalas</button>
+    <button class="btn btn-secondary" onclick="loadExample()">📋 Ejemplo</button>
+    <button class="btn btn-success" onclick="exportCSV()">📥 CSV</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑️ Limpiar</button>
+</div>
+
+<div class="system-bar">
+    <input type="text" id="sysName" value="" placeholder="Nombre del sistema / equipo...">
+</div>
+
+<div class="cards" id="cardsContainer">
+    <div class="empty-state" id="emptyState">
+        <div class="icon">📋</div>
+        <p>No hay modos de falla registrados.<br>Toque <strong>➕ Agregar</strong> o <strong>📋 Ejemplo</strong> para comenzar.</p>
+    </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="addCard()">+</button>
+
+<!-- Scales Modal -->
+<div class="modal-overlay" id="scalesModal" onclick="if(event.target===this)closeScales();">
+<div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📊 Escalas de Referencia</h3>
+    <div class="tab-btns">
+        <button class="tab-btn s-tab active" onclick="showTab('s')">Severidad</button>
+        <button class="tab-btn o-tab" onclick="showTab('o')">Ocurrencia</button>
+        <button class="tab-btn d-tab" onclick="showTab('d')">Detección</button>
+    </div>
+    <div id="tab-s">
+        <table class="scale-tbl"><thead><tr><th>Val</th><th>Nivel</th><th>Ejemplo</th></tr></thead><tbody>
+        <tr><td class="hi">10</td><td>Peligroso sin aviso</td><td>Explosión sin alarma</td></tr>
+        <tr><td class="hi">9</td><td>Peligroso con aviso</td><td>Fuga tóxica con detector</td></tr>
+        <tr><td class="hi">8</td><td>Muy alto</td><td>Paro total de planta</td></tr>
+        <tr><td class="mi">7</td><td>Alto</td><td>Producción al 50%</td></tr>
+        <tr><td class="mi">6</td><td>Moderado</td><td>Degradación funcional</td></tr>
+        <tr><td class="mi">5</td><td>Bajo-moderado</td><td>Degradación menor</td></tr>
+        <tr><td class="lo">4</td><td>Bajo</td><td>Defecto menor visible</td></tr>
+        <tr><td class="lo">3</td><td>Muy bajo</td><td>Apenas perceptible</td></tr>
+        <tr><td class="lo">2</td><td>Mínimo</td><td>Casi imperceptible</td></tr>
+        <tr><td class="lo">1</td><td>Ninguno</td><td>Sin efecto</td></tr>
+        </tbody></table>
+    </div>
+    <div id="tab-o" style="display:none;">
+        <table class="scale-tbl"><thead><tr><th>Val</th><th>Frecuencia</th><th>Probabilidad</th></tr></thead><tbody>
+        <tr><td class="hi">10</td><td>+1 vez/semana</td><td>> 1 en 2</td></tr>
+        <tr><td class="hi">9</td><td>Cada 2 semanas</td><td>1 en 3</td></tr>
+        <tr><td class="hi">8</td><td>1 vez/mes</td><td>1 en 8</td></tr>
+        <tr><td class="mi">7</td><td>Cada 2 meses</td><td>1 en 20</td></tr>
+        <tr><td class="mi">6</td><td>Cada 6 meses</td><td>1 en 80</td></tr>
+        <tr><td class="mi">5</td><td>1 vez/año</td><td>1 en 400</td></tr>
+        <tr><td class="lo">4</td><td>Cada 2-3 años</td><td>1 en 2.000</td></tr>
+        <tr><td class="lo">3</td><td>Cada 5 años</td><td>1 en 15.000</td></tr>
+        <tr><td class="lo">2</td><td>Cada 10+ años</td><td>1 en 150.000</td></tr>
+        <tr><td class="lo">1</td><td>Casi imposible</td><td>< 1 en 1.500.000</td></tr>
+        </tbody></table>
+    </div>
+    <div id="tab-d" style="display:none;">
+        <table class="scale-tbl"><thead><tr><th>Val</th><th>Capacidad</th><th>Control</th></tr></thead><tbody>
+        <tr><td class="hi">10</td><td>Imposible</td><td>Sin control alguno</td></tr>
+        <tr><td class="hi">9</td><td>Muy remota</td><td>Visual ocasional</td></tr>
+        <tr><td class="hi">8</td><td>Remota</td><td>Visual programada</td></tr>
+        <tr><td class="mi">7</td><td>Muy baja</td><td>Medición manual</td></tr>
+        <tr><td class="mi">6</td><td>Baja</td><td>Análisis trimestral</td></tr>
+        <tr><td class="mi">5</td><td>Moderada</td><td>Ruta mensual</td></tr>
+        <tr><td class="lo">4</td><td>Moderada-alta</td><td>Monitoreo con alarma</td></tr>
+        <tr><td class="lo">3</td><td>Alta</td><td>Sensor + alarma auto</td></tr>
+        <tr><td class="lo">2</td><td>Muy alta</td><td>Doble sensor + trip</td></tr>
+        <tr><td class="lo">1</td><td>Segura (100%)</td><td>Protección + interlock</td></tr>
+        </tbody></table>
+    </div>
+    <button class="modal-close" onclick="closeScales()">Cerrar</button>
+</div>
+</div>
+
+<script>
+let cardId=0;
+
+function opts(){let h='';for(let i=1;i<=10;i++)h+=`<option value="${i}">${i}</option>`;return h;}
+
+function addCard(d){
+    cardId++;
+    const id=cardId;
+    const c=d||{};
+    const el=document.createElement('div');
+    el.className='fcard'+(c.comp?'':' expanded');
+    el.id='fc-'+id;
+    el.innerHTML=`
+    <div class="fcard-header" onclick="toggleCard('fc-${id}')">
+        <div class="fcard-num">${id}</div>
+        <div class="fcard-summary">
+            <div class="name" id="fn-${id}">${c.comp||'Nuevo modo de falla'}</div>
+            <div class="mode" id="fm-${id}">${c.mode||'Toque para editar'}</div>
+        </div>
+        <div class="fcard-npr npr-vlow" id="fnpr-${id}">
+            <div class="npr-val" id="fnv-${id}">1</div>
+            <div class="npr-lbl">NPR</div>
+        </div>
+        <div class="fcard-toggle">▼</div>
+    </div>
+    <div class="fcard-body">
+        <div class="field"><label>Componente / Paso</label><input type="text" placeholder="Ej: Rodamiento" value="${c.comp||''}" oninput="document.getElementById('fn-${id}').textContent=this.value||'Sin nombre'"></div>
+        <div class="field"><label>Función</label><input type="text" placeholder="Ej: Soportar carga radial" value="${c.func||''}"></div>
+        <div class="field"><label>Modo de Falla</label><input type="text" placeholder="Ej: Desgaste prematuro" value="${c.mode||''}" oninput="document.getElementById('fm-${id}').textContent=this.value||'Sin modo'"></div>
+        <div class="field"><label>Efecto de la Falla</label><input type="text" placeholder="Ej: Vibración alta, paro" value="${c.effect||''}"></div>
+        <div class="sod-row">
+            <div class="sod-item"><label class="s-label">Severidad</label><select class="sod-select s-sel" onchange="recalc(${id})">${opts()}</select></div>
+            <div class="sod-item"><label class="o-label">Ocurrencia</label><select class="sod-select o-sel" onchange="recalc(${id})">${opts()}</select></div>
+            <div class="sod-item"><label class="d-label">Detección</label><select class="sod-select d-sel" onchange="recalc(${id})">${opts()}</select></div>
+        </div>
+        <div class="npr-result" id="nr-${id}">
+            <div class="formula" id="nf-${id}">1 × 1 × 1</div>
+            <div class="npr-big" id="nb-${id}" style="color:#1abc9c;">1</div>
+            <div class="risk-text" id="nrt-${id}" style="background:#1abc9c;color:#fff;">MUY BAJO</div>
+        </div>
+        <div class="field"><label>Causa de la Falla</label><input type="text" placeholder="Ej: Lubricación insuficiente" value="${c.cause||''}"></div>
+        <div class="field"><label>Control Actual</label><input type="text" placeholder="Ej: Ruta de vibración mensual" value="${c.control||''}"></div>
+        <div class="field"><label>Acción Recomendada</label><input type="text" placeholder="Ej: Lubricación automática" value="${c.action||''}"></div>
+        <button class="fcard-delete" onclick="delCard('fc-${id}')">🗑️ Eliminar este modo de falla</button>
+    </div>`;
+    document.getElementById('cardsContainer').appendChild(el);
+    document.getElementById('emptyState')?.remove();
+
+    if(c.s||c.o||c.d){
+        const sels=el.querySelectorAll('.sod-select');
+        if(c.s)sels[0].value=c.s;
+        if(c.o)sels[1].value=c.o;
+        if(c.d)sels[2].value=c.d;
+        recalc(id);
+    }
+    updateDash();
+}
+
+function toggleCard(cid){
+    document.getElementById(cid).classList.toggle('expanded');
+}
+
+function recalc(id){
+    const card=document.getElementById('fc-'+id);
+    const sels=card.querySelectorAll('.sod-select');
+    const s=+sels[0].value, o=+sels[1].value, d=+sels[2].value;
+    const npr=s*o*d;
+
+    document.getElementById('nf-'+id).textContent=s+' × '+o+' × '+d;
+    document.getElementById('nb-'+id).textContent=npr;
+    document.getElementById('fnv-'+id).textContent=npr;
+
+    let txt,cls,col;
+    if(npr>=500){txt='MUY ALTO';cls='npr-vhigh';col='#e74c3c';}
+    else if(npr>=200){txt='ALTO';cls='npr-high';col='#e67e22';}
+    else if(npr>=100){txt='MEDIO';cls='npr-med';col='#f1c40f';}
+    else if(npr>=40){txt='BAJO';cls='npr-low';col='#2ecc71';}
+    else{txt='MUY BAJO';cls='npr-vlow';col='#1abc9c';}
+
+    const hdr=document.getElementById('fnpr-'+id);
+    hdr.className='fcard-npr '+cls;
+    const big=document.getElementById('nb-'+id);
+    big.style.color=col;
+    const rt=document.getElementById('nrt-'+id);
+    rt.textContent=txt;rt.style.background=col;
+    rt.style.color=(npr>=100&&npr<200)?'#1a3a5c':'#fff';
+
+    updateDash();
+}
+
+function delCard(cid){
+    if(confirm('¿Eliminar este modo de falla?')){
+        document.getElementById(cid).remove();
+        renumber();
+        updateDash();
+        if(!document.querySelectorAll('.fcard').length){
+            document.getElementById('cardsContainer').innerHTML='<div class="empty-state" id="emptyState"><div class="icon">📋</div><p>No hay modos de falla registrados.<br>Toque <strong>➕ Agregar</strong> o <strong>📋 Ejemplo</strong> para comenzar.</p></div>';
+        }
+    }
+}
+
+function renumber(){
+    document.querySelectorAll('.fcard').forEach((c,i)=>{
+        const n=c.querySelector('.fcard-num');
+        if(n)n.textContent=i+1;
+    });
+}
+
+function updateDash(){
+    const cards=document.querySelectorAll('.fcard');
+    let tot=cards.length,crit=0,nprs=[];
+    cards.forEach(c=>{
+        const v=+(c.querySelector('.npr-val')?.textContent)||0;
+        nprs.push(v);if(v>=200)crit++;
+    });
+    document.getElementById('d-total').textContent=tot;
+    document.getElementById('d-crit').textContent=crit;
+    document.getElementById('d-avg').textContent=nprs.length?Math.round(nprs.reduce((a,b)=>a+b,0)/nprs.length):0;
+    const mx=nprs.length?Math.max(...nprs):0;
+    document.getElementById('d-max').textContent=mx;
+}
+
+function showScales(){document.getElementById('scalesModal').classList.add('active');}
+function closeScales(){document.getElementById('scalesModal').classList.remove('active');}
+function showTab(t){
+    ['s','o','d'].forEach(x=>{
+        document.getElementById('tab-'+x).style.display=x===t?'block':'none';
+        document.querySelector('.tab-btn.'+x+'-tab').classList.toggle('active',x===t);
+    });
+}
+
+function clearAll(){
+    if(confirm('¿Limpiar todos los datos?')){
+        document.getElementById('cardsContainer').innerHTML='<div class="empty-state" id="emptyState"><div class="icon">📋</div><p>No hay modos de falla registrados.<br>Toque <strong>➕ Agregar</strong> o <strong>📋 Ejemplo</strong> para comenzar.</p></div>';
+        cardId=0;updateDash();
+    }
+}
+
+function loadExample(){
+    if(document.querySelectorAll('.fcard').length>0&&!confirm('Esto reemplazará los datos actuales.'))return;
+    document.getElementById('cardsContainer').innerHTML='';
+    cardId=0;
+    document.getElementById('sysName').value='Bomba Centrífuga P-101';
+    [
+        {comp:'Rodamiento',func:'Soportar carga radial',mode:'Desgaste prematuro',effect:'Vibración alta, paro',s:'8',cause:'Lubricación insuficiente',o:'6',control:'Ruta vibración mensual',d:'5',action:'Lubricación automática'},
+        {comp:'Sello mecánico',func:'Sellar fluido',mode:'Fuga externa',effect:'Derrame, riesgo ambiental',s:'7',cause:'Desgaste por abrasión',o:'5',control:'Inspección visual semanal',d:'7',action:'Sello doble con flush'},
+        {comp:'Impulsor',func:'Generar presión',mode:'Erosión de álabes',effect:'Pérdida de caudal',s:'6',cause:'Sólidos en fluido',o:'4',control:'Presión de descarga',d:'6',action:'Filtro tipo Y'},
+        {comp:'Acople',func:'Transmitir torque',mode:'Fractura de elementos',effect:'Paro total',s:'8',cause:'Desalineación',o:'3',control:'Verificación post-mtto',d:'4',action:'Alineación láser'},
+        {comp:'Motor eléctrico',func:'Proveer potencia',mode:'Sobrecalentamiento',effect:'Trip térmico, paro',s:'7',cause:'Ventilación obstruida',o:'5',control:'Monitoreo corriente',d:'4',action:'Limpieza trimestral'},
+    ].forEach(e=>addCard(e));
+}
+</script>
+</body>
+</html>

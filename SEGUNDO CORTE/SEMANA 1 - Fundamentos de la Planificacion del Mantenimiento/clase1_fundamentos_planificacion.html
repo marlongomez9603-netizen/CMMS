@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semana 1 · Fundamentos de la Planificación del Mantenimiento</title>
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0e1a;
+      --surface:  #111827;
+      --card:     #1a2235;
+      --border:   #2a3a55;
+      --accent:   #00d4ff;
+      --accent2:  #ff6b35;
+      --accent3:  #7c3aed;
+      --green:    #10b981;
+      --yellow:   #f59e0b;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --radius:   12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ─── Scrollbar ─────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+    /* ─── Hero ──────────────────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 860px;
+      padding: 0 2rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: rgba(0,212,255,.12);
+      border: 1px solid rgba(0,212,255,.3);
+      color: var(--accent);
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .35rem 1rem;
+      border-radius: 99px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff 30%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-sub {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 580px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .meta-chip {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      padding: .4rem 1rem;
+      border-radius: 8px;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+
+    .meta-chip span { color: var(--text); font-weight: 600; }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .4rem;
+      color: var(--muted);
+      font-size: .75rem;
+    }
+
+    .scroll-hint .arrow {
+      width: 24px; height: 24px;
+      border-right: 2px solid var(--accent);
+      border-bottom: 2px solid var(--accent);
+      transform: rotate(45deg);
+      animation: bounce 1.4s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%,100% { transform: rotate(45deg) translateY(0); }
+      50%      { transform: rotate(45deg) translateY(6px); }
+    }
+
+    /* ─── Nav ───────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,14,26,.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+      gap: .5rem;
+      padding: .7rem 1rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .82rem;
+      padding: .35rem .9rem;
+      border-radius: 8px;
+      transition: .25s;
+    }
+
+    nav a:hover, nav a.active {
+      background: rgba(0,212,255,.12);
+      color: var(--accent);
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────────── */
+    main { max-width: 1160px; margin: 0 auto; padding: 0 1.5rem; }
+
+    section { padding: 5rem 0; }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      color: var(--accent);
+      font-size: .78rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: .8rem;
+    }
+
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 28px; height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 1.2rem;
+    }
+
+    .section-intro {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 680px;
+      margin-bottom: 3rem;
+    }
+
+    /* ─── Cards grid ────────────────────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.4rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.4rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+      transition: transform .25s, border-color .25s, box-shadow .25s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 32px rgba(0,212,255,.12);
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: .8rem;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+      color: var(--text);
+    }
+
+    .card p {
+      font-size: .88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .card.highlight {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(0,212,255,.06), var(--card));
+    }
+
+    /* ─── Divider ───────────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0;
+    }
+
+    /* ─── Concept Box ───────────────────────────────────────────────── */
+    .concept-box {
+      background: linear-gradient(135deg, rgba(0,212,255,.06), rgba(124,58,237,.06));
+      border: 1px solid rgba(0,212,255,.25);
+      border-radius: var(--radius);
+      padding: 1.8rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .concept-box .quote {
+      font-size: 1.05rem;
+      font-style: italic;
+      color: var(--text);
+      border-left: 3px solid var(--accent);
+      padding-left: 1.2rem;
+      margin-bottom: .8rem;
+    }
+
+    .concept-box .source {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    /* ─── Cycle Diagram ─────────────────────────────────────────────── */
+    #cycle-container {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto 2rem;
+      aspect-ratio: 1;
+    }
+
+    #cycle-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .cycle-info-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.6rem;
+      margin-top: 1rem;
+      min-height: 110px;
+      transition: .3s;
+    }
+
+    .cycle-info-panel h4 { color: var(--accent); margin-bottom: .4rem; font-size: 1rem; }
+    .cycle-info-panel p { color: var(--muted); font-size: .88rem; }
+
+    /* ─── Comparison Table ──────────────────────────────────────────── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    @media(max-width:600px) { .compare-grid { grid-template-columns: 1fr; } }
+
+    .compare-col {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .compare-col .col-header {
+      padding: 1rem 1.2rem;
+      font-weight: 700;
+      font-size: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .col-plan .col-header  { background: rgba(0,212,255,.12); color: var(--accent); }
+    .col-prog .col-header  { background: rgba(255,107,53,.12); color: var(--accent2); }
+
+    .compare-col ul {
+      list-style: none;
+      padding: 1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+
+    .compare-col li {
+      font-size: .87rem;
+      color: var(--muted);
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .compare-col li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .col-prog li::before { color: var(--accent2); }
+
+    /* ─── KPI Cards ─────────────────────────────────────────────────── */
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+      text-align: center;
+    }
+
+    .kpi-card .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .kpi-card .kpi-label { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+    .kpi-card .kpi-formula {
+      font-family: 'Courier New', monospace;
+      font-size: .78rem;
+      background: rgba(0,212,255,.08);
+      border: 1px solid rgba(0,212,255,.2);
+      color: var(--accent);
+      padding: .3rem .8rem;
+      border-radius: 6px;
+      margin-top: .6rem;
+      display: inline-block;
+    }
+
+    /* ─── Interactive Chart area ────────────────────────────────────── */
+    .chart-wrapper {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+    }
+
+    .chart-wrapper h3 {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    /* ─── Timeline ──────────────────────────────────────────────────── */
+    .timeline {
+      position: relative;
+      padding-left: 2.5rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: .65rem;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent), var(--accent3));
+    }
+
+    .tl-item {
+      position: relative;
+      padding: 0 0 2rem 1.5rem;
+    }
+
+    .tl-dot {
+      position: absolute;
+      left: -1.85rem;
+      top: .25rem;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.25);
+    }
+
+    .tl-item h4 { font-size: .95rem; font-weight: 700; color: var(--text); margin-bottom: .3rem; }
+    .tl-item p  { font-size: .85rem; color: var(--muted); }
+
+    /* ─── Accordion ─────────────────────────────────────────────────── */
+    .accordion { display: flex; flex-direction: column; gap: .6rem; }
+
+    .acc-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .acc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.3rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: background .2s;
+      user-select: none;
+    }
+
+    .acc-header:hover { background: rgba(0,212,255,.07); }
+
+    .acc-icon {
+      font-size: 1.1rem;
+      transition: transform .3s;
+      color: var(--accent);
+    }
+
+    .acc-item.open .acc-icon { transform: rotate(45deg); }
+
+    .acc-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s ease;
+    }
+
+    .acc-body-inner {
+      padding: 0 1.3rem 1.2rem;
+      font-size: .87rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .acc-body-inner ul {
+      list-style: disc;
+      padding-left: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+      margin-top: .5rem;
+    }
+
+    /* ─── Three.js canvas section ───────────────────────────────────── */
+    #three-section {
+      position: relative;
+      height: 420px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+    }
+
+    .three-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .three-overlay h3 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .4rem;
+    }
+
+    .three-overlay p { color: var(--muted); font-size: .85rem; }
+
+    /* ─── Pill tabs ─────────────────────────────────────────────────── */
+    .pill-tabs {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .pill-tab {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: .4rem 1rem;
+      border-radius: 99px;
+      font-size: .83rem;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .pill-tab.active, .pill-tab:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ─── Quiz ──────────────────────────────────────────────────────── */
+    .quiz-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .quiz-question { font-weight: 700; font-size: .95rem; margin-bottom: 1rem; }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .7rem 1rem;
+      cursor: pointer;
+      font-size: .87rem;
+      color: var(--text);
+      transition: .2s;
+    }
+
+    .quiz-option:hover { border-color: var(--accent); background: rgba(0,212,255,.06); }
+
+    .quiz-option.correct { border-color: var(--green); background: rgba(16,185,129,.1); color: var(--green); }
+    .quiz-option.wrong   { border-color: #ef4444; background: rgba(239,68,68,.1); color: #ef4444; }
+
+    .quiz-option input[type=radio] { accent-color: var(--accent); }
+
+    .quiz-feedback {
+      margin-top: .8rem;
+      font-size: .85rem;
+      padding: .6rem 1rem;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok { background: rgba(16,185,129,.12); color: var(--green); border: 1px solid var(--green); }
+    .quiz-feedback.err { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid #ef4444; }
+
+    /* ─── Footer ────────────────────────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: .83rem;
+    }
+
+    footer strong { color: var(--accent); }
+
+    /* ─── Utilities ─────────────────────────────────────────────────── */
+    .mt-0 { margin-top: 0 !important; }
+    .fade-in { opacity: 0; transform: translateY(28px); }
+
+    @media(max-width:768px) {
+      #cycle-container { max-width: 320px; }
+      nav { gap: .2rem; }
+      nav a { font-size: .75rem; padding: .3rem .65rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════════════════════ -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+
+  <div class="hero-content">
+    <div class="badge">⚙️ Programación y Control del Mantenimiento</div>
+    <h1 class="hero-title">Fundamentos de la<br/>Planificación del Mantenimiento</h1>
+    <p class="hero-sub">
+      Comprende los conceptos esenciales que sustentan la gestión moderna del mantenimiento industrial:
+      disponibilidad, confiabilidad y el ciclo de gestión completo.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Ing. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>Asignatura 730502</span></div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="arrow"></div>
+    <span>Desplázate</span>
+  </div>
+</section>
+
+<!-- NAV -->
+<nav id="main-nav">
+  <a href="#s-conceptos" class="active">Conceptos</a>
+  <a href="#s-diferencias">Planif. vs Prog.</a>
+  <a href="#s-objetivos">Objetivos</a>
+  <a href="#s-ciclo">Ciclo PPEC</a>
+  <a href="#s-indicadores">Indicadores</a>
+  <a href="#s-quiz">Autoevaluación</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECCIÓN 1 · CONCEPTOS
+══════════════════════════════════════════════════════════════════════ -->
+<section id="s-conceptos">
+  <div class="section-label">01 · Conceptos base</div>
+  <h2>¿Qué es la Planificación del Mantenimiento?</h2>
+  <p class="section-intro">
+    Antes de programar cualquier actividad, el equipo de mantenimiento debe <em>planificar</em>.
+    Comprender esta distinción es el primer paso hacia una gestión eficiente.
+  </p>
+
+  <div class="concept-box fade-in">
+    <div class="quote">
+      "La planificación del mantenimiento es el proceso de determinar <strong>qué</strong> trabajo se realizará,
+      <strong>cómo</strong> se realizará, <strong>qué</strong> recursos se necesitan y <strong>en qué orden</strong>
+      deben ejecutarse las tareas, antes de que cualquier trabajo comience."
+    </div>
+    <div class="source">— Adaptado de Dounce, E. · <em>Un enfoque analítico del mantenimiento industrial</em></div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card fade-in">
+      <div class="card-icon">🔍</div>
+      <h3>Definición funcional</h3>
+      <p>Proceso sistemático que establece los lineamientos para asegurar la disponibilidad y confiabilidad de los activos físicos con el mínimo costo posible.</p>
+    </div>
+    <div class="card fade-in highlight">
+      <div class="card-icon">🎯</div>
+      <h3>Enfoque estratégico</h3>
+      <p>La planificación no es reactiva: anticipa las necesidades, organiza los recursos y establece prioridades basadas en la criticidad de los equipos.</p>
+    </div>
+    <div class="card fade-in">
+      <div class="card-icon">🏭</div>
+      <h3>Contexto industrial</h3>
+      <p>En plantas electromecánicas, una buena planificación puede reducir las paradas no programadas hasta en un <strong style="color:var(--accent)">35–50%</strong> y bajar los costos de mantenimiento entre un <strong style="color:var(--accent)">15–25%</strong>.</p>
+    </div>
+  </div>
+
+  <!-- Three.js visualization -->
+  <div id="three-section">
+    <canvas id="three-canvas"></canvas>
+    <div class="three-overlay">
+      <h3>Activos Industriales en Gestión</h3>
+      <p>Visualización conceptual del universo de equipos que requieren planificación</p>
+    </div>
+  </div>
+
+  <!-- Accordion: tipos de mantenimiento -->
+  <div class="section-label">Tipos generales de mantenimiento</div>
+  <div class="accordion">
+
+    <div class="acc-item">
+      <div class="acc-header">
+        🔧 Mantenimiento Correctivo
+        <span class="acc-icon">+</span>
+      </div>
+      <div class="acc-body">
+        <div class="acc-body-inner">
+          Intervención que se realiza <strong>después de que ocurre una falla</strong>. Puede ser:
+          <ul>
+            <li><strong>No planificado (emergencia):</strong> falla inesperada que detiene la producción.</li>
+            <li><strong>Planificado (diferido):</strong> la falla se detecta pero se programa su corrección para una ventana conveniente.</li>
+          </ul>
+          <br/>Aunque inevitable, el objetivo es <em>minimizar</em> las emergencias correctivas mediante buena planificación preventiva.
+        </div>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-header">
+        🛡️ Mantenimiento Preventivo
+        <span class="acc-icon">+</span>
+      </div>
+      <div class="acc-body">
+        <div class="acc-body-inner">
+          Conjunto de acciones <strong>planificadas y programadas</strong> que se ejecutan antes de que ocurra la falla, con el fin de prolongar la vida útil de los equipos y reducir la probabilidad de fallo.
+          <ul>
+            <li><strong>Basado en tiempo (TBM):</strong> cada cierto número de horas, días o ciclos.</li>
+            <li><strong>Basado en condición (CBM):</strong> según el estado real del equipo medido por sensores o inspecciones.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-header">
+        🔬 Mantenimiento Predictivo
+        <span class="acc-icon">+</span>
+      </div>
+      <div class="acc-body">
+        <div class="acc-body-inner">
+          Técnicas de monitoreo continuo (vibración, termografía, análisis de aceite) que permiten <strong>predecir la falla antes de que ocurra</strong>. Reduce costos al evitar reemplazos prematuros y fallas catastróficas.
+          <ul>
+            <li>Análisis de vibraciones en rodamientos y motores.</li>
+            <li>Termografía infrarroja en tableros eléctricos.</li>
+            <li>Análisis de aceite en compresores y reductores.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-header">
+        ♻️ Mantenimiento Proactivo
+        <span class="acc-icon">+</span>
+      </div>
+      <div class="acc-body">
+        <div class="acc-body-inner">
+          Va más allá del predictivo: busca <strong>eliminar las causas raíz</strong> de las fallas. Incluye análisis RCA (Root Cause Analysis), mejoras de diseño, estandarización de procedimientos y capacitación del personal operativo.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECCIÓN 2 · PLANIFICACIÓN vs PROGRAMACIÓN
+══════════════════════════════════════════════════════════════════════ -->
+<section id="s-diferencias">
+  <div class="section-label">02 · Distinción clave</div>
+  <h2>Planificación <em>vs.</em> Programación</h2>
+  <p class="section-intro">
+    Estos dos conceptos suelen confundirse en la práctica industrial. Comprender la diferencia
+    es fundamental para estructurar correctamente el área de mantenimiento.
+  </p>
+
+  <div class="compare-grid fade-in">
+    <div class="compare-col col-plan">
+      <div class="col-header">📋 PLANIFICACIÓN</div>
+      <ul>
+        <li>Responde a: <strong>¿QUÉ, CÓMO y CON QUÉ?</strong></li>
+        <li>Define el alcance de las tareas de mantenimiento</li>
+        <li>Determina los recursos: mano de obra, materiales, herramientas</li>
+        <li>Establece los procedimientos y pasos de ejecución</li>
+        <li>Estima la duración de cada trabajo</li>
+        <li>Horizonte: <strong>largo y mediano plazo</strong></li>
+        <li>Resultado: el <strong>Plan de Mantenimiento</strong></li>
+        <li>Responsable: <strong>Planeador / Ingeniero de Mantenimiento</strong></li>
+      </ul>
+    </div>
+    <div class="compare-col col-prog">
+      <div class="col-header">🗓️ PROGRAMACIÓN</div>
+      <ul>
+        <li>Responde a: <strong>¿CUÁNDO y QUIÉN?</strong></li>
+        <li>Asigna fecha y hora específica a cada tarea planificada</li>
+        <li>Considera la disponibilidad de equipos, personal y materiales</li>
+        <li>Coordina con producción las ventanas de intervención</li>
+        <li>Prioriza según criticidad y backlog</li>
+        <li>Horizonte: <strong>corto plazo (semanal/diario)</strong></li>
+        <li>Resultado: el <strong>Programa de Mantenimiento</strong></li>
+        <li>Responsable: <strong>Supervisor / Programador de Mantenimiento</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="concept-box fade-in" style="margin-top:2rem;">
+    <div class="quote">
+      <strong>Analogía práctica:</strong> La planificación es como el <em>menú de un restaurante</em> —define los platos, ingredientes y técnicas de preparación. La programación es la <em>orden del día</em> del chef — decide cuándo y en qué orden se prepara cada plato según la demanda del momento.
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECCIÓN 3 · OBJETIVOS: D, C, M
+══════════════════════════════════════════════════════════════════════ -->
+<section id="s-objetivos">
+  <div class="section-label">03 · Pilares de la planificación</div>
+  <h2>Disponibilidad, Confiabilidad y Mantenibilidad</h2>
+  <p class="section-intro">
+    La planificación del mantenimiento tiene tres grandes objetivos operacionales que forman el
+    <strong>triángulo D-C-M</strong>. Cada uno es medible y se relaciona directamente con la eficiencia de la planta.
+  </p>
+
+  <!-- Pill tabs -->
+  <div class="pill-tabs">
+    <button class="pill-tab active" data-tab="tab-disp">⚡ Disponibilidad</button>
+    <button class="pill-tab" data-tab="tab-conf">🔒 Confiabilidad</button>
+    <button class="pill-tab" data-tab="tab-mant">🔧 Mantenibilidad</button>
+  </div>
+
+  <div id="tab-disp" class="tab-content active">
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:1.2rem;">
+          <h3 style="color:var(--accent)">Disponibilidad (A)</h3>
+          <p>
+            Probabilidad de que un equipo esté en condiciones de operar cuando se requiere.
+            Es la fracción de tiempo en que el activo puede cumplir su función durante un período de referencia.
+          </p>
+          <br/>
+          <p style="font-size:.85rem; color:var(--muted)">
+            Una disponibilidad del <strong style="color:var(--text)">95%</strong> significa que de cada 100 horas de producción planificada,
+            el equipo estuvo disponible 95 horas. El 5% restante corresponde a paradas por mantenimiento (planificado o no).
+          </p>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">A = MTBF / (MTBF + MTTR)</div>
+          <div class="kpi-label">Fórmula de Disponibilidad Inherente</div>
+          <div class="kpi-formula">MTBF = Tiempo Medio Entre Fallas | MTTR = Tiempo Medio de Reparación</div>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <h3>Simulación interactiva de Disponibilidad</h3>
+        <canvas id="chart-disp" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-conf" class="tab-content">
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:1.2rem;">
+          <h3 style="color:var(--accent2)">Confiabilidad (R)</h3>
+          <p>
+            Probabilidad de que un equipo funcione <strong>sin fallar</strong> durante un intervalo de tiempo específico,
+            bajo condiciones de operación definidas.
+          </p>
+          <br/>
+          <p style="font-size:.85rem; color:var(--muted)">
+            A diferencia de la disponibilidad, la confiabilidad mide la <em>estabilidad en el tiempo</em>.
+            Un equipo muy confiable falla pocas veces. Si falla frecuentemente pero se repara rápido,
+            puede tener buena disponibilidad pero baja confiabilidad.
+          </p>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">R(t) = e^(−t/MTBF)</div>
+          <div class="kpi-label">Función de Confiabilidad (distribución exponencial)</div>
+          <div class="kpi-formula">t = tiempo de operación | MTBF = tiempo medio entre fallas</div>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <h3>Curva de Confiabilidad en el tiempo</h3>
+        <canvas id="chart-conf" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-mant" class="tab-content">
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:1.2rem;">
+          <h3 style="color:var(--green)">Mantenibilidad (M)</h3>
+          <p>
+            Probabilidad de que un equipo <strong>pueda ser restaurado</strong> a su estado operacional
+            en un tiempo dado, cuando la intervención se realiza bajo condiciones estándar.
+          </p>
+          <br/>
+          <p style="font-size:.85rem; color:var(--muted)">
+            La mantenibilidad depende del diseño del equipo (accesibilidad, modularidad),
+            la calidad de los procedimientos, las herramientas disponibles y la competencia del personal.
+            Se mejora con una buena <strong style="color:var(--text)">planificación de los trabajos</strong>.
+          </p>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">M(t) = 1 − e^(−μt)</div>
+          <div class="kpi-label">Función de Mantenibilidad</div>
+          <div class="kpi-formula">μ = tasa de reparación = 1/MTTR</div>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <h3>Comparación: MTTR antes y después de planificación</h3>
+        <canvas id="chart-mant" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary KPI grid -->
+  <div class="grid-4 fade-in" style="margin-top:2.5rem;">
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-mtbf">320 h</div>
+      <div class="kpi-label">MTBF promedio motor eléctrico</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-mttr">4.2 h</div>
+      <div class="kpi-label">MTTR promedio con planificación</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-disp">98.7%</div>
+      <div class="kpi-label">Disponibilidad resultante</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-oee">82%</div>
+      <div class="kpi-label">OEE típico industria colombiana</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECCIÓN 4 · CICLO PPEC
+══════════════════════════════════════════════════════════════════════ -->
+<section id="s-ciclo">
+  <div class="section-label">04 · El ciclo central</div>
+  <h2>Ciclo de Gestión del Mantenimiento</h2>
+  <p class="section-intro">
+    La gestión del mantenimiento opera en un ciclo continuo de cuatro fases.
+    Haz clic en cada etapa para conocer sus actividades clave.
+  </p>
+
+  <div id="cycle-container">
+    <svg id="cycle-svg" viewBox="0 0 400 400">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Arrow markers -->
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="rgba(0,212,255,.5)"/>
+        </marker>
+      </defs>
+
+      <!-- Central gears icon -->
+      <circle cx="200" cy="200" r="55" fill="rgba(0,212,255,.06)" stroke="rgba(0,212,255,.25)" stroke-width="1.5"/>
+      <text x="200" y="195" text-anchor="middle" font-size="28">⚙️</text>
+      <text x="200" y="218" text-anchor="middle" fill="rgba(0,212,255,.8)" font-size="10" font-weight="700">GESTIÓN</text>
+
+      <!-- Curved arrows between nodes -->
+      <path d="M 270 120 Q 310 200 270 280" fill="none" stroke="rgba(0,212,255,.3)" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+      <path d="M 130 280 Q 90  200 130 120" fill="none" stroke="rgba(0,212,255,.3)" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+      <path d="M 150 100 Q 200 70  260 100" fill="none" stroke="rgba(0,212,255,.3)" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+      <path d="M 260 300 Q 200 330 150 300" fill="none" stroke="rgba(0,212,255,.3)" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+
+      <!-- PLANIFICAR -->
+      <g class="cycle-node" data-phase="0" transform="translate(200,65)" style="cursor:pointer">
+        <circle r="52" fill="#0a1628" stroke="#00d4ff" stroke-width="2"/>
+        <text y="-10" text-anchor="middle" font-size="22">📋</text>
+        <text y="8"  text-anchor="middle" fill="#00d4ff" font-size="10" font-weight="800">PLANIFICAR</text>
+      </g>
+
+      <!-- PROGRAMAR -->
+      <g class="cycle-node" data-phase="1" transform="translate(335,200)" style="cursor:pointer">
+        <circle r="52" fill="#0a1628" stroke="#f59e0b" stroke-width="2"/>
+        <text y="-10" text-anchor="middle" font-size="22">🗓️</text>
+        <text y="8"  text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="800">PROGRAMAR</text>
+      </g>
+
+      <!-- EJECUTAR -->
+      <g class="cycle-node" data-phase="2" transform="translate(200,335)" style="cursor:pointer">
+        <circle r="52" fill="#0a1628" stroke="#10b981" stroke-width="2"/>
+        <text y="-10" text-anchor="middle" font-size="22">🔧</text>
+        <text y="8"  text-anchor="middle" fill="#10b981" font-size="10" font-weight="800">EJECUTAR</text>
+      </g>
+
+      <!-- CONTROLAR -->
+      <g class="cycle-node" data-phase="3" transform="translate(65,200)" style="cursor:pointer">
+        <circle r="52" fill="#0a1628" stroke="#7c3aed" stroke-width="2"/>
+        <text y="-10" text-anchor="middle" font-size="22">📊</text>
+        <text y="8"  text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="800">CONTROLAR</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="cycle-info-panel" id="cycle-panel">
+    <h4>👆 Selecciona una fase del ciclo</h4>
+    <p>Haz clic en cualquiera de las cuatro etapas del diagrama para ver su descripción detallada y las actividades clave que la conforman.</p>
+  </div>
+
+  <!-- Timeline detail -->
+  <div style="margin-top:3rem;">
+    <div class="section-label">Flujo típico de un plan de mantenimiento</div>
+    <div class="timeline fade-in">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <h4>1. Inventario y jerarquía de activos</h4>
+        <p>Identificar todos los equipos de la planta, clasificarlos por área, sistema y criticidad. Base de datos de activos (TAG, descripción, ubicación, datos técnicos).</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--yellow)"></div>
+        <h4>2. Análisis de criticidad</h4>
+        <p>Evaluar cada equipo según su impacto en la producción, seguridad y costos. Priorizar las intervenciones sobre los activos críticos.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--green)"></div>
+        <h4>3. Diseño de tareas preventivas</h4>
+        <p>Para cada equipo crítico, definir qué inspecciones, lubricaciones, ajustes o reemplazos se realizarán, con qué frecuencia y bajo qué procedimiento.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--accent2)"></div>
+        <h4>4. Estimación de recursos</h4>
+        <p>Cuantificar mano de obra (horas-hombre), repuestos, materiales y herramientas para cada tarea. Insumo clave para el presupuesto de mantenimiento.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--accent3)"></div>
+        <h4>5. Generación de órdenes de trabajo (OT)</h4>
+        <p>Documentar cada intervención con su número de OT, descripción, responsable, fecha programada y recursos asignados. Es el instrumento de control.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#ff6b6b"></div>
+        <h4>6. Ejecución y registro</h4>
+        <p>El técnico ejecuta la tarea según el procedimiento, registra lo ejecutado, el tiempo real, observaciones y firma la OT.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--green)"></div>
+        <h4>7. Análisis y retroalimentación</h4>
+        <p>Calcular indicadores (MTBF, MTTR, Disponibilidad, cumplimiento del plan). Identificar desviaciones y actualizar el plan. Reinicia el ciclo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECCIÓN 5 · INDICADORES
+══════════════════════════════════════════════════════════════════════ -->
+<section id="s-indicadores">
+  <div class="section-label">05 · Medición del desempeño</div>
+  <h2>Indicadores Clave de Mantenimiento</h2>
+  <p class="section-intro">
+    "Lo que no se mide, no se puede gestionar." Los indicadores permiten evaluar la efectividad del plan
+    y tomar decisiones basadas en datos.
+  </p>
+
+  <div class="grid-2 fade-in" style="margin-bottom:2rem;">
+    <div class="chart-wrapper">
+      <h3>Radar de Madurez — Áreas de Gestión</h3>
+      <canvas id="chart-radar" height="250"></canvas>
+    </div>
+    <div class="chart-wrapper">
+      <h3>Distribución típica de costos de mantenimiento</h3>
+      <canvas id="chart-pie" height="250"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-3 fade-in">
+    <div class="card">
+      <div class="card-icon">⏱️</div>
+      <h3>MTBF</h3>
+      <p><strong>Mean Time Between Failures</strong> · Tiempo promedio de operación entre fallas consecutivas. Mide confiabilidad. Un MTBF alto = equipo muy confiable.</p>
+      <div style="margin-top:.8rem; font-family:monospace; font-size:.82rem; color:var(--accent); background:rgba(0,212,255,.08); padding:.4rem .7rem; border-radius:6px;">
+        MTBF = Tiempo total operativo / N° de fallas
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>MTTR</h3>
+      <p><strong>Mean Time To Repair</strong> · Tiempo promedio para restaurar un equipo después de una falla. Mide mantenibilidad. Un MTTR bajo = reparaciones rápidas y eficientes.</p>
+      <div style="margin-top:.8rem; font-family:monospace; font-size:.82rem; color:var(--accent2); background:rgba(255,107,53,.08); padding:.4rem .7rem; border-radius:6px;">
+        MTTR = Tiempo total de reparación / N° de fallas
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>OEE</h3>
+      <p><strong>Overall Equipment Effectiveness</strong> · Indicador global que combina Disponibilidad × Rendimiento × Calidad. Estándar mundial de eficiencia industrial.</p>
+      <div style="margin-top:.8rem; font-family:monospace; font-size:.82rem; color:var(--green); background:rgba(16,185,129,.08); padding:.4rem .7rem; border-radius:6px;">
+        OEE = A × P × Q × 100%
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <h3>Cumplimiento del Plan</h3>
+      <p>Porcentaje de órdenes de trabajo preventivas ejecutadas en la fecha programada vs las planeadas. Objetivo típico: ≥ 90%.</p>
+      <div style="margin-top:.8rem; font-family:monospace; font-size:.82rem; color:var(--accent3); background:rgba(124,58,237,.08); padding:.4rem .7rem; border-radius:6px;">
+        CP = OT ejecutadas / OT programadas × 100
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">💰</div>
+      <h3>Costo de Mantenimiento / RAV</h3>
+      <p>Relación entre el gasto anual de mantenimiento y el valor de reposición del activo. Industria: 2–4%. Valores altos indican ineficiencia o activos al final de su vida útil.</p>
+      <div style="margin-top:.8rem; font-family:monospace; font-size:.82rem; color:var(--yellow); background:rgba(245,158,11,.08); padding:.4rem .7rem; border-radius:6px;">
+        CM/RAV = Costo Manto / Valor del Activo
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">📉</div>
+      <h3>Backlog de Mantenimiento</h3>
+      <p>Acumulado de órdenes de trabajo pendientes de ejecutar. Se expresa en semanas de trabajo. Backlog saludable: 2–4 semanas. Si crece, el plan está subfinanciado.</p>
+      <div style="margin-top:.8rem; font-family:monospace; font-size:.82rem; color:var(--accent); background:rgba(0,212,255,.08); padding:.4rem .7rem; border-radius:6px;">
+        Backlog = Σ HH pendientes / HH disponibles/semana
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECCIÓN 6 · QUIZ
+══════════════════════════════════════════════════════════════════════ -->
+<section id="s-quiz">
+  <div class="section-label">06 · Autoevaluación</div>
+  <h2>Verifica tu comprensión</h2>
+  <p class="section-intro">
+    Responde las preguntas para consolidar los conceptos de la sesión.
+    Obtendrás retroalimentación inmediata.
+  </p>
+
+  <!-- Q1 -->
+  <div class="quiz-card" id="q1">
+    <div class="quiz-question">1. ¿Cuál de las siguientes afirmaciones describe mejor la diferencia entre <em>planificación</em> y <em>programación</em> del mantenimiento?</div>
+    <div class="quiz-options">
+      <label class="quiz-option"><input type="radio" name="q1" value="a"> La planificación define el "cuándo" y la programación el "qué".</label>
+      <label class="quiz-option"><input type="radio" name="q1" value="b"> La planificación define el "qué", "cómo" y "con qué"; la programación define el "cuándo" y "quién".</label>
+      <label class="quiz-option"><input type="radio" name="q1" value="c"> Son sinónimos y se usan indistintamente en la industria.</label>
+      <label class="quiz-option"><input type="radio" name="q1" value="d"> La programación es de largo plazo y la planificación es de corto plazo.</label>
+    </div>
+    <div class="quiz-feedback" id="fb1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-card" id="q2">
+    <div class="quiz-question">2. Un motor eléctrico tiene un MTBF de 400 horas y un MTTR de 8 horas. ¿Cuál es su disponibilidad inherente?</div>
+    <div class="quiz-options">
+      <label class="quiz-option"><input type="radio" name="q2" value="a"> 50.0%</label>
+      <label class="quiz-option"><input type="radio" name="q2" value="b"> 92.0%</label>
+      <label class="quiz-option"><input type="radio" name="q2" value="c"> 98.0%</label>
+      <label class="quiz-option"><input type="radio" name="q2" value="d"> 99.8%</label>
+    </div>
+    <div class="quiz-feedback" id="fb2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-card" id="q3">
+    <div class="quiz-question">3. En el ciclo de gestión del mantenimiento (PPEC), ¿qué fase genera las métricas que retroalimentan y mejoran el plan?</div>
+    <div class="quiz-options">
+      <label class="quiz-option"><input type="radio" name="q3" value="a"> Planificar</label>
+      <label class="quiz-option"><input type="radio" name="q3" value="b"> Programar</label>
+      <label class="quiz-option"><input type="radio" name="q3" value="c"> Ejecutar</label>
+      <label class="quiz-option"><input type="radio" name="q3" value="d"> Controlar</label>
+    </div>
+    <div class="quiz-feedback" id="fb3"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="quiz-card" id="q4">
+    <div class="quiz-question">4. ¿Cuál indicador combina Disponibilidad × Rendimiento × Calidad para medir la eficiencia global de un equipo?</div>
+    <div class="quiz-options">
+      <label class="quiz-option"><input type="radio" name="q4" value="a"> MTBF</label>
+      <label class="quiz-option"><input type="radio" name="q4" value="b"> MTTR</label>
+      <label class="quiz-option"><input type="radio" name="q4" value="c"> OEE</label>
+      <label class="quiz-option"><input type="radio" name="q4" value="d"> Backlog</label>
+    </div>
+    <div class="quiz-feedback" id="fb4"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-card" id="q5">
+    <div class="quiz-question">5. El mantenimiento basado en condición (CBM) se clasifica dentro de:</div>
+    <div class="quiz-options">
+      <label class="quiz-option"><input type="radio" name="q5" value="a"> Mantenimiento correctivo no planificado</label>
+      <label class="quiz-option"><input type="radio" name="q5" value="b"> Mantenimiento preventivo</label>
+      <label class="quiz-option"><input type="radio" name="q5" value="c"> Mantenimiento correctivo planificado</label>
+      <label class="quiz-option"><input type="radio" name="q5" value="d"> Mantenimiento proactivo exclusivamente</label>
+    </div>
+    <div class="quiz-feedback" id="fb5"></div>
+  </div>
+
+  <div id="quiz-result" style="display:none; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.6rem; text-align:center; margin-top:1rem;">
+    <div style="font-size:2.5rem; margin-bottom:.6rem;" id="result-emoji">🎯</div>
+    <div style="font-size:1.4rem; font-weight:800; margin-bottom:.4rem;" id="result-score"></div>
+    <div style="color:var(--muted); font-size:.88rem;" id="result-msg"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502<br/>
+    Tecnología en Operación de Sistemas Electromecánicos · UNIPAZ<br/>
+    <span style="color:var(--muted)">Ing. Marlon Gómez — Escuela de Ingeniería de Producción</span>
+  </p>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ─── Three.js Hero background ───────────────────────────────────── */
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
+  camera.position.set(0, 0, 30);
+
+  // Grid of floating particles (representing industrial network)
+  const geo = new THREE.BufferGeometry();
+  const N = 1800;
+  const pos = new Float32Array(N * 3);
+  const col = new Float32Array(N * 3);
+  for(let i=0; i<N; i++){
+    pos[i*3]   = (Math.random()-0.5)*80;
+    pos[i*3+1] = (Math.random()-0.5)*60;
+    pos[i*3+2] = (Math.random()-0.5)*40;
+    const t = Math.random();
+    col[i*3]   = t < 0.5 ? 0 : t < 0.8 ? 1 : 0.48;
+    col[i*3+1] = t < 0.5 ? 0.83: t < 0.8 ? 0.42: 0.23;
+    col[i*3+2] = t < 0.5 ? 1 : t < 0.8 ? 0.21 : 0.93;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+
+  const mat = new THREE.PointsMaterial({ size: 0.22, vertexColors: true, transparent: true, opacity: 0.7 });
+  const pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+
+  // Torus representing cyclic maintenance
+  const tGeo = new THREE.TorusGeometry(12, 0.2, 8, 80);
+  const tMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.15, wireframe: true });
+  const torus = new THREE.Mesh(tGeo, tMat);
+  scene.add(torus);
+
+  // Second torus
+  const tGeo2 = new THREE.TorusGeometry(18, 0.1, 8, 100);
+  const tMat2 = new THREE.MeshBasicMaterial({ color: 0x7c3aed, transparent: true, opacity: 0.1, wireframe: true });
+  const torus2 = new THREE.Mesh(tGeo2, tMat2);
+  torus2.rotation.x = Math.PI/3;
+  scene.add(torus2);
+
+  let t = 0;
+  function animate(){
+    requestAnimationFrame(animate);
+    t += 0.005;
+    pts.rotation.y = t * 0.15;
+    pts.rotation.x = t * 0.07;
+    torus.rotation.z = t * 0.3;
+    torus.rotation.x = t * 0.1;
+    torus2.rotation.y = t * 0.2;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+/* ─── Three.js mid-section ───────────────────────────────────────── */
+(function(){
+  const canvas = document.getElementById('three-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, canvas.parentElement.clientWidth/canvas.parentElement.clientHeight, 0.1, 200);
+  camera.position.set(0,0,18);
+
+  // Ambient
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  const dLight = new THREE.DirectionalLight(0x00d4ff, 1.2);
+  dLight.position.set(5,8,5);
+  scene.add(dLight);
+  const dLight2 = new THREE.DirectionalLight(0x7c3aed, 0.8);
+  dLight2.position.set(-5,-3,3);
+  scene.add(dLight2);
+
+  // Industrial equipment representations
+  const equipments = [];
+
+  // Motor (cylinder + sphere)
+  function makeMotor(x,y,z, color){
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.7,0.7,1.8,16),
+      new THREE.MeshPhongMaterial({ color, wireframe:false, opacity:0.85, transparent:true })
+    );
+    const cap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.72,12,8),
+      new THREE.MeshPhongMaterial({ color:0x00d4ff, wireframe:true, transparent:true, opacity:0.4 })
+    );
+    cap.position.y = 0.9;
+    g.add(body, cap);
+    g.position.set(x,y,z);
+    return g;
+  }
+
+  // Pump (box)
+  function makePump(x,y,z, color){
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4,1,1.8),
+      new THREE.MeshPhongMaterial({ color, wireframe:false, opacity:0.85, transparent:true })
+    );
+    const outline = new THREE.Mesh(
+      new THREE.BoxGeometry(1.45,1.05,1.85),
+      new THREE.MeshBasicMaterial({ color:0xff6b35, wireframe:true, transparent:true, opacity:0.3 })
+    );
+    g.add(body, outline);
+    g.position.set(x,y,z);
+    return g;
+  }
+
+  // Compressor (torus + cylinder)
+  function makeCompressor(x,y,z){
+    const g = new THREE.Group();
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.8,0.25,10,24),
+      new THREE.MeshPhongMaterial({ color:0x10b981, transparent:true, opacity:0.8 })
+    );
+    ring.rotation.x = Math.PI/2;
+    const shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12,0.12,2.2,8),
+      new THREE.MeshPhongMaterial({ color:0xcccccc })
+    );
+    g.add(ring, shaft);
+    g.position.set(x,y,z);
+    return g;
+  }
+
+  const colors = [0x0066aa, 0x0088cc, 0x00aadd, 0x005588];
+  const items = [
+    makeMotor(-5,1,0, 0x1a4a8a), makeMotor(-3,-1,-2, 0x0d6b9e),
+    makeMotor(5,0.5,0, 0x1a4a8a), makeMotor(3,-0.8,1, 0x0d6b9e),
+    makePump(-1,2,0, 0x8b3508), makePump(1,-2,1, 0x6b2906),
+    makePump(-2.5,0.5,-1, 0x7c3008), makePump(2.5,1.5,-2, 0x8b3508),
+    makeCompressor(0,0,0), makeCompressor(-4,2,-1), makeCompressor(4,-1.5,-1)
+  ];
+
+  items.forEach(i => { scene.add(i); equipments.push(i); });
+
+  // Connection lines
+  const lineMat = new THREE.LineBasicMaterial({ color:0x00d4ff, transparent:true, opacity:0.2 });
+  for(let i=0; i<items.length-1; i++){
+    const pts = [items[i].position.clone(), items[i+1].position.clone()];
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    scene.add(new THREE.Line(lineGeo, lineMat));
+  }
+
+  let t = 0;
+  function animate(){
+    requestAnimationFrame(animate);
+    t += 0.008;
+    equipments.forEach((eq, idx) => {
+      eq.rotation.y += 0.008 + idx*0.001;
+      eq.position.y += Math.sin(t + idx) * 0.003;
+    });
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+/* ─── GSAP Scroll animations ─────────────────────────────────────── */
+gsap.registerPlugin(ScrollTrigger);
+
+gsap.utils.toArray('.fade-in').forEach(el => {
+  gsap.to(el, {
+    opacity: 1, y: 0, duration: 0.75, ease: 'power2.out',
+    scrollTrigger: { trigger: el, start: 'top 88%' }
+  });
+});
+
+/* ─── Nav active state ───────────────────────────────────────────── */
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      navLinks.forEach(a => a.classList.remove('active'));
+      const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if(link) link.classList.add('active');
+    }
+  });
+}, { threshold: 0.35 });
+
+sections.forEach(s => io.observe(s));
+
+/* ─── Accordion ──────────────────────────────────────────────────── */
+document.querySelectorAll('.acc-header').forEach(h => {
+  h.addEventListener('click', () => {
+    const item = h.parentElement;
+    const body = item.querySelector('.acc-body');
+    const isOpen = item.classList.contains('open');
+
+    document.querySelectorAll('.acc-item').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.acc-body').style.maxHeight = null;
+    });
+
+    if(!isOpen){
+      item.classList.add('open');
+      body.style.maxHeight = body.scrollHeight + 'px';
+    }
+  });
+});
+
+/* ─── Cycle Diagram ──────────────────────────────────────────────── */
+const cycleData = [
+  {
+    name: 'PLANIFICAR',
+    color: '#00d4ff',
+    desc: 'Es la fase de preparación. Se definen las tareas de mantenimiento, sus procedimientos, los recursos necesarios (mano de obra, repuestos, herramientas) y se estima la duración. Sin buena planificación, las demás fases son ineficientes.',
+    activities: ['Identificar y jerarquizar activos', 'Analizar criticidad de equipos', 'Diseñar procedimientos de trabajo', 'Estimar recursos y costos', 'Establecer políticas de mantenimiento']
+  },
+  {
+    name: 'PROGRAMAR',
+    color: '#f59e0b',
+    desc: 'Se asigna fecha, hora y responsable a cada tarea planificada, coordinando con producción las ventanas de intervención. Se prioriza según criticidad, backlog y disponibilidad de recursos.',
+    activities: ['Generar órdenes de trabajo (OT)', 'Priorizar según criticidad', 'Coordinar con producción', 'Asignar personal y materiales', 'Publicar programa semanal']
+  },
+  {
+    name: 'EJECUTAR',
+    color: '#10b981',
+    desc: 'El técnico realiza la intervención siguiendo el procedimiento establecido. Registra el tiempo real, materiales usados, observaciones y condición del equipo. La calidad de la ejecución depende de la calidad de la planificación.',
+    activities: ['Recibir y revisar la OT', 'Preparar herramientas y materiales', 'Ejecutar tarea según procedimiento', 'Registrar trabajo realizado y tiempos', 'Firmar y cerrar la OT']
+  },
+  {
+    name: 'CONTROLAR',
+    color: '#7c3aed',
+    desc: 'Se calculan indicadores (MTBF, MTTR, Disponibilidad, cumplimiento del plan, costos). Se identifican desviaciones respecto al plan y se generan acciones correctivas que retroalimentan la fase de planificación.',
+    activities: ['Calcular KPIs de mantenimiento', 'Analizar tendencias de falla', 'Verificar cumplimiento del programa', 'Generar informes de gestión', 'Actualizar historial de equipos']
+  }
+];
+
+document.querySelectorAll('.cycle-node').forEach(node => {
+  node.addEventListener('click', () => {
+    const phase = parseInt(node.dataset.phase);
+    const data = cycleData[phase];
+    const panel = document.getElementById('cycle-panel');
+    panel.innerHTML = `
+      <h4 style="color:${data.color}">▶ ${data.name}</h4>
+      <p style="margin-bottom:.7rem;">${data.desc}</p>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:.3rem;">
+        ${data.activities.map(a=>`<li style="font-size:.83rem;color:#94a3b8;padding-left:1rem;position:relative;">
+          <span style="position:absolute;left:0;color:${data.color};">›</span>${a}
+        </li>`).join('')}
+      </ul>
+    `;
+    gsap.from(panel, { opacity:0, y:10, duration:0.35 });
+
+    // highlight selected node
+    document.querySelectorAll('.cycle-node circle:first-child').forEach((c,i)=>{
+      c.setAttribute('opacity', i===phase ? '1' : '0.5');
+    });
+  });
+});
+
+/* ─── Pill Tabs ──────────────────────────────────────────────────── */
+document.querySelectorAll('.pill-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.pill-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+
+    // Re-draw chart if needed
+    if(tab.dataset.tab === 'tab-conf' && !window._confChartDone){ initConfChart(); window._confChartDone=true; }
+    if(tab.dataset.tab === 'tab-mant' && !window._mantChartDone){ initMantChart(); window._mantChartDone=true; }
+  });
+});
+
+/* ─── Chart.js: Disponibilidad ───────────────────────────────────── */
+(function initDispChart(){
+  const ctx = document.getElementById('chart-disp');
+  const mtbf = [100,200,300,400,500,600,800,1000];
+  const mttr = 8;
+  const avail = mtbf.map(m => ((m/(m+mttr))*100).toFixed(1));
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: mtbf.map(m => m+'h'),
+      datasets: [{
+        label: 'Disponibilidad (%)',
+        data: avail,
+        borderColor: '#00d4ff',
+        backgroundColor: 'rgba(0,212,255,.12)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#00d4ff',
+        pointRadius: 5
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font:{size:11} } },
+        tooltip: {
+          callbacks: {
+            title: ctx => 'MTBF = ' + ctx[0].label,
+            label: ctx => 'Disponibilidad: ' + ctx.raw + '%'
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color:'#94a3b8' }, grid: { color:'rgba(255,255,255,.05)' },
+             title: { display:true, text:'MTBF (horas)', color:'#94a3b8', font:{size:10} } },
+        y: { min:85, max:100, ticks: { color:'#94a3b8' }, grid: { color:'rgba(255,255,255,.05)' },
+             title: { display:true, text:'Disponibilidad (%)', color:'#94a3b8', font:{size:10} } }
+      }
+    }
+  });
+})();
+
+function initConfChart(){
+  const ctx = document.getElementById('chart-conf');
+  const t = Array.from({length:20}, (_,i)=>i*20);
+  const conf = (mtbf) => t.map(ti => (Math.exp(-ti/mtbf)*100).toFixed(1));
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: t.map(v=>v+'h'),
+      datasets: [
+        { label:'MTBF = 200h', data:conf(200), borderColor:'#ff6b35', borderWidth:2, fill:false, tension:0.3, pointRadius:3 },
+        { label:'MTBF = 400h', data:conf(400), borderColor:'#00d4ff', borderWidth:2.5, fill:'origin', backgroundColor:'rgba(0,212,255,.07)', tension:0.3, pointRadius:3 },
+        { label:'MTBF = 800h', data:conf(800), borderColor:'#10b981', borderWidth:2, fill:false, tension:0.3, pointRadius:3 },
+      ]
+    },
+    options: {
+      plugins: { legend: { labels: { color:'#94a3b8', font:{size:10} } } },
+      scales: {
+        x: { ticks:{color:'#94a3b8'}, grid:{color:'rgba(255,255,255,.05)'},
+             title:{display:true, text:'Tiempo de operación (h)', color:'#94a3b8', font:{size:10}} },
+        y: { min:0, max:100, ticks:{color:'#94a3b8'}, grid:{color:'rgba(255,255,255,.05)'},
+             title:{display:true, text:'Confiabilidad R(t) %', color:'#94a3b8', font:{size:10}} }
+      }
+    }
+  });
+}
+
+function initMantChart(){
+  const ctx = document.getElementById('chart-mant');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Motor\nBomba A','Motor\nBomba B','Compresor\n#1','Bomba\nCentríf.','Reductor\n#2','Tablero\nEléctrico'],
+      datasets: [
+        { label:'MTTR Sin planificación (h)', data:[12,9,18,7,15,6],
+          backgroundColor:'rgba(239,68,68,.6)', borderColor:'#ef4444', borderWidth:1.5, borderRadius:4 },
+        { label:'MTTR Con planificación (h)', data:[4.5,3.2,7,2.8,5.5,2.1],
+          backgroundColor:'rgba(16,185,129,.6)', borderColor:'#10b981', borderWidth:1.5, borderRadius:4 }
+      ]
+    },
+    options: {
+      plugins: { legend: { labels: { color:'#94a3b8', font:{size:10} } } },
+      scales: {
+        x: { ticks:{color:'#94a3b8', font:{size:9}}, grid:{color:'rgba(255,255,255,.05)'} },
+        y: { ticks:{color:'#94a3b8'}, grid:{color:'rgba(255,255,255,.05)'},
+             title:{display:true, text:'Tiempo de Reparación (horas)', color:'#94a3b8', font:{size:10}} }
+      }
+    }
+  });
+}
+
+/* ─── Chart Radar ────────────────────────────────────────────────── */
+(function(){
+  const ctx = document.getElementById('chart-radar');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Planificación','Programación','Ejecución','Control','Indicadores','Gestión Stock'],
+      datasets: [
+        { label:'Empresa sin CMMS', data:[30,40,60,20,25,35],
+          borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.15)', pointBackgroundColor:'#ef4444' },
+        { label:'Empresa con CMMS', data:[85,80,78,88,82,75],
+          borderColor:'#00d4ff', backgroundColor:'rgba(0,212,255,.15)', pointBackgroundColor:'#00d4ff' }
+      ]
+    },
+    options: {
+      plugins: { legend: { labels:{color:'#94a3b8', font:{size:10}} } },
+      scales: { r: {
+        min:0, max:100,
+        ticks:{color:'#94a3b8', backdropColor:'transparent', font:{size:9}},
+        grid:{color:'rgba(255,255,255,.1)'},
+        pointLabels:{color:'#94a3b8', font:{size:10}},
+        angleLines:{color:'rgba(255,255,255,.1)'}
+      }}
+    }
+  });
+})();
+
+/* ─── Chart Pie ──────────────────────────────────────────────────── */
+(function(){
+  const ctx = document.getElementById('chart-pie');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Mano de obra','Repuestos y materiales','Contratistas','Herramientas y equipos','Gastos generales'],
+      datasets: [{
+        data: [40, 30, 16, 8, 6],
+        backgroundColor: ['#00d4ff','#7c3aed','#ff6b35','#10b981','#f59e0b'],
+        borderColor: '#1a2235',
+        borderWidth: 3
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position:'bottom', labels:{color:'#94a3b8', font:{size:10}, padding:10} },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}%` } }
+      },
+      cutout: '60%'
+    }
+  });
+})();
+
+/* ─── Quiz Logic ─────────────────────────────────────────────────── */
+const quizAnswers = { q1:'b', q2:'c', q3:'d', q4:'c', q5:'b' };
+const quizExplanations = {
+  q1: '✅ Correcto. La planificación responde al QUÉ, CÓMO y CON QUÉ (alcance y recursos). La programación responde al CUÁNDO y QUIÉN (calendarización y asignación).',
+  q2: '✅ Correcto. A = 400/(400+8) = 400/408 ≈ 98.04%. Con buena planificación se puede mantener este nivel.',
+  q3: '✅ Correcto. La fase CONTROLAR genera indicadores, mide desempeño y retroalimenta al plan para mejorarlo continuamente.',
+  q4: '✅ Correcto. OEE (Overall Equipment Effectiveness) = Disponibilidad × Rendimiento × Calidad. Es el indicador de productividad más completo.',
+  q5: '✅ Correcto. El mantenimiento basado en condición (CBM) es un tipo de mantenimiento preventivo que actúa según el estado real del equipo.'
+};
+const quizErrors = {
+  q1: '❌ Incorrecto. La planificación responde al QUÉ, CÓMO y CON QUÉ — no al "cuándo". La programación asigna fechas y responsables.',
+  q2: '❌ Incorrecto. Usa la fórmula A = MTBF/(MTBF+MTTR) = 400/(400+8) = 400/408 ≈ 98.0%.',
+  q3: '❌ Incorrecto. Es la fase CONTROLAR la que genera métricas (MTBF, MTTR, KPIs) que retroalimentan la planificación.',
+  q4: '❌ Incorrecto. OEE combina los tres factores. MTBF y MTTR son indicadores parciales; Backlog mide trabajo pendiente.',
+  q5: '❌ Incorrecto. El CBM (Condition Based Maintenance) es un tipo de mantenimiento PREVENTIVO que interviene según la condición real del equipo.'
+};
+
+let answered = {};
+
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    const name = opt.querySelector('input').name;
+    if(answered[name]) return;
+
+    const radio = opt.querySelector('input');
+    radio.checked = true;
+    answered[name] = radio.value;
+
+    const correct = quizAnswers[name];
+    const fb = document.getElementById('fb' + name.slice(1));
+
+    document.querySelectorAll(`[name="${name}"]`).forEach(r => {
+      const label = r.parentElement;
+      if(r.value === correct) label.classList.add('correct');
+      else if(r.value === radio.value) label.classList.add('wrong');
+    });
+
+    if(radio.value === correct){
+      fb.textContent = quizExplanations[name];
+      fb.className = 'quiz-feedback show ok';
+    } else {
+      fb.textContent = quizErrors[name];
+      fb.className = 'quiz-feedback show err';
+    }
+
+    // Check if all answered
+    if(Object.keys(answered).length === 5){
+      const score = Object.entries(answered).filter(([k,v]) => v === quizAnswers[k]).length;
+      const result = document.getElementById('quiz-result');
+      result.style.display = 'block';
+      document.getElementById('result-score').textContent = `${score} / 5 respuestas correctas`;
+      const msgs = [
+        '😅 Revisa los conceptos y vuelve a intentarlo.',
+        '😐 Buen esfuerzo, repasa los temas 2 y 3.',
+        '🙂 Vas bien, sigue profundizando.',
+        '😊 Muy bien, dominas la mayoría de conceptos.',
+        '🎯 ¡Excelente! Dominas todos los fundamentos.',
+        '🏆 ¡Perfecto! Estás listo para la siguiente semana.'
+      ];
+      document.getElementById('result-emoji').textContent = score >= 4 ? '🏆' : score >= 3 ? '🎯' : '📚';
+      document.getElementById('result-msg').textContent = msgs[score];
+      gsap.from(result, { opacity:0, y:20, duration:.5 });
+    }
+  });
+});
+
+/* ─── KPI counter animation ──────────────────────────────────────── */
+function animateCounter(id, target, suffix, decimals=0){
+  const el = document.getElementById(id);
+  if(!el) return;
+  gsap.to({ val: 0 }, {
+    val: parseFloat(target),
+    duration: 1.8,
+    ease: 'power2.out',
+    scrollTrigger: { trigger: el, start: 'top 90%' },
+    onUpdate: function(){
+      el.textContent = this.targets()[0].val.toFixed(decimals) + suffix;
+    }
+  });
+}
+
+animateCounter('kpi-mtbf', 320, ' h');
+animateCounter('kpi-mttr', 4.2, ' h', 1);
+animateCounter('kpi-disp', 98.7, '%', 1);
+animateCounter('kpi-oee',  82,   '%');
+</script>
+</body>
+</html>

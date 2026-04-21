@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>¿Cómo elegir el tipo de mantenimiento? Criterios y estrategias</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08060f;--surface:#0e0b1a;--card:#14102a;--border:#2d1f5e;
+  --accent:#7c3aed;--accent2:#06b6d4;--accent3:#f59e0b;
+  --green:#10b981;--red:#ef4444;--text:#ede9fe;--muted:#8b7cb0;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:920px;padding:0 2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.4);color:var(--accent);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.8rem;font-weight:700}
+.hero-title{font-size:clamp(1.9rem,4.5vw,3.5rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 15%,var(--accent) 60%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem}
+.hero-sub{color:var(--muted);font-size:1rem;max-width:640px;margin:0 auto 2.5rem;line-height:1.8}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:.9rem}
+.meta-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.38rem 1rem;border-radius:8px;font-size:.8rem;color:var(--muted)}
+.meta-chip span{color:var(--text);font-weight:700}
+.norm-badges{display:flex;justify-content:center;flex-wrap:wrap;gap:.6rem;margin-top:1.8rem}
+.norm-badge{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);color:var(--accent2);font-size:.7rem;font-weight:700;padding:.22rem .7rem;border-radius:6px;letter-spacing:.05em}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.72rem}
+.arrow{width:22px;height:22px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);animation:bounce 1.4s ease infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(7px)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(8,6,15,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.3rem;padding:.65rem 1rem;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:.78rem;padding:.35rem .85rem;border-radius:8px;transition:.2s;font-weight:600}
+nav a:hover,nav a.active{background:rgba(124,58,237,.14);color:var(--accent)}
+
+/* LAYOUT */
+main{max-width:1160px;margin:0 auto;padding:0 1.5rem}
+section{padding:5rem 0}
+.section-label{display:inline-flex;align-items:center;gap:.5rem;color:var(--accent);font-size:.74rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;margin-bottom:.8rem}
+.section-label::before{content:'';display:block;width:28px;height:2px;background:var(--accent);border-radius:2px}
+h2{font-size:clamp(1.7rem,3vw,2.5rem);font-weight:800;margin-bottom:1.2rem}
+.section-intro{color:var(--muted);font-size:1rem;max-width:720px;margin-bottom:3rem;line-height:1.82}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* CARDS */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1.2rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 10px 36px rgba(124,58,237,.12)}
+.card-icon{font-size:2.1rem;margin-bottom:.8rem}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:.45rem}
+.card p{font-size:.86rem;color:var(--muted);line-height:1.65}
+.norm-ref{display:inline-block;font-size:.68rem;font-family:'JetBrains Mono',monospace;background:rgba(6,182,212,.1);color:var(--accent2);border:1px solid rgba(6,182,212,.22);padding:.15rem .55rem;border-radius:5px;margin-top:.5rem}
+
+/* CONCEPT BOX */
+.concept-box{background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.25);border-radius:var(--radius);padding:1.8rem 2rem;margin-bottom:1.5rem}
+.concept-box .quote{font-size:1.01rem;font-style:italic;color:var(--text);border-left:3px solid var(--accent);padding-left:1.2rem;margin-bottom:.7rem}
+.concept-box .source{font-size:.78rem;color:var(--muted)}
+
+/* TAXONOMY TREE */
+.taxonomy-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;overflow-x:auto}
+.tax-tree{display:flex;flex-direction:column;gap:.5rem;margin-top:.8rem}
+.tax-node{border-radius:10px;overflow:hidden;cursor:pointer}
+.tax-header{display:flex;align-items:center;gap:.8rem;padding:.85rem 1.1rem;font-weight:700;font-size:.9rem;transition:filter .2s}
+.tax-header:hover{filter:brightness(1.1)}
+.tax-icon-btn{font-size:1rem;transition:transform .3s;color:rgba(255,255,255,.6)}
+.tax-node.open .tax-icon-btn{transform:rotate(90deg)}
+.tax-body{max-height:0;overflow:hidden;transition:max-height .4s ease;background:rgba(0,0,0,.2)}
+.tax-body-inner{padding:.9rem 1.2rem 1rem 1.4rem;font-size:.85rem;color:rgba(255,255,255,.7);line-height:1.7}
+.tax-body-inner ul{list-style:none;display:flex;flex-direction:column;gap:.3rem;margin-top:.4rem}
+.tax-body-inner ul li::before{content:'→ ';color:rgba(255,255,255,.4)}
+.tax-body-inner strong{color:#fff}
+.tax-subtitle{font-size:.7rem;font-weight:400;opacity:.7;margin-left:.4rem}
+/* Colors per type */
+.tax-correctivo .tax-header{background:linear-gradient(135deg,rgba(239,68,68,.35),rgba(239,68,68,.15))}
+.tax-preventivo .tax-header{background:linear-gradient(135deg,rgba(16,185,129,.35),rgba(16,185,129,.15))}
+.tax-predictivo .tax-header{background:linear-gradient(135deg,rgba(6,182,212,.35),rgba(6,182,212,.15))}
+.tax-proactivo .tax-header{background:linear-gradient(135deg,rgba(124,58,237,.35),rgba(124,58,237,.15))}
+.tax-rtf .tax-header{background:linear-gradient(135deg,rgba(245,158,11,.35),rgba(245,158,11,.15))}
+
+/* ACCORDION */
+.accordion{display:flex;flex-direction:column;gap:.6rem}
+.acc-item{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.acc-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.3rem;cursor:pointer;font-weight:700;font-size:.9rem;transition:background .2s;user-select:none}
+.acc-header:hover{background:rgba(124,58,237,.07)}
+.acc-icon{font-size:1.1rem;transition:transform .3s;color:var(--accent)}
+.acc-item.open .acc-icon{transform:rotate(45deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.acc-body-inner{padding:0 1.3rem 1.2rem;font-size:.86rem;color:var(--muted);line-height:1.75}
+.acc-body-inner ul{list-style:disc;padding-left:1.2rem;margin-top:.4rem;display:flex;flex-direction:column;gap:.3rem}
+.acc-body-inner strong{color:var(--text)}
+
+/* VARIABLES TABLE */
+.var-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.var-table th{background:rgba(124,58,237,.15);color:var(--accent);padding:.6rem .9rem;text-align:left;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.var-table td{padding:.55rem .9rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--muted)}
+.var-table td:first-child{color:var(--text);font-weight:700;width:22%}
+.var-table tr:hover td{background:rgba(124,58,237,.04)}
+.impact-high{color:var(--red);font-weight:700}
+.impact-med{color:var(--accent3);font-weight:700}
+.impact-low{color:var(--green);font-weight:700}
+
+/* PF CURVE */
+.pf-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem}
+.pf-wrap h3{font-size:1rem;font-weight:700;margin-bottom.8rem;color:var(--text)}
+#pf-canvas{width:100%;border-radius:8px;background:var(--surface)}
+.pf-legend{display:flex;flex-wrap:wrap;gap:1.2rem;margin-top:1rem;font-size:.78rem;color:var(--muted)}
+.pf-leg-item{display:flex;align-items:center;gap:.5rem}
+.pf-leg-dot{width:12px;height:3px;border-radius:2px}
+.pf-controls{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1rem;align-items:center}
+.pf-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:.35rem .9rem;border-radius:7px;cursor:pointer;font-size:.78rem;font-family:'Inter',sans-serif;transition:.2s;font-weight:600}
+.pf-btn.active,.pf-btn:hover{background:rgba(124,58,237,.15);border-color:var(--accent);color:var(--accent)}
+
+/* WEIBULL section */
+.weibull-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem}
+.weibull-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1rem}
+.slider-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.slider-row label{font-size:.82rem;color:var(--muted);font-weight:700;min-width:140px}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.slider-val{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--accent);font-weight:700;min-width:40px;text-align:right}
+.beta-info{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.2rem;font-size:.84rem;margin-top:.8rem;min-height:52px}
+.beta-info .bi-title{font-weight:700;color:var(--accent);margin-bottom:.2rem;font-size:.88rem}
+
+/* DECISION TREE */
+.decision-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem}
+.decision-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:var(--accent)}
+.dt-step{display:none}
+.dt-step.active{display:block;animation:fadeStep .3s ease}
+@keyframes fadeStep{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.dt-question{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1.2rem;line-height:1.5}
+.dt-context{font-size:.84rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.7;padding:.7rem 1rem;background:rgba(124,58,237,.06);border-radius:8px;border-left:3px solid var(--accent)}
+.dt-options{display:flex;flex-wrap:wrap;gap:.8rem}
+.dt-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.7rem 1.4rem;border-radius:10px;cursor:pointer;font-size:.88rem;font-family:'Inter',sans-serif;font-weight:600;transition:.2s}
+.dt-btn:hover{background:rgba(124,58,237,.15);border-color:var(--accent);color:var(--accent)}
+.dt-result{background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(6,182,212,.1));border:1px solid var(--accent);border-radius:var(--radius);padding:1.4rem 1.6rem;margin-top:.5rem}
+.dt-result .result-type{font-size:1.1rem;font-weight:900;margin-bottom:.5rem}
+.dt-result .result-why{font-size:.86rem;color:var(--muted);line-height:1.7}
+.dt-result .result-norm{font-size:.75rem;color:var(--accent2);margin-top:.7rem}
+.dt-progress{display:flex;gap:.3rem;margin-bottom:1.2rem}
+.dp-step{height:4px;flex:1;border-radius:2px;background:var(--border);transition:background .3s}
+.dp-step.done{background:var(--accent)}
+.dp-step.current{background:var(--accent2)}
+.btn-restart{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.45rem 1rem;border-radius:8px;cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-restart:hover{border-color:var(--accent);color:var(--accent)}
+
+/* STANDARDS TABLE */
+.std-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.std-table th{background:rgba(6,182,212,.1);color:var(--accent2);padding:.6rem .9rem;text-align:left;font-weight:700;font-size:.74rem;text-transform:uppercase}
+.std-table td{padding:.55rem .9rem;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.std-table td:first-child{color:var(--text);font-weight:700;font-family:'JetBrains Mono',monospace;font-size:.78rem;white-space:nowrap}
+.std-table td:nth-child(2){color:var(--accent3)}
+.std-table tr:hover td{background:rgba(6,182,212,.03)}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin-bottom:1.2rem}
+.quiz-question{font-weight:700;font-size:.95rem;margin-bottom:1rem;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;font-size:.86rem;color:var(--text);transition:.2s}
+.quiz-option:hover{border-color:var(--accent);background:rgba(124,58,237,.06)}
+.quiz-option.correct{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.07);color:var(--red)}
+.quiz-option input[type=radio]{accent-color:var(--accent)}
+.quiz-feedback{margin-top:.8rem;font-size:.84rem;padding:.6rem 1rem;border-radius:8px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(16,185,129,.09);color:var(--green);border:1px solid rgba(16,185,129,.28)}
+.quiz-feedback.err{background:rgba(239,68,68,.07);color:var(--red);border:1px solid rgba(239,68,68,.28)}
+.score-display{background:var(--card);border:1px solid rgba(124,58,237,.35);border-radius:var(--radius);padding:2rem;text-align:center;margin-top:2rem;display:none}
+.score-display.show{display:block}
+.score-num{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-quiz{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.84rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-quiz:hover{border-color:var(--accent);color:var(--accent)}
+.btn-quiz.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;font-weight:800}
+
+/* CHART */
+.chart-wrapper{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.chart-wrapper h3{font-size:.95rem;font-weight:700;margin-bottom:1rem}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.83rem}
+footer strong{color:var(--accent)}
+footer .norms{margin-top:.6rem;font-size:.74rem;color:rgba(139,124,176,.6)}
+
+/* UTILS */
+.fade-in{opacity:0;transform:translateY(24px)}
+.mt-2{margin-top:2rem}.mt-1{margin-top:1.2rem}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem;text-align:center}
+.kpi-value{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.kpi-label{font-size:.76rem;color:var(--muted);margin-top:.3rem}
+@media(max-width:768px){nav{gap:.15rem}nav a{font-size:.73rem;padding:.3rem .6rem}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">📚 Programación y Control del Mantenimiento</div>
+    <h1 class="hero-title">¿Cómo elegir el tipo<br/>de mantenimiento correcto?</h1>
+    <p class="hero-sub">Todo plan de mantenimiento comienza con una decisión clave: ¿qué tipo de mantenimiento aplico a cada equipo y por qué? Esta clase te da los criterios, las variables y las herramientas para tomar esa decisión con fundamento técnico.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Ing. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>Asignatura 730502</span></div>
+    </div>
+    <div class="norm-badges">
+      <span class="norm-badge">EN 13306:2017</span>
+      <span class="norm-badge">ISO 55001:2014</span>
+      <span class="norm-badge">SAE JA1011 (RCM)</span>
+      <span class="norm-badge">ISO 17359:2018</span>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="arrow"></div><span>Comienza el módulo</span></div>
+</section>
+
+<nav id="main-nav">
+  <a href="#s-pre" class="active">El PRE</a>
+  <a href="#s-taxonomy">Tipos</a>
+  <a href="#s-variables">Criterios</a>
+  <a href="#s-campo">Señales de Campo</a>
+  <a href="#s-pf">Curva P-F</a>
+  <a href="#s-decision">Árbol de Decisión</a>
+  <a href="#s-normas">Normas</a>
+</nav>
+
+<main>
+
+<!-- ═══════════ SECCIÓN 1 · EL PRE ═══════════ -->
+<section id="s-pre">
+  <div class="section-label">01 · Antes del plan</div>
+  <h2>El PRE del Plan de Mantenimiento</h2>
+  <p class="section-intro">Antes de crear cualquier plan de mantenimiento, el ingeniero debe responder una pregunta fundamental: <strong>¿Qué tipo de mantenimiento es el más adecuado para cada activo y para cada modo de falla?</strong> Esta decisión no es intuitiva ni arbitraria — tiene una base normativa y metodológica sólida.</p>
+
+  <div class="concept-box fade-in">
+    <div class="quote">"El mantenimiento no es una sola técnica. Es la selección sistemática y justificada de la estrategia más apropiada para cada activo, basada en las consecuencias de sus modos de falla."</div>
+    <div class="source">— Paráfrasis de SAE JA1011:1999 · <em>Evaluation Criteria for Reliability-Centered Maintenance (RCM) Processes</em></div>
+  </div>
+
+  <div class="grid-3 fade-in">
+    <div class="card">
+      <div class="card-icon">🚫</div>
+      <h3>Error común</h3>
+      <p>Aplicar el <strong>mismo tipo de mantenimiento</strong> a todos los equipos por igual (ej: "hacemos preventivo a todo"). Esta práctica genera sobre-costos o fallas no gestionadas.</p>
+    </div>
+    <div class="card" style="border-color:rgba(124,58,237,.4);background:linear-gradient(135deg,rgba(124,58,237,.07),var(--card))">
+      <div class="card-icon">✅</div>
+      <h3>Enfoque correcto</h3>
+      <p>Evaluar <strong>cada activo y cada modo de falla por separado</strong>, usando criterios de criticidad, patrón de falla, detectabilidad y costo-riesgo. Este es el núcleo del RCM.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <h3>Resultado esperado</h3>
+      <p>Un <strong>programa de mantenimiento justificado normativamente</strong>, donde cada tarea tiene una razón técnica documentada para ser del tipo que es.</p>
+    </div>
+  </div>
+
+  <div class="accordion mt-2">
+    <div class="acc-item">
+      <div class="acc-header">🧭 ¿Qué preguntas debe responder el PRE del plan?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">Antes de definir el plan, el ingeniero de mantenimiento debe responder:
+        <ul>
+          <li><strong>¿Cuáles son las funciones del activo</strong> y sus estándares de desempeño? (ISO 55001 §6.2)</li>
+          <li><strong>¿Cuáles son los modos de falla</strong> posibles de cada función? (FMEA/AMEF)</li>
+          <li><strong>¿Cuáles son las consecuencias</strong> de cada modo de falla? (seguridad, ambiente, producción, costos)</li>
+          <li><strong>¿El modo de falla tiene patrón predecible</strong> (edad-dependiente) o aleatorio?</li>
+          <li><strong>¿La falla puede detectarse antes</strong> de que se vuelva funcional? (¿existe un P-F interval?)</li>
+          <li><strong>¿Qué tan crítico es el activo</strong> para la cadena productiva?</li>
+          <li><strong>¿Cuál es el costo de intervención</strong> vs. costo de falla?</li>
+        </ul>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">📖 ¿Por qué basarse en normas?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">Las normas internacionales de mantenimiento existen porque la industria aprendió — muchas veces con accidentes y pérdidas millonarias — que las decisiones de mantenimiento sin metodología son arriesgadas. Beneficios de las normas:
+        <ul>
+          <li><strong>Lenguaje común</strong> entre ingenieros, operadores y auditores (EN 13306: terminología unificada).</li>
+          <li><strong>Criterios probados</strong> en miles de plantas industriales alrededor del mundo.</li>
+          <li><strong>Requisito legal/contractual:</strong> muchas certificaciones (ISO 9001, ISO 45001) exigen programas de mantenimiento documentados.</li>
+          <li><strong>Benchmark:</strong> permiten comparar el desempeño del mantenimiento con la industria.</li>
+          <li><strong>Defensa ante auditorías:</strong> "lo hicimos porque la norma X lo establece".</li>
+        </ul>
+      </div></div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════ SECCIÓN 2 · TAXONOMÍA ═══════════ -->
+<section id="s-taxonomy">
+  <div class="section-label">02 · EN 13306:2017</div>
+  <h2>Taxonomía Completa de Mantenimiento</h2>
+  <p class="section-intro">La norma <strong>EN 13306:2017</strong> (Mantenimiento – Terminología de mantenimiento) es la clasificación oficial de Europa adoptada globalmente. Define con precisión cada tipo de mantenimiento y sus sub-categorías. Haz clic en cada tipo para ver su definición normativa.</p>
+
+  <div class="taxonomy-wrap fade-in">
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:1.2rem">📌 <strong style="color:var(--text)">Fuente:</strong> EN 13306:2017 Clause 7 – Classification of maintenance</div>
+    <div class="tax-tree" id="tax-tree"></div>
+  </div>
+
+  <div class="grid-4 mt-2 fade-in">
+    <div class="kpi-card"><div style="font-size:1.6rem">🔴</div><div class="kpi-value" style="font-size:1.1rem;background:none;-webkit-text-fill-color:var(--red)">Correctivo</div><div class="kpi-label">Interviene después de la falla. Reactivo.</div></div>
+    <div class="kpi-card"><div style="font-size:1.6rem">🟢</div><div class="kpi-value" style="font-size:1.1rem;background:none;-webkit-text-fill-color:var(--green)">Preventivo</div><div class="kpi-label">Interviene antes de la falla. Planificado.</div></div>
+    <div class="kpi-card"><div style="font-size:1.6rem">🔵</div><div class="kpi-value" style="font-size:1.1rem;background:none;-webkit-text-fill-color:var(--accent2)">Predictivo</div><div class="kpi-label">Basado en condición. Monitorea parámetros.</div></div>
+    <div class="kpi-card"><div style="font-size:1.6rem">🟣</div><div class="kpi-value" style="font-size:1.1rem">Proactivo</div><div class="kpi-label">Elimina causas raíz. Mejora el diseño.</div></div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════ SECCIÓN 3 · VARIABLES ═══════════ -->
+<section id="s-variables">
+  <div class="section-label">03 · Criterios de selección</div>
+  <h2>Variables que determinan el tipo de mantenimiento</h2>
+  <p class="section-intro">La elección del tipo de mantenimiento no depende de una sola variable, sino de la interacción de <strong>seis factores clave</strong>. Comprender cómo interactúan es la base del análisis RCM y de la gestión de activos según ISO 55001.</p>
+
+  <div style="overflow-x:auto" class="fade-in">
+    <table class="var-table">
+      <thead><tr>
+        <th>Variable</th><th>Descripción</th><th>Impacto en la decisión</th><th>Herramienta de evaluación</th><th>Ref. normativa</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>🎯 Criticidad del activo</td>
+          <td>Impacto del equipo en seguridad, producción, medio ambiente y costos si falla</td>
+          <td><span class="impact-high">ALTO</span> – Define el nivel de inversión en mantenimiento proactivo</td>
+          <td>Matriz de Criticidad (Consecuencia × Frecuencia)</td>
+          <td><span class="norm-ref">ISO 55001 §8.1</span></td>
+        </tr>
+        <tr>
+          <td>📈 Comportamiento de la falla</td>
+          <td>¿La falla ocurre con más frecuencia a medida que el equipo envejece (desgaste progresivo), o de forma aleatoria sin avisar?</td>
+          <td><span class="impact-high">ALTO</span> – Si la falla aumenta con la edad → preventivo. Si es aleatoria → monitoreo o dejar fallar con control</td>
+          <td>Historial de fallas, registro de OTs anteriores</td>
+          <td><span class="norm-ref">ISO 14224 §8</span></td>
+        </tr>
+        <tr>
+          <td>🔍 Detectabilidad</td>
+          <td>¿Existe una señal detectable de deterioro antes de la falla funcional? ¿Cuánto tiempo hay para actuar? (P-F interval)</td>
+          <td><span class="impact-high">ALTO</span> – Si hay intervalo P-F suficiente → mantenimiento predictivo/CBM es viable</td>
+          <td>Curva P-F, análisis de modos de falla</td>
+          <td><span class="norm-ref">ISO 17359:2018</span></td>
+        </tr>
+        <tr>
+          <td>💰 Costo de falla vs. prevención</td>
+          <td>Relación entre el costo total de la falla (pérdida de producción + reparación + daños) y el costo del mantenimiento proactivo</td>
+          <td><span class="impact-med">MEDIO-ALTO</span> – Si costo falla &lt;&lt; costo prevención → RTF puede ser válido</td>
+          <td>Análisis costo-riesgo, Life Cycle Cost (LCC)</td>
+          <td><span class="norm-ref">ISO 55001 §4.2</span></td>
+        </tr>
+        <tr>
+          <td>🔬 Disponibilidad tecnológica</td>
+          <td>¿Existe tecnología de monitoreo disponible y económicamente viable para ese modo de falla?</td>
+          <td><span class="impact-med">MEDIO</span> – Sin tecnología → no es viable implemenar CBM aunque sea ideal</td>
+          <td>Catálogo de técnicas de monitoreo</td>
+          <td><span class="norm-ref">ISO 17359:2018</span></td>
+        </tr>
+        <tr>
+          <td>⚖️ Requisitos legales/normativos</td>
+          <td>Exigencias de ley, seguros, certificaciones o del fabricante que obligan a ciertos tipos de mantenimiento</td>
+          <td><span class="impact-high">ALTO</span> – Un requisito legal anula el análisis costo-beneficio. Es obligatorio cumplirlo</td>
+          <td>Revisión normativa sectorial, manual del fabricante</td>
+          <td><span class="norm-ref">ISO 55001 §4.2</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="accordion mt-2" id="vars-accordion">
+
+    <!-- VAR 1 -->
+    <div class="acc-item">
+      <div class="acc-header">🎯 Variable 1: Criticidad del activo<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">La criticidad mide el <strong>impacto total</strong> si el activo falla. Se calcula cruzando la frecuencia de falla con la severidad de sus consecuencias. Es la primera variable porque define cuánto vale la pena invertir en mantenimiento proactivo.</p>
+        <div style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.82rem">
+          <strong style="color:var(--accent)">Fórmula:</strong> Criticidad = Frecuencia de falla × (Impacto seguridad + Impacto ambiental + Impacto operacional + Impacto costo)<br/>
+          <span style="color:var(--muted)">Resultado: Clase A (crítico) → estrategia robusta | Clase B (importante) → preventivo estándar | Clase C (no crítico) → RTF o correctivo diferido</span>
+        </div>
+        <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.5rem">📌 Selecciona un equipo para ver su criticidad típica:</p>
+        <div class="ex-chips" data-var="v1">
+          <button class="ex-chip" onclick="showEx('v1','bomba')">💧 Bomba de proceso</button>
+          <button class="ex-chip" onclick="showEx('v1','compresor')">🔧 Compresor de aire</button>
+          <button class="ex-chip" onclick="showEx('v1','ventilador')">🌀 Ventilador de techo</button>
+          <button class="ex-chip" onclick="showEx('v1','ups')">⚡ UPS eléctrico</button>
+        </div>
+        <div class="ex-result" id="ex-v1" style="display:none"></div>
+      </div></div>
+    </div>
+
+    <!-- VAR 2 -->
+    <div class="acc-item">
+      <div class="acc-header">📈 Variable 2: Patrón de comportamiento de la falla<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">No todos los equipos fallan de la misma manera. El patrón de falla determina si el preventivo por tiempo (TBM) es útil o no. Si la falla ocurre de forma aleatoria, el TBM no reduce la probabilidad — solo añade costo.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:1rem">
+          <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:9px;padding:.7rem;font-size:.75rem;text-align:center">
+            <div style="font-size:1.2rem;margin-bottom:.3rem">📈</div>
+            <strong style="color:var(--green)">Desgaste progresivo</strong><br/>
+            <span style="color:var(--muted)">β &gt; 1 · La falla aumenta con la edad. TBM es efectivo.</span><br/>
+            <span style="font-size:.7rem;color:var(--green)">Ej: Rodamientos, correas, filtros</span>
+          </div>
+          <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:9px;padding:.7rem;font-size:.75rem;text-align:center">
+            <div style="font-size:1.2rem;margin-bottom:.3rem">📊</div>
+            <strong style="color:var(--accent2)">Falla aleatoria</strong><br/>
+            <span style="color:var(--muted)">β ≈ 1 · No depende de la edad. TBM no ayuda.</span><br/>
+            <span style="font-size:.7rem;color:var(--accent2)">Ej: Electrónica, válvulas, instrumentos</span>
+          </div>
+          <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:9px;padding:.7rem;font-size:.75rem;text-align:center">
+            <div style="font-size:1.2rem;margin-bottom:.3rem">📉</div>
+            <strong style="color:var(--red)">Mortalidad infantil</strong><br/>
+            <span style="color:var(--muted)">β &lt; 1 · Falla más al inicio. Mejorar instalación.</span><br/>
+            <span style="font-size:.7rem;color:var(--red)">Ej: Componentes mal instalados</span>
+          </div>
+        </div>
+        <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.5rem">📌 Selecciona un componente para ver su patrón típico:</p>
+        <div class="ex-chips" data-var="v2">
+          <button class="ex-chip" onclick="showEx('v2','rodamiento')">🔩 Rodamiento</button>
+          <button class="ex-chip" onclick="showEx('v2','electronica')">🖥️ Tarjeta electrónica</button>
+          <button class="ex-chip" onclick="showEx('v2','sello')">💧 Sello mecánico</button>
+          <button class="ex-chip" onclick="showEx('v2','correa')">⚙️ Correa de transmisión</button>
+        </div>
+        <div class="ex-result" id="ex-v2" style="display:none"></div>
+      </div></div>
+    </div>
+
+    <!-- VAR 3 -->
+    <div class="acc-item">
+      <div class="acc-header">🔍 Variable 3: Detectabilidad — El Intervalo P-F<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">La detectabilidad pregunta: <em>¿puedo ver la falla venir antes de que ocurra?</em> Si existe una señal observable entre la falla potencial (P) y la falla funcional (F), el mantenimiento predictivo es viable.</p>
+        <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.82rem">
+          <strong style="color:var(--accent2)">Regla del P-F interval:</strong> La frecuencia de inspección debe ser ≤ P-F interval / 2.<br/>
+          <span style="color:var(--muted)">Si el P-F es 6 semanas → inspeccionar cada 3 semanas o menos.</span>
+        </div>
+        <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.5rem">📌 Selecciona un modo de falla para ver su detectabilidad:</p>
+        <div class="ex-chips" data-var="v3">
+          <button class="ex-chip" onclick="showEx('v3','vibracion')">📳 Falla por vibración</button>
+          <button class="ex-chip" onclick="showEx('v3','corrosion')">🧪 Corrosión interna</button>
+          <button class="ex-chip" onclick="showEx('v3','fatiga')">⚡ Fisura por fatiga</button>
+          <button class="ex-chip" onclick="showEx('v3','hidraulico')">💧 Fuga hidráulica</button>
+        </div>
+        <div class="ex-result" id="ex-v3" style="display:none"></div>
+      </div></div>
+    </div>
+
+    <!-- VAR 4 -->
+    <div class="acc-item">
+      <div class="acc-header">💰 Variable 4: Costo de falla vs. costo de prevención<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">Cuando no hay consecuencias de seguridad, la decisión entre preventivo y RTF es económica. El costo total de la falla incluye la reparación, el tiempo de parada, la pérdida de producción y el impacto en calidad.</p>
+        <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.82rem">
+          <strong style="color:var(--accent3)">Análisis:</strong> Si Costo(falla × frecuencia) &lt; Costo(programa preventivo anual) → RTF es la decisión económicamente correcta.<br/>
+          <span style="color:var(--muted)">Este análisis solo aplica cuando la falla NO tiene consecuencias de seguridad ni ambientales.</span>
+        </div>
+        <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.5rem">📌 Selecciona un escenario para analizar el costo:</p>
+        <div class="ex-chips" data-var="v4">
+          <button class="ex-chip" onclick="showEx('v4','bombillo')">💡 Bombillo de pasillo</button>
+          <button class="ex-chip" onclick="showEx('v4','motorbomba')">🏭 Motobomba única</button>
+          <button class="ex-chip" onclick="showEx('v4','filtrored')">🔧 Filtro con redundancia</button>
+          <button class="ex-chip" onclick="showEx('v4','compresorppal')">⚙️ Compresor principal</button>
+        </div>
+        <div class="ex-result" id="ex-v4" style="display:none"></div>
+      </div></div>
+    </div>
+
+    <!-- VAR 5 -->
+    <div class="acc-item">
+      <div class="acc-header">🔬 Variable 5: Disponibilidad tecnológica y capacidad técnica<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">De nada sirve decidir que un equipo necesita mantenimiento predictivo si no se tiene el instrumento, el software o el técnico capacitado para ejecutarlo. La estrategia debe ser técnicamente factible, no solo teóricamente correcta.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1rem">
+          <div style="font-size:.8rem;border:1px solid var(--border);border-radius:9px;padding:.8rem">
+            <div style="font-weight:800;color:var(--accent2);margin-bottom:.4rem">✅ Requisitos para CBM/Predictivo</div>
+            <ul style="color:var(--muted);padding-left:1rem;margin:0;line-height:1.8">
+              <li>Instrumento de medición disponible</li>
+              <li>Personal capacitado en la técnica</li>
+              <li>Software de análisis o proveedor especializado</li>
+              <li>P-F interval suficiente para el modo de falla</li>
+              <li>Acceso al punto de medición (seguridad)</li>
+            </ul>
+          </div>
+          <div style="font-size:.8rem;border:1px solid var(--border);border-radius:9px;padding:.8rem">
+            <div style="font-weight:800;color:var(--accent3);margin-bottom:.4rem">⚠️ Si NO se tiene la tecnología...</div>
+            <ul style="color:var(--muted);padding-left:1rem;margin:0;line-height:1.8">
+              <li>Se evalúa Preventivo TBM según fabricante</li>
+              <li>Se busca contratación externa del servicio</li>
+              <li>Se planifica la adquisición del instrumento</li>
+              <li>RTF con redundancia si la criticidad lo permite</li>
+            </ul>
+          </div>
+        </div>
+        <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.5rem">📌 Selecciona una técnica para ver qué se necesita:</p>
+        <div class="ex-chips" data-var="v5">
+          <button class="ex-chip" onclick="showEx('v5','vibrometria')">📳 Vibrometría</button>
+          <button class="ex-chip" onclick="showEx('v5','termografia')">🌡️ Termografía</button>
+          <button class="ex-chip" onclick="showEx('v5','aceite')">🛢️ Análisis de aceite</button>
+          <button class="ex-chip" onclick="showEx('v5','ultrasonido')">🔊 Ultrasonido</button>
+        </div>
+        <div class="ex-result" id="ex-v5" style="display:none"></div>
+      </div></div>
+    </div>
+
+    <!-- VAR 6 -->
+    <div class="acc-item">
+      <div class="acc-header">⚖️ Variable 6: Requisitos legales, normativos y del fabricante<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">Algunos equipos tienen obligaciones de mantenimiento establecidas por <strong>ley, por el seguro de la planta, por certificaciones de calidad o por el fabricante</strong>. Estos requisitos anulan cualquier análisis costo-beneficio: son no negociables.</p>
+        <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.82rem">
+          <strong style="color:var(--red)">⚠️ Importante:</strong> Si una ley o norma exige hacer mantenimiento preventivo o pruebas funcionales a ciertos plazos, eso no es opcional aunque el análisis económico diga que RTF es más barato. Incumplirlo puede anular pólizas de seguro, generar sanciones o comprometer certificaciones.
+        </div>
+        <p style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:.5rem">📌 Selecciona un tipo de equipo regulado:</p>
+        <div class="ex-chips" data-var="v6">
+          <button class="ex-chip" onclick="showEx('v6','vasopresion')">💨 Vaso a presión</button>
+          <button class="ex-chip" onclick="showEx('v6','grua')">🏗️ Grúa y elementos de izaje</button>
+          <button class="ex-chip" onclick="showEx('v6','extintor')">🧯 Sistema contra incendios</button>
+          <button class="ex-chip" onclick="showEx('v6','electrico')">⚡ Instalación eléctrica industrial</button>
+        </div>
+        <div class="ex-result" id="ex-v6" style="display:none"></div>
+      </div></div>
+    </div>
+
+  </div><!-- /accordion -->
+
+</section>
+<hr class="divider"/>
+
+
+<!-- ═══════════ SECCIÓN 4 · SEÑALES DE CAMPO ═══════════ -->
+<section id="s-campo">
+  <div class="section-label">04 · Práctica de campo</div>
+  <h2>Señales de campo: ¿Qué observo y qué mantenimiento aplico?</h2>
+  <p class="section-intro">En el día a día del mantenimiento, el tecnólogo identifica síntomas en los equipos y debe tomar decisiones. Esta sección te muestra las señales más comunes en equipos industriales y cuál es el tipo de mantenimiento más indicado para cada una. Selecciona una categoría para ver los síntomas y recomendaciones.</p>
+
+  <!-- SELECTOR DE TIPO DE EQUIPO/SÍNTOMA -->
+  <div style="display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:1.8rem" class="fade-in">
+    <button class="pf-btn active" onclick="showCampo('mecanico',this)">⚙️ Mecánico</button>
+    <button class="pf-btn" onclick="showCampo('electrico',this)">⚡ Eléctrico</button>
+    <button class="pf-btn" onclick="showCampo('termico',this)">🌡️ Térmico</button>
+    <button class="pf-btn" onclick="showCampo('hidraulico',this)">💧 Hidráulico / Neumático</button>
+    <button class="pf-btn" onclick="showCampo('lubricacion',this)">🛢️ Lubricación</button>
+  </div>
+
+  <div id="campo-content" class="fade-in"></div>
+
+  <div class="concept-box mt-2 fade-in">
+    <div class="quote"><strong>Regla de oro del tecnólogo de mantenimiento:</strong></div>
+    <div class="source" style="color:var(--muted);font-size:.85rem;line-height:1.9;margin-top:.5rem">
+      🔴 <strong style="color:var(--text)">Si la señal es una emergencia o para la producción</strong> → Mantenimiento Correctivo Inmediato (P1).<br/>
+      🟠 <strong style="color:var(--text)">Si la señal existe pero el equipo sigue funcionando</strong> → Correctivo Diferido o Preventivo urgente (P2-P3).<br/>
+      🟡 <strong style="color:var(--text)">Si puedes medir el deterioro con un instrumento</strong> → Predictivo / Monitoreo de condición (CBM).<br/>
+      🟢 <strong style="color:var(--text)">Si el manual dice cuándo cambiar o revisar</strong> → Preventivo (TBM) según el fabricante.<br/>
+      ⚪ <strong style="color:var(--text)">Si el equipo tiene respaldo y la falla no es peligrosa</strong> → Correctivo planificado (RTF).
+    </div>
+  </div>
+
+  <div class="accordion mt-2">
+    <div class="acc-item">
+      <div class="acc-header">🤔 ¿Por qué no hacemos preventivo a todo?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">Aunque suena lógico, hacer preventivo a todo puede ser un problema:
+        <ul>
+          <li><strong>Costo innecesario:</strong> cambiar piezas buenas es desperdiciar dinero y mano de obra.</li>
+          <li><strong>Riesgo de falla por la intervención:</strong> cada vez que desmontas un equipo, puedes introducir un error nuevo (mal ajuste, contaminación, tornillo olvidado).</li>
+          <li><strong>No todos los equipos se desgastan igual:</strong> hay equipos que fallan de forma aleatoria — el preventivo no los protege.</li>
+          <li><strong>Falta de recursos:</strong> si haces preventivo innecesario a equipos de baja importancia, no te queda tiempo ni presupuesto para los críticos.</li>
+        </ul>
+        La norma <strong>EN 13306:2017</strong> reconoce explícitamente que el correctivo planificado es una estrategia válida en los contextos adecuados.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">🏭 Ejemplo práctico: Una bomba de agua industrial<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">Analicemos los diferentes tipos de mantenimiento aplicados a un mismo equipo:
+        <ul>
+          <li><strong>Correctivo:</strong> el sello mecánico falla y hay fuga — se detiene para reparar (P1 o P2 según impacto).</li>
+          <li><strong>Preventivo TBM:</strong> el fabricante indica cambio de rodamientos cada 8.000 horas o 2 años. Se programa y se hace sin importar la condición visible.</li>
+          <li><strong>Predictivo (CBM):</strong> se mide la vibración mensualmente con un vibrómetro. Cuando supera el umbral establecido, se interviene.</li>
+          <li><strong>Proactivo:</strong> se detecta que la falla repetitiva del sello se debe a desalineación del eje. Se corrige la instalación para eliminar la causa raíz.</li>
+          <li><strong>RTF:</strong> la bomba tiene una bomba de respaldo y el proceso no se detiene si falla. El costo de reparar cuando falle es menor al de un programa de preventivo.</li>
+        </ul>
+        Un plan bien diseñado puede incluir <strong>varios tipos de mantenimiento para el mismo equipo</strong>, cada uno aplicado a un modo de falla diferente.
+      </div></div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════ SECCIÓN 5 · CURVA P-F ═══════════ -->
+<section id="s-pf">
+  <div class="section-label">05 · ISO 17359:2018</div>
+  <h2>La Curva P-F: El fundamento del mantenimiento predictivo</h2>
+  <p class="section-intro">La curva P-F (Potential Failure to Functional Failure) describe el deterioro progresivo de un componente desde el momento en que aparece la primera señal hasta que falla funcionalmente. Es el concepto central del mantenimiento basado en condición (CBM) según <strong>ISO 17359:2018</strong>.</p>
+
+  <div class="grid-2 fade-in">
+    <div class="pf-wrap">
+      <h3>📉 Curva P-F Interactiva</h3>
+      <div class="pf-controls">
+        <span style="font-size:.78rem;color:var(--muted);font-weight:700">Modo de falla:</span>
+        <button class="pf-btn active" data-mode="rodamiento">🔄 Rodamiento</button>
+        <button class="pf-btn" data-mode="corrosion">🧪 Corrosión</button>
+        <button class="pf-btn" data-mode="fatiga">⚡ Fatiga</button>
+      </div>
+      <canvas id="pf-canvas" height="280" style="margin-top:.8rem"></canvas>
+      <div class="pf-legend">
+        <div class="pf-leg-item"><div class="pf-leg-dot" style="background:#7c3aed;width:24px"></div>Condición del equipo</div>
+        <div class="pf-leg-item"><div class="pf-leg-dot" style="background:#ef4444;width:24px"></div>Falla funcional (F)</div>
+        <div class="pf-leg-item"><div class="pf-leg-dot" style="background:#f59e0b;width:24px;border-top:2px dashed #f59e0b;background:none"></div>Punto P (señal detectable)</div>
+      </div>
+    </div>
+    <div>
+      <div class="concept-box">
+        <div class="quote"><strong>Cómo usar la curva P-F para decidir:</strong></div>
+        <div class="source" style="color:var(--muted);font-size:.84rem;line-height:1.9;margin-top:.5rem">
+          <strong style="color:var(--text)">1. Identifica el Punto P:</strong> ¿cuánto antes de la falla puedo detectar la señal?<br/>
+          <strong style="color:var(--text)">2. Mide el P-F interval:</strong> tiempo entre P y F en condiciones operativas normales.<br/>
+          <strong style="color:var(--text)">3. Define la frecuencia de inspección:</strong> debe ser ≤ P-F interval / 2.<br/>
+          <strong style="color:var(--text)">4. Selecciona la técnica de monitoreo</strong> que detecte la señal en el punto P o antes.<br/>
+          <strong style="color:var(--text)">Si el P-F interval es muy corto</strong> (horas/minutos) → monitoreo online continuo.<br/>
+          <strong style="color:var(--text)">Si no hay intervalo P-F</strong> → no es viable el CBM; se evalúa preventivo TBM o RTF.
+        </div>
+      </div>
+      <div id="pf-info" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;font-size:.84rem"></div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════ SECCIÓN 6 · ÁRBOL DE DECISIÓN (EXPANDIDO) ═══════════ -->
+<section id="s-decision">
+  <div class="section-label">06 · SAE JA1011 · RCM</div>
+  <h2>Árbol de Decisión: ¿Qué tipo de mantenimiento aplico?</h2>
+  <p class="section-intro">El <strong>árbol de decisión RCM</strong> (basado en SAE JA1011) es la herramienta más rigurosa para elegir el tipo de mantenimiento correcto para cada modo de falla. No es una opinión — es una ruta lógica con preguntas ordenadas que lleva siempre a la misma respuesta si los hechos son los mismos.</p>
+
+  <!-- DIAGRAMA VISUAL DEL ÁRBOL -->
+  <div class="fade-in" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;margin-bottom:2rem;overflow-x:auto">
+    <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1.5rem;color:var(--accent)">&#127795; Estructura del Árbol de Decisión RCM (SAE JA1011)</h3>
+    <div style="min-width:680px">
+
+      <!-- NODO RAIZ -->
+      <div style="text-align:center;margin-bottom:1.2rem">
+        <div style="display:inline-block;background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(6,182,212,.15));border:2px solid var(--accent);border-radius:12px;padding:.8rem 1.6rem;font-size:.87rem;font-weight:800;color:var(--text)">&#128229; MODO DE FALLA IDENTIFICADO</div>
+      </div>
+
+      <!-- PREGUNTA 1 -->
+      <div style="text-align:center;margin-bottom:.6rem">
+        <div style="display:inline-block;width:10px;height:24px;background:var(--border)"></div>
+      </div>
+      <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:.9rem 1.2rem;text-align:center;font-size:.84rem;font-weight:700;margin-bottom:1rem">
+        <span style="color:var(--red)">&#10067; PREGUNTA 1:</span> &nbsp;¿La falla puede causar daño a personas o al medio ambiente?
+      </div>
+
+      <!-- BIFURCACION 1 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1rem">
+        <!-- RAMA SI -->
+        <div>
+          <div style="text-align:center;margin-bottom:.5rem"><span style="background:rgba(239,68,68,.2);color:var(--red);font-size:.75rem;font-weight:800;padding:.2rem .8rem;border-radius:6px">✅ SÍ → Consecuencia de SEGURIDAD</span></div>
+          <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:.8rem 1rem;font-size:.82rem;font-weight:700;text-align:center;margin-bottom:.5rem;">&#10067; PREGUNTA 2A:<br/><span style="color:var(--muted);font-weight:400">¿Existe tarea proactiva que controle el riesgo?</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:9px;padding:.7rem;font-size:.76rem;text-align:center">
+              <div style="font-size:1.1rem">&#128225;</div>
+              <strong style="color:var(--accent2)">Sí, hay señal detectable</strong><br/>
+              <span style="color:var(--muted)">&#8594; PREDICTIVO obligatorio</span>
+            </div>
+            <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:9px;padding:.7rem;font-size:.76rem;text-align:center">
+              <div style="font-size:1.1rem">&#9200;</div>
+              <strong style="color:var(--green)">Sí, falla por edad</strong><br/>
+              <span style="color:var(--muted)">&#8594; PREVENTIVO obligatorio</span>
+            </div>
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:.7rem;font-size:.76rem;text-align:center">
+              <div style="font-size:1.1rem">&#128270;</div>
+              <strong style="color:var(--accent3)">Sí, equipo oculto</strong><br/>
+              <span style="color:var(--muted)">&#8594; BÚSQL. DE FALLA</span>
+            </div>
+            <div style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);border-radius:9px;padding:.7rem;font-size:.76rem;text-align:center">
+              <div style="font-size:1.1rem">&#128296;</div>
+              <strong style="color:var(--accent)">Ninguna tarea viable</strong><br/>
+              <span style="color:var(--muted)">&#8594; REDISEÑO obligatorio</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAMA NO -->
+        <div>
+          <div style="text-align:center;margin-bottom:.5rem"><span style="background:rgba(16,185,129,.2);color:var(--green);font-size:.75rem;font-weight:800;padding:.2rem .8rem;border-radius:6px">❌ NO → Consecuencia OPERACIONAL o ECONÓMICA</span></div>
+          <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:.8rem 1rem;font-size:.82rem;font-weight:700;text-align:center;margin-bottom:.5rem">
+            &#10067; PREGUNTA 2B:<br/><span style="color:var(--muted);font-weight:400">¿Afecta la producción/servicio?</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <!-- Sub-rama SI operacional -->
+            <div style="border:1px solid var(--border);border-radius:9px;padding:.7rem;font-size:.76rem">
+              <div style="color:var(--accent3);font-weight:700;margin-bottom:.4rem">✅ SÍ → Pregunta 3A:<br/>¿Falla por edad o aleatoria?</div>
+              <div style="display:flex;flex-direction:column;gap:.3rem">
+                <div style="background:rgba(16,185,129,.1);border-radius:6px;padding:.35rem .5rem;font-size:.73rem">
+                  <strong style="color:var(--green)">Por edad (β&gt;1)</strong>:<br/>¿Hay señal detectable? <span style="color:var(--accent2)">&#8658; CBM/Predictivo</span> | No &#8658; <span style="color:var(--green)">Preventivo TBM</span>
+                </div>
+                <div style="background:rgba(6,182,212,.1);border-radius:6px;padding:.35rem .5rem;font-size:.73rem">
+                  <strong style="color:var(--accent2)">Aleatoria (β≈1)</strong>:<br/>¿Hay tecnología CBM? <span style="color:var(--accent2)">&#8658; CBM</span> | No &#8658; <span style="color:var(--accent3)">RTF+redundancia</span>
+                </div>
+              </div>
+            </div>
+            <!-- Sub-rama NO operacional -->
+            <div style="border:1px solid var(--border);border-radius:9px;padding:.7rem;font-size:.76rem">
+              <div style="color:var(--muted);font-weight:700;margin-bottom:.4rem">❌ NO → Solo costo directo<br/>Pregunta 3B:<br/>¿El preventivo cuesta menos que el correctivo?</div>
+              <div style="display:flex;flex-direction:column;gap:.3rem">
+                <div style="background:rgba(16,185,129,.1);border-radius:6px;padding:.35rem .5rem;font-size:.73rem">
+                  <strong style="color:var(--green)">Sí</strong> &#8658; <span style="color:var(--green)">Preventivo (TBM o CBM)</span>
+                </div>
+                <div style="background:rgba(245,158,11,.1);border-radius:6px;padding:.35rem .5rem;font-size:.73rem">
+                  <strong style="color:var(--accent3)">No</strong> &#8658; <span style="color:var(--accent3)">RTF (Correctivo planificado)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEYENDA -->
+      <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--border)">
+        <span style="font-size:.72rem;color:var(--muted)">Resultados posibles:</span>
+        <span style="background:rgba(6,182,212,.15);color:var(--accent2);font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:5px">&#128225; Predictivo / CBM</span>
+        <span style="background:rgba(16,185,129,.15);color:var(--green);font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:5px">&#9200; Preventivo TBM</span>
+        <span style="background:rgba(245,158,11,.15);color:var(--accent3);font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:5px">&#128338; RTF / Correctivo planificado</span>
+        <span style="background:rgba(124,58,237,.15);color:var(--accent);font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:5px">&#128296; Rediseño</span>
+        <span style="background:rgba(245,158,11,.12);color:var(--accent3);font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:5px">&#128270; Búsqueda de falla</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EJEMPLOS PRACTICOS ANTES DEL SIMULADOR -->
+  <h3 class="fade-in" style="font-size:1.05rem;font-weight:800;margin-bottom:1rem">&#128214; Ejemplos resueltos con el árbol</h3>
+  <div class="grid-2 fade-in" style="margin-bottom:2rem">
+
+    <div class="card" style="border-color:rgba(239,68,68,.35);background:linear-gradient(135deg,rgba(239,68,68,.06),var(--card))">
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin-bottom:.5rem">Ejemplo 1 — Válvula de seguridad (PSV)</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">
+        <strong style="color:var(--text)">&#10071; P1:</strong> ¿Daño a personas? <span style="color:var(--red)">&#9989; SÍ</span> — Si la PSV no abre, el recipiente puede explotar.<br/>
+        <strong style="color:var(--text)">&#10071; P2A:</strong> ¿Existe tarea proactiva? <span style="color:var(--accent3)">Sí — prueba funcional periódica</span>.<br/>
+        La falla de una PSV <em>es oculta</em> (no se ve hasta que se necesita). Se aplica <strong>búsqueda de falla</strong>.
+      </div>
+      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:.6rem .9rem;font-size:.8rem">
+        &#128270; <strong style="color:var(--accent3)">Resultado:</strong> Búsqueda de Falla (Failure Finding Task)<br/>
+        <span style="color:var(--muted)">Prueba funcional anual obligatoria por normativa ASME/API. La frecuencia se calcula según disponibilidad requerida del sistema de protección.</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(6,182,212,.35);background:linear-gradient(135deg,rgba(6,182,212,.06),var(--card))">
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);margin-bottom:.5rem">Ejemplo 2 — Rodamiento de bomba</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">
+        <strong style="color:var(--text)">&#10071; P1:</strong> ¿Daño a personas? <span style="color:var(--green)">&#10060; NO</span> — Solo para la bomba, no hay riesgo personal.<br/>
+        <strong style="color:var(--text)">&#10071; P2B:</strong> ¿Afecta producción? <span style="color:var(--accent3)">SÍ</span> — Es la única bomba del sistema.<br/>
+        <strong style="color:var(--text)">&#10071; P3A:</strong> ¿Falla por edad? <span style="color:var(--accent3)">SÍ</span> (β&gt;1, desgaste progresivo).<br/>
+        <strong style="color:var(--text)">&#10071; P4:</strong> ¿Hay señal detectable? <span style="color:var(--accent3)">SÍ</span> — Vibración y ultrasonido con P-F de 4-8 semanas.
+      </div>
+      <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:8px;padding:.6rem .9rem;font-size:.8rem">
+        &#128225; <strong style="color:var(--accent2)">Resultado:</strong> Predictivo / CBM<br/>
+        <span style="color:var(--muted)">Medición mensual de vibración. Intervención programada cuando la condición supere el umbral ISO 10816. Maximiza la vida del rodamiento sin riesgo de falla.</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(16,185,129,.35);background:linear-gradient(135deg,rgba(16,185,129,.06),var(--card))">
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--green);margin-bottom:.5rem">Ejemplo 3 — Filtro de aceite en compresor</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">
+        <strong style="color:var(--text)">&#10071; P1:</strong> ¿Daño a personas? <span style="color:var(--green)">&#10060; NO</span>.<br/>
+        <strong style="color:var(--text)">&#10071; P2B:</strong> ¿Afecta producción? <span style="color:var(--accent3)">SÍ</span> — Si el compresor falla, se pierde el aire de planta.<br/>
+        <strong style="color:var(--text)">&#10071; P3A:</strong> ¿Falla por edad? <span style="color:var(--accent3)">SÍ</span> — Obstrucción progresiva por suciedad (desgaste determinístico).<br/>
+        <strong style="color:var(--text)">&#10071; P4:</strong> ¿Hay señal detectable con tiempo suficiente? <span style="color:var(--muted)">Hay indicador de δP, pero el intervalo P-F puede ser corto.</span>
+      </div>
+      <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:8px;padding:.6rem .9rem;font-size:.8rem">
+        &#9200; <strong style="color:var(--green)">Resultado:</strong> Preventivo TBM<br/>
+        <span style="color:var(--muted)">Cambio de filtro a intervalo fijo según horarómetro (ej: cada 250h). Simple, económico y efectivo para un componente de bajo costo con falla determinística.</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,rgba(245,158,11,.06),var(--card))">
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--accent3);margin-bottom:.5rem">Ejemplo 4 — Bombillo de lámpara de pasillo</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">
+        <strong style="color:var(--text)">&#10071; P1:</strong> ¿Daño a personas? <span style="color:var(--green)">&#10060; NO</span>.<br/>
+        <strong style="color:var(--text)">&#10071; P2B:</strong> ¿Afecta producción? <span style="color:var(--green)">&#10060; NO</span> — Solo iluminación de pasillo.<br/>
+        <strong style="color:var(--text)">&#10071; P3B:</strong> ¿El preventivo cuesta menos que el correctivo? <span style="color:var(--green)">&#10060; NO</span> — Cambiar el bombillo funcional es más costoso que esperar que falle.<br/>
+        <span style="font-size:.79rem">El costo de reemplazarlo cuando falle es mínimo. No hay riesgo de seguridad. El bombillo de respaldo (redundancia) garantiza continuidad.</span>
+      </div>
+      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:.6rem .9rem;font-size:.8rem">
+        &#128338; <strong style="color:var(--accent3)">Resultado:</strong> RTF — Correctivo planificado<br/>
+        <span style="color:var(--muted)">Dejar fallar conscientemente. Tener repuesto disponible. Reemplazar cuando falle. Es la decisión técnicamente correcta — no es abandono.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUNTOS CLAVE DEL ARBOL -->
+  <div class="accordion fade-in" style="margin-bottom:2rem">
+    <div class="acc-item">
+      <div class="acc-header">&#128683; ¿Por qué la seguridad SIEMPRE va primero en el árbol?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">El árbol de decisión RCM basado en <strong>SAE JA1011:1999</strong> fue diseñado originalmente para la industria aeronaútica, donde una falla puede significar la pérdida de una aeronave. Por eso su primera y más importante pregunta es sobre consecuencias de seguridad y medio ambiente.
+        <ul>
+          <li>Si <strong>hay consecuencia de seguridad o ambiental</strong>: se <em>obliga</em> a encontrar una tarea que controle el riesgo. El costo-beneficio queda anulado.</li>
+          <li>Si <strong>no existe ninguna tarea</strong> que controle el riesgo: la respuesta es el <em>rediseño</em> del sistema — nunca se acepta el riesgo de seguridad sin acciones.</li>
+          <li>Solo cuando <strong>no hay consecuencias de seguridad</strong> entra en juego el análisis económico.</li>
+        </ul>
+        Esto diferencia al RCM de los métodos que hacen todo basado en costos: para el RCM, la seguridad no tiene precio.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">&#128270; ¿Qué es la "Búsqueda de Falla" (Failure Finding Task)?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">Muchos equipos tienen <strong>funciones ocultas</strong>: su falla no es visible hasta que se necesita la función en una situación real de emergencia.
+        <ul>
+          <li><strong>Ejemplos típicos:</strong> válvulas de seguridad (PSV), sistemas de detección de incendio, bombas de emergencia (fire water), relés de protección eléctrica.</li>
+          <li><strong>La tarea:</strong> probar periódicamente que la función de protección sigue disponible (<em>«failure finding task» o «scheduled functional test»</em>).</li>
+          <li><strong>La frecuencia</strong> de la prueba se calcula para garantizar que la probabilidad de encontrar el equipo fallado sea baja (disponibilidad requerida del sistema de protección).</li>
+        </ul>
+        Sin la búsqueda de falla, podrías tener una falla oculta por meses o años sin saberlo.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">&#128296; ¿Cuándo el árbol lleva al Rediseño?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">El rediseño es la acción más radical del RCM, pero necesaria en casos específicos:
+        <ul>
+          <li>Cuando hay <strong>consecuencia de seguridad o ambiental</strong> Y no existe ninguna tarea de mantenimiento viable que controle el riesgo.</li>
+          <li>Cuando el rediseño <strong>elimina el modo de falla</strong> completamente (ej: cambiar material por uno resistente a la corrosión).</li>
+          <li>Cuando el rediseño <strong>mitiga la consecuencia</strong> aunque el modo de falla persista (ej: agregar redundancia, instalar sistema de detección).</li>
+        </ul>
+        El rediseño no es siempre una obra de ingeniería compleja. Puede ser simplemente: cambiar una pieza por una de mejor material, agregar un sensor, instalar una válvula de bye-pass o crear una segunda línea de operación.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">&#9200; ¿Cuál es la diferencia entre TBM y CBM en la práctica?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+          <thead><tr>
+            <th style="background:rgba(124,58,237,.15);color:var(--accent);padding:.45rem .7rem;text-align:left;font-size:.72rem">Criterio</th>
+            <th style="background:rgba(16,185,129,.12);color:var(--green);padding:.45rem .7rem;text-align:left;font-size:.72rem">TBM (Basado en Tiempo)</th>
+            <th style="background:rgba(6,182,212,.12);color:var(--accent2);padding:.45rem .7rem;text-align:left;font-size:.72rem">CBM (Basado en Condición)</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border)">Disparador</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--green)">Calendario o número de horas</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--accent2)">Parámetro medido supera umbral</td></tr>
+            <tr><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border)">Requiere</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--green)">Historial o dato del fabricante</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--accent2)">Instrumento de medición y P-F interval</td></tr>
+            <tr><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border)">Cuando aplica mejor</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--green)">&beta; &gt; 1 (desgaste por edad). Ejemplos: correas, filtros, sellos, rodamientos según ciclos</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--accent2)">&beta; &asymp; 1 (aleatorio) o &beta; &gt; 1 con señal detectble. Ejemplos: rodamientos con vibrómetro, transformadores con análisis de aceite</td></tr>
+            <tr><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border)">Desventaja</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--muted)">Puede cambiar componentes aún en buen estado</td><td style="padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--muted)">Costo de equipos de medición y personal capacitado</td></tr>
+            <tr><td style="padding:.4rem .7rem">Ejemplo norma</td><td style="padding:.4rem .7rem;color:var(--muted)">EN 13306 §7.2.1</td><td style="padding:.4rem .7rem;color:var(--muted)">ISO 17359:2018 + EN 13306 §7.2.2</td></tr>
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- SIMULADOR INTERACTIVO -->
+  <div class="decision-wrap fade-in">
+    <h3>&#127973; Simulador Interactivo: Aplica el árbol a tu caso</h3>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:1.2rem">Piensa en un equipo y un modo de falla específico de tu planta. Responde cada pregunta según la realidad de ese equipo para obtener la estrategia recomendada por el RCM.</p>
+    <div class="dt-progress" id="dt-progress"></div>
+    <div id="dt-container"></div>
+  </div>
+</section>
+<hr class="divider"/>
+
+</main>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Ing. Marlon Gómez · Asignatura 730502</p>
+  <p class="norms">Normativa de referencia: EN 13306:2017 · ISO 55001:2014 · SAE JA1011:1999 · ISO 17359:2018</p>
+</footer>
+
+<script>
+// ══════════════════════════════════
+// HERO CANVAS – DNA/network nodes floating
+// ══════════════════════════════════
+(function(){
+  const cv=document.getElementById('hero-canvas'),ctx=cv.getContext('2d');
+  let W,H,nodes=[];
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  resize();addEventListener('resize',resize);
+  const C1='#7c3aed',C2='#06b6d4',C3='#f59e0b';
+  const COLS=[C1,C2,C3];
+  class Node{
+    constructor(){
+      this.x=Math.random()*W;this.y=Math.random()*H;
+      this.r=1.5+Math.random()*3;
+      this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;
+      this.alpha=.15+Math.random()*.35;
+      this.color=COLS[Math.floor(Math.random()*3)];
+      this.pulse=Math.random()*Math.PI*2;
+      this.pulseSpeed=.02+Math.random()*.03;
+    }
+    update(){this.x+=this.vx;this.y+=this.vy;this.pulse+=this.pulseSpeed;
+      if(this.x<-30)this.x=W+30;if(this.x>W+30)this.x=-30;
+      if(this.y<-30)this.y=H+30;if(this.y>H+30)this.y=-30;}
+    draw(){
+      const pulse=1+Math.sin(this.pulse)*.3;
+      ctx.save();ctx.globalAlpha=this.alpha;
+      ctx.beginPath();ctx.arc(this.x,this.y,this.r*pulse,0,Math.PI*2);
+      ctx.fillStyle=this.color;ctx.fill();
+      ctx.restore();
+    }
+  }
+  for(let i=0;i<70;i++)nodes.push(new Node());
+  function drawConnections(){
+    for(let i=0;i<nodes.length;i++)
+      for(let j=i+1;j<nodes.length;j++){
+        const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){
+          ctx.save();ctx.globalAlpha=.07*(1-d/120);ctx.strokeStyle=nodes[i].color;
+          ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);
+          ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();ctx.restore();
+        }
+      }
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,H*.7);
+    g.addColorStop(0,'rgba(124,58,237,.06)');g.addColorStop(1,'rgba(8,6,15,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    drawConnections();nodes.forEach(n=>{n.update();n.draw();});
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ══════════════════════════════════
+// GSAP
+// ══════════════════════════════════
+gsap.registerPlugin(ScrollTrigger);
+document.querySelectorAll('.fade-in').forEach(el=>{
+  gsap.to(el,{opacity:1,y:0,duration:.7,ease:'power2.out',
+    scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play none none none'}});
+});
+const secs=document.querySelectorAll('section[id]'),navLs=document.querySelectorAll('nav a');
+addEventListener('scroll',()=>{
+  let cur='';secs.forEach(s=>{if(scrollY>=s.offsetTop-120)cur=s.id;});
+  navLs.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));
+});
+
+// ══════════════════════════════════
+// ACCORDION
+// ══════════════════════════════════
+document.querySelectorAll('.acc-header').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const item=h.parentElement,body=item.querySelector('.acc-body'),isOpen=item.classList.contains('open');
+    document.querySelectorAll('.acc-item.open').forEach(o=>{o.classList.remove('open');o.querySelector('.acc-body').style.maxHeight='0';});
+    if(!isOpen){item.classList.add('open');body.style.maxHeight=body.scrollHeight+40+'px';}
+  });
+});
+
+// ══════════════════════════════════
+// TAXONOMY TREE
+// ══════════════════════════════════
+const taxData=[
+  {id:'correctivo',cls:'tax-correctivo',icon:'🔴',label:'Mantenimiento Correctivo',sub:'EN 13306 §7.1 – Realizado después de detectar una falla',
+   content:`<strong>Definición EN 13306:2017:</strong> "Mantenimiento llevado a cabo después del reconocimiento de la falla, destinado a poner el activo en un estado en que pueda ejecutar su función requerida."<br/><br/>Sub-tipos:<ul>
+    <li><strong>Correctivo inmediato (Immediate CM):</strong> se ejecuta tan pronto como sea posible después de la falla para evitar consecuencias inaceptables.</li>
+    <li><strong>Correctivo diferido (Deferred CM):</strong> no se lleva a cabo inmediatamente después de la detección; se postpone de acuerdo con reglas establecidas de mantenimiento.</li>
+   </ul><br/>📌 <strong>¿Cuándo es la estrategia apropiada?</strong> Cuando el equipo tiene baja criticidad, falla aleatoria (β≈1), bajo costo de falla y la falla no afecta seguridad ni ambiente.`},
+  {id:'preventivo',cls:'tax-preventivo',icon:'🟢',label:'Mantenimiento Preventivo',sub:'EN 13306 §7.2 – Realizado a intervalos predeterminados o según criterios',
+   content:`<strong>Definición EN 13306:2017:</strong> "Mantenimiento realizado a intervalos de tiempo predeterminados o de acuerdo con criterios prescritos, con la intención de reducir la probabilidad de falla o la degradación del funcionamiento de un activo."<br/><br/>Sub-tipos:<ul>
+    <li><strong>Mantenimiento basado en tiempo (TBM):</strong> se realiza en intervalos de tiempo fijos (horas, días, ciclos). Efectivo cuando β&gt;1.</li>
+    <li><strong>Mantenimiento basado en condición (CBM):</strong> se realiza cuando parámetros medidos superan umbrales. Requiere monitoreo. Incluye el predictivo.</li>
+    <li><strong>Mantenimiento de ronda/inspección:</strong> inspecciones operacionales para detectar deterioro.</li>
+   </ul><br/>📌 <strong>Requisito para TBM:</strong> existencia de relación comprobada entre edad/uso y probabilidad de falla (β&gt;1 Weibull).`},
+  {id:'predictivo',cls:'tax-predictivo',icon:'🔵',label:'Mantenimiento Predictivo / CBM Avanzado',sub:'EN 13306 §7.2.2 + ISO 17359 – Monitoreo de condición',
+   content:`<strong>Definición ISO 17359:2018:</strong> El mantenimiento predictivo es un subconjunto del CBM que utiliza técnicas de monitoreo de condición para <em>predecir</em> el punto en que se necesitará mantenimiento.<br/><br/>Técnicas principales:<ul>
+    <li><strong>Análisis de vibraciones:</strong> detecta desbalance, desalineación, fallas en rodamientos y engranajes.</li>
+    <li><strong>Termografía infrarroja:</strong> puntos calientes en conexiones eléctricas, rodamientos, procesos térmicos.</li>
+    <li><strong>Análisis de aceite:</strong> desgaste de metales, contaminación, degradación del lubricante.</li>
+    <li><strong>Ultrasonido:</strong> fugas de gas/aire comprimido, fallas en rodamientos a baja velocidad.</li>
+    <li><strong>Análisis de corriente eléctrica (MCSA):</strong> fallas en motores eléctricos sin desmontaje.</li>
+   </ul><br/>📌 <strong>Requisito fundamental:</strong> debe existir un P-F interval suficiente para detectar la falla potencial y actuar antes de la falla funcional.`},
+  {id:'proactivo',cls:'tax-proactivo',icon:'🟣',label:'Mantenimiento Proactivo / Mejora',sub:'EN 13306 §7.3 – Elimina causas raíz de falla',
+   content:`<strong>Definición:</strong> El mantenimiento proactivo de va más allá de reparar o prevenir fallas: busca <em>eliminar las causas raíz</em> que las generan. Opera en el nivel de mejora continua de activos.<br/><br/>Actividades típicas:<ul>
+    <li><strong>Análisis de Causa Raíz (RCA / APR):</strong> investigación sistemática de por qué ocurren las fallas.</li>
+    <li><strong>Modificaciones de diseño:</strong> cambiar el diseño original del equipo para eliminar un modo de falla recurrente.</li>
+    <li><strong>Mejora de procedimientos:</strong> estandarización de procesos de instalación, operación y mantenimiento.</li>
+    <li><strong>Gestión de lubricación proactiva:</strong> control de contaminación de aceite, filtración deshumidificación.</li>
+    <li><strong>Capacitación del personal operativo:</strong> errores humanos como causa raíz de falla.</li>
+   </ul><br/>📌 <strong>Referencia:</strong> ISO 55001:2014 §10 – Mejora continua en gestión de activos.`},
+  {id:'rtf',cls:'tax-rtf',icon:'🟡',label:'Run-To-Failure (RTF) / Correctivo planificado',sub:'EN 13306 §7.4 – Dejar fallar de forma consciente y planificada',
+   content:`<strong>Definición EN 13306:2017:</strong> Estrategia donde se toma una decisión explícita de no realizar mantenimiento preventivo, permitiendo al activo operar hasta la falla.<br/><br/><strong>⚠️ NO es abandono:</strong> es una decisión consciente y justificada. Requiere:<ul>
+    <li>Confirmación de que la falla NO afecta seguridad ni medio ambiente.</li>
+    <li>Evaluación del costo total de los correctivos esperados vs. el costo del preventivo.</li>
+    <li>Identificación de los repuestos y procedimientos de reemplazo anticipadamente.</li>
+    <li>Existencia de redundancia o impacto operacional aceptable.</li>
+   </ul><br/>💡 Ejemplo válido: bombilla de alumbrado, fusibles, filtros de bajo costo en equipos redundantes.<br/>🚫 Ejemplo inválido: válvulas de seguridad, equipos de protección contra incendios, activos responsables de seguridad de proceso.`},
+];
+function buildTaxTree(){
+  const tree=document.getElementById('tax-tree');
+  taxData.forEach(t=>{
+    const node=document.createElement('div');
+    node.className=`tax-node ${t.cls}`;
+    node.innerHTML=`<div class="tax-header" onclick="toggleTax(this)">
+      <span style="font-size:1.1rem">${t.icon}</span>
+      <span style="flex:1"><strong>${t.label}</strong><span class="tax-subtitle">${t.sub}</span></span>
+      <span class="tax-icon-btn">▶</span>
+    </div>
+    <div class="tax-body"><div class="tax-body-inner">${t.content}</div></div>`;
+    tree.appendChild(node);
+  });
+}
+function toggleTax(header){
+  const node=header.parentElement,body=node.querySelector('.tax-body'),isOpen=node.classList.contains('open');
+  document.querySelectorAll('.tax-node.open').forEach(o=>{o.classList.remove('open');o.querySelector('.tax-body').style.maxHeight='0';});
+  if(!isOpen){node.classList.add('open');body.style.maxHeight=body.scrollHeight+20+'px';}
+}
+buildTaxTree();
+
+// ══════════════════════════════════
+// SEÑALES DE CAMPO – Selector interactivo
+// ══════════════════════════════════
+const campoData={
+  mecanico:{
+    title:'⚙️ Señales mecánicas y qué hacemos',
+    rows:[
+      {sig:'Vibración inusual o golpeteo',eq:'Motores, bombas, compresores',tipo:'Predictivo / Preventivo',action:'Medir vibración con vibrómetro. Si supera el umbral → programar intervención. Verificar desbalance, desalineación o rodamientos.'},
+      {sig:'Ruido metálico anormal',eq:'Reductores, engranajes, rodamientos',tipo:'Correctivo diferido o Preventivo urgente',action:'Inspeccionar rodamientos y lubricación. Programar intervención antes de falla total.'},
+      {sig:'Juego excesivo en ejes o acoplamientos',eq:'Motores, bombas, transmisiones',tipo:'Preventivo',action:'Verificar tolerancias según manual. Programar ajuste o reemplazo de componente.'},
+      {sig:'Desgaste visible en correas, cadenas o dientes',eq:'Transmisiones mecánicas',tipo:'Preventivo TBM',action:'Revisar vida útil según manual del fabricante. Reemplazar según programa.'},
+      {sig:'Falla completa — el equipo no arranca',eq:'Cualquier equipo rotativo',tipo:'Correctivo inmediato (P1/P2)',action:'Emitir OT de emergencia. Aplicar LOTO. Diagnosticar causa raíz.'},
+    ]
+  },
+  electrico:{
+    title:'⚡ Señales eléctricas y qué hacemos',
+    rows:[
+      {sig:'Disyuntor que viaja repetidamente',eq:'Motores, tableros eléctricos',tipo:'Correctivo diferido → Proactivo',action:'Verificar corriente de arranque, estado del motor, conexiones flojas. Si es recurrente → analizar causa raíz.'},
+      {sig:'Punto caliente en conexión eléctrica',eq:'Tableros, bornes, contactores',tipo:'Predictivo (termografía)',action:'Identificado con cámara termográfica. Apretar o reemplazar el borne antes de que cause incendio o falla.'},
+      {sig:'Motor con temperatura elevada',eq:'Motores eléctricos',tipo:'Predictivo / Preventivo',action:'Medir temperatura con termómetro infrarrojo. Verificar ventilación, corriente, carga del motor.'},
+      {sig:'Chispas o arco eléctrico visible',eq:'Contactores, tableros',tipo:'Correctivo inmediato (P1)',action:'Desenergizar INMEDIATAMENTE. Aplicar LOTO. Intervención solo con personal calificado.'},
+      {sig:'Consumo eléctrico más alto de lo normal',eq:'Motores, compresores',tipo:'Predictivo',action:'Analizar corriente con pinza amperimétrica. Puede indicar rozamiento mecánico, sobrecarga o problema en el bobinado.'},
+    ]
+  },
+  termico:{
+    title:'🌡️ Señales térmicas y qué hacemos',
+    rows:[
+      {sig:'Temperatura de proceso fuera del rango normal',eq:'Intercambiadores, calderas, hornos',tipo:'Predictivo / Correctivo',action:'Verificar incrustaciones, suciedad en superficies de transferencia. Programar limpieza o purga.'},
+      {sig:'Punto caliente en carcasa o tubería',eq:'Bombas, válvulas, tuberías',tipo:'Predictivo',action:'Usar termómetro infrarrojo o cámara termográfica. Investigar causa: obstrucción, corrosión, aislamiento dañado.'},
+      {sig:'Vapor o vaho visible en unión de tuberías',eq:'Sistemas de vapor, tuberías a presión',tipo:'Correctivo diferido o urgente',action:'Verificar la severidad. Fuga de vapor puede ser peligrosa → evaluar prioridad. Programar intervención con aislamiento del segmento.'},
+      {sig:'Temperatura de rodamiento elevada',eq:'Motores, bombas, ventiladores',tipo:'Predictivo / Preventivo',action:'Temperatura ≥ 90°C es señal de alarma. Verificar lubricación, alineación y carga. Reacondicionar antes de falla.'},
+    ]
+  },
+  hidraulico:{
+    title:'💧 Señales hidráulicas/neumáticas y qué hacemos',
+    rows:[
+      {sig:'Fuga de aceite hidráulico visible',eq:'Cilindros, mangueras, racores',tipo:'Correctivo diferido o urgente',action:'Evaluar severidad. Fuga menor → programar. Fuga mayor o en zona caliente → urgente. Identificar origen y reemplazar sello o manguera.'},
+      {sig:'Pérdida de presión hidráulica / caída de fuerza',eq:'Prensas hidráulicas, cilindros',tipo:'Correctivo / Preventivo',action:'Verificar nivel de aceite, estado de bomba, válvulas y sellos. Puede indicar desgaste interno de la bomba.'},
+      {sig:'Fuga de aire comprimido (silbido audible)',eq:'Tuberías, conexiones, cilindros neumáticos',tipo:'Correctivo planificado / Proactivo',action:'Localizar con detector ultrasónico o agua jabonosa. Reparar fitting o reemplazar manguera. Las fugas de aire son muy costosas energéticamente.'},
+      {sig:'Aceite hidráulico oscuro o con partículas',eq:'Sistemas hidráulicos en general',tipo:'Predictivo (análisis de aceite)',action:'Tomar muestra y enviar a análisis de laboratorio. Puede indicar desgaste de componentes internos o contaminación. Reemplazar aceite y filtros.'},
+    ]
+  },
+  lubricacion:{
+    title:'🛢️ Señales de lubricación y qué hacemos',
+    rows:[
+      {sig:'Rodamiento seco (falta de grasa)',eq:'Motores, ventiladores, rodillos',tipo:'Preventivo (incumplido)',action:'Regresar al programa de lubricación. Verificar la frecuencia establecida. Aplicar grasa según especificación del fabricante.'},
+      {sig:'Exceso de grasa (rebose por sello)',eq:'Rodamientos con sello',tipo:'Preventivo mal ejecutado',action:'Exceso de grasa puede elevar temperatura y dañar sellos. Revisar cantidad aplicada según manual.'},
+      {sig:'Aceite de reductor con color lechoso (agua)',eq:'Reductores, cajas de engranajes',tipo:'Correctivo / Proactivo',action:'Presencia de agua indica falla en sellos o condensación. Cambiar aceite, revisar sellos y condiciones de almacenamiento.'},
+      {sig:'Nivel de aceite por debajo del mínimo',eq:'Reductores, compresores, motores',tipo:'Preventivo (inspección fallida)',action:'Rellenar al nivel correcto según visor. Investigar consumo: puede haber fuga o quema interna de aceite.'},
+      {sig:'Lubricante con aspecto quemado o espumoso',eq:'Sistemas circulantes, reductores',tipo:'Correctivo / Proactivo',action:'Indica temperatura excesiva o contaminación. Drenar y reemplazar. Analizar causa raíz del sobrecalentamiento.'},
+    ]
+  }
+};
+function showCampo(key,btn){
+  document.querySelectorAll('.pf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d=campoData[key];
+  let html=`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;overflow-x:auto">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem">${d.title}</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+    <thead><tr>
+      <th style="background:rgba(124,58,237,.15);color:var(--accent);padding:.5rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase">Señal / Síntoma</th>
+      <th style="background:rgba(124,58,237,.15);color:var(--accent);padding:.5rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase">Equipos típicos</th>
+      <th style="background:rgba(124,58,237,.15);color:var(--accent);padding:.5rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase">Tipo de Mto.</th>
+      <th style="background:rgba(124,58,237,.15);color:var(--accent);padding:.5rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase">Acción recomendada</th>
+    </tr></thead><tbody>`;
+  d.rows.forEach(r=>{
+    const tColor=r.tipo.includes('inmediato')||r.tipo.includes('P1')?'rgba(239,68,68,.8)':
+      r.tipo.includes('urgente')||r.tipo.includes('P2')?'rgba(249,115,22,.8)':
+      r.tipo.includes('Predictivo')?'rgba(6,182,212,.8)':
+      r.tipo.includes('Preventivo')?'rgba(16,185,129,.8)':
+      r.tipo.includes('Proactivo')?'rgba(124,58,237,.8)':'rgba(245,158,11,.8)';
+    html+=`<tr>
+      <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--text);font-weight:600">${r.sig}</td>
+      <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--muted)">${r.eq}</td>
+      <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border)">
+        <span style="background:${tColor};color:#fff;font-size:.72rem;font-weight:800;padding:.15rem .6rem;border-radius:5px;white-space:nowrap">${r.tipo}</span>
+      </td>
+      <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--muted);font-size:.8rem">${r.action}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  const c=document.getElementById('campo-content');
+  c.innerHTML=html;
+  gsap.from(c,{opacity:0,y:10,duration:.35});
+}
+showCampo('mecanico',document.querySelector('[onclick*="mecanico"]'));
+
+// ══════════════════════════════════
+// P-F CURVE
+// ══════════════════════════════════
+const pfModes={
+  rodamiento:{title:'Rodamiento (falla por fatiga de pistas)',pfInterval:'3–6 semanas',techniques:['Ultrasonido (semanas/meses antes)','Análisis de vibraciones (semanas antes)','Temperatura cojinete (días antes)'],
+    info:'El rodamiento es uno de los mejores ejemplos de curva P-F bien definida. El ultrasonido puede detectar la falla potencial hasta 3 meses antes. La vibración, semanas antes. La temperatura solo días antes. Esto permite múltiples capas de monitoreo.'},
+  corrosion:{title:'Tubería por corrosión interna',pfInterval:'Meses a años',techniques:['Ultrasonido de espesores (meses/años antes)','Radiografía industrial','Inspección visual de señales externas'],
+    info:'La corrosión es un proceso gradual. El P-F interval puede ser muy largo (años), lo que permite inspecciones periódicas de espesores. La técnica principal es el ultrasonido de espesores o la radiografía en tuberías críticas.'},
+  fatiga:{title:'Fisura por fatiga en estructura',pfInterval:'Días a semanas (después de aparición)',techniques:['Inspección visual/END (partículas magnéticas, PT)','Emisión acústica (en crecimiento activo)','Ultrasonido Phased Array'],
+    info:'Las fisuras por fatiga pueden crecer muy rápidamente una vez iniciadas. El P-F interval puede ser corto. La inspección requiere técnicas de END (Ensayos No Destructivos): partículas magnéticas, líquidos penetrantes o ultrasonido avanzado.'}
+};
+let pfChart=null;
+function drawPF(mode){
+  const canvas=document.getElementById('pf-canvas');
+  const md=pfModes[mode];
+  const labels=[];const cond=[];
+  for(let i=0;i<=100;i++){
+    labels.push(i);
+    // Condition: 100 -> slowly decays, then accelerates toward 0 at t=100
+    const x=i/100;
+    let c;
+    if(mode==='corrosion') c=100*(1-Math.pow(x,1.4));
+    else if(mode==='fatiga') c=100*(1-Math.pow(x,3));
+    else c=100*(1-Math.pow(x,1.8));
+    cond.push(Math.max(0,c));
+  }
+  // P point is at ~40% time, F at 100%
+  const pIdx=mode==='corrosion'?30:mode==='fatiga'?55:40;
+  if(pfChart) pfChart.destroy();
+  pfChart=new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Condición del equipo',data:cond,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.08)',fill:true,borderWidth:2.5,pointRadius:0,tension:.4},
+      {label:'Punto P',data:labels.map((l,i)=>i===pIdx?cond[pIdx]:null),pointRadius:labels.map((l,i)=>i===pIdx?8:0),pointBackgroundColor:'#f59e0b',borderColor:'transparent',showLine:false},
+      {label:'Límite de falla funcional',data:new Array(101).fill(10),borderColor:'rgba(239,68,68,.7)',borderWidth:1.5,borderDash:[5,5],fill:false,pointRadius:0},
+    ]},
+    options:{responsive:true,animation:{duration:500},plugins:{legend:{labels:{color:'#8b7cb0',font:{size:11}}}},
+      scales:{x:{title:{display:true,text:'Tiempo →',color:'#8b7cb0'},ticks:{color:'#8b7cb0',maxTicksLimit:6},grid:{color:'rgba(45,31,94,.4)'}},
+        y:{title:{display:true,text:'Condición del equipo (%)',color:'#8b7cb0'},ticks:{color:'#8b7cb0'},grid:{color:'rgba(45,31,94,.4)'},min:0,max:105}}}
+  });
+  document.getElementById('pf-info').innerHTML=`<strong style="color:var(--accent)">${md.title}</strong><br/>
+    <span style="font-size:.78rem;color:var(--muted)">Intervalo P-F típico: <strong style="color:var(--text)">${md.pfInterval}</strong></span><br/><br/>
+    <span style="font-size:.78rem;color:var(--muted)">Técnicas de detección:<br/>${md.techniques.map(t=>`• ${t}`).join('<br/>')}</span><br/><br/>
+    <span style="font-size:.8rem;color:var(--muted)">${md.info}</span>`;
+}
+document.querySelectorAll('.pf-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.pf-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    drawPF(btn.dataset.mode);
+  });
+});
+// ══════════════════════════════════
+// DECISION TREE (RCM Logic)
+// ══════════════════════════════════
+const dtSteps=[
+  {id:'s0',q:'PASO 1 de 5: ¿La falla del activo puede causar daño a personas o al medio ambiente?',
+   ctx:'Esta es la pregunta más importante. Los requisitos de seguridad y ambientales siempre tienen prioridad sobre cualquier análisis costo-beneficio. (SAE JA1011 §5.4)',
+   opts:[
+    {txt:'✅ Sí, hay consecuencias de seguridad o ambientales',next:'s1_si'},
+    {txt:'❌ No, las consecuencias son solo operacionales o económicas',next:'s1_no'},
+   ]},
+  {id:'s1_si',q:'PASO 2 de 5 (ruta seguridad): ¿Existe una tarea proactiva que reduzca el riesgo a un nivel aceptable?',
+   ctx:'Cuando hay consecuencias de seguridad, la norma SAE JA1011 exige buscar activamente una tarea que controle el riesgo. Si no existe ninguna tarea técnicamente factible, se debe rediseñar.',
+   opts:[
+    {txt:'📡 Sí, se puede monitorear la condición (existe P-F interval)',next:'r_predictivo_seg'},
+    {txt:'⏱️ Sí, se puede intervenir a intervalos fijos (β>1 confirmado)',next:'r_preventivo_seg'},
+    {txt:'🔬 Sí, existe tarea de búsqueda de falla (equipo oculto/redundante)',next:'r_busqueda'},
+    {txt:'🚫 No existe ninguna tarea técnicamente factible',next:'r_rediseno'},
+   ]},
+  {id:'s1_no',q:'PASO 2 de 5 (ruta operacional): ¿La falla afecta directamente la producción o el servicio?',
+   ctx:'Si no hay consecuencias de seguridad, evaluamos el impacto operacional. Esto define cuánta inversión en prevención es justificable económicamente. (SAE JA1011 §5.5)',
+   opts:[
+    {txt:'✅ Sí, detiene o reduce significativamente la producción',next:'s2_op'},
+    {txt:'❌ No, solo genera costos directos de reparación (sin impacto en producción)',next:'s2_econ'},
+   ]},
+  {id:'s2_op',q:'PASO 3 de 5: ¿La falla sigue un patrón de edad/desgaste? (¿aumenta con el tiempo de operación?)',
+   ctx:'El parámetro β de Weibull responde esta pregunta. Si β>1, la tasa de falla aumenta con la edad y el preventivo TBM es efectivo. Si β≈1, las fallas son aleatorias. (ISO 14224 §8.3)',
+   opts:[
+    {txt:'📈 Sí, el patrón de falla aumenta con el tiempo (β > 1)',next:'s3_tbm_op'},
+    {txt:'📊 No, las fallas son aleatorias (β ≈ 1)',next:'s3_cbm_op'},
+   ]},
+  {id:'s2_econ',q:'PASO 3 de 5: ¿El costo total de la falla (reparación) es mayor al costo de un programa preventivo?',
+   ctx:'El análisis costo-beneficio es la clave aquí. Se calcula: costo de falla = costo reparación + costo materiales + pérdida de oportunidad. Si la prevención es más cara, el RTF es la opción económicamente racional. (ISO 55001)',
+   opts:[
+    {txt:'💰 Sí, la falla cuesta más que el preventivo',next:'r_preventivo_econ'},
+    {txt:'✂️ No, el preventivo sería más costoso que dejar fallar',next:'r_rtf'},
+   ]},
+  {id:'s3_tbm_op',q:'PASO 4 de 5: ¿Se puede detectar la falla potencial antes de que se vuelva funcional? (¿existe P-F interval usable?)',
+   ctx:'Aunque el patrón es por edad, puede que también sea posible monitorear la condición. Si el P-F interval es suficiente, el CBM/predictivo reduce intervenciones innecesarias. (ISO 17359)',
+   opts:[
+    {txt:'📡 Sí, existe señal detectable y P-F interval suficiente',next:'r_cbm'},
+    {txt:'❌ No, no hay señal detectable antes de la falla',next:'r_tbm'},
+   ]},
+  {id:'s3_cbm_op',q:'PASO 4 de 5: ¿Existe una técnica de monitoreo viable para este modo de falla?',
+   ctx:'Las fallas aleatorias (β≈1) solo se pueden gestionar con monitoreo de condición (CBM). Si no existe tecnología viable o el P-F interval es muy corto, se evalúa RTF con redundancia.',
+   opts:[
+    {txt:'📡 Sí, hay tecnología de monitoreo viable y P-F interval suficiente',next:'r_cbm'},
+    {txt:'❌ No, no hay tecnología viable para monitorear este modo de falla',next:'r_rtf_red'},
+   ]},
+  {id:'r_predictivo_seg',result:true,type:'🔵 Mantenimiento Predictivo / CBM – OBLIGATORIO (Seguridad)',color:'#06b6d4',why:'Existe consecuencia de seguridad Y hay señal detectable antes de la falla funcional. El CBM/predictivo es la estrategia que mejor controla el riesgo.',norm:'SAE JA1011 §5.4 + ISO 17359:2018'},
+  {id:'r_preventivo_seg',result:true,type:'🟢 Mantenimiento Preventivo TBM – OBLIGATORIO (Seguridad)',color:'#10b981',why:'Existe consecuencia de seguridad, el modo de falla es edad-dependiente (β>1) y no hay señal detectable antes de la falla. El TBM a intervalo adecuado es la estrategia que garantiza el control del riesgo.',norm:'SAE JA1011 §5.4 – Scheduled restoration/discard task'},
+  {id:'r_busqueda',result:true,type:'🟡 Tarea de Búsqueda de Falla (Failure Finding)',color:'#f59e0b',why:'El equipo tiene función oculta (protección, redundancia) y la falla no es evidente en operación normal. Se programa una prueba periódica para verificar que la función de protección sigue disponible.',norm:'SAE JA1011 §5.4.4 – Failure-finding tasks'},
+  {id:'r_rediseno',result:true,type:'🟣 Rediseño obligatorio – No existe tarea aceptable',color:'#7c3aed',why:'Cuando hay consecuencias de seguridad/ambientales y NO existe ninguna tarea técnicamente factible que reduzca el riesgo, la norma SAE JA1011 requiere modificar el diseño del sistema.',norm:'SAE JA1011 §6 – Default actions when no proactive task is applicable'},
+  {id:'r_cbm',result:true,type:'📡 Mantenimiento Predictivo / CBM (Basado en Condición)',color:'#06b6d4',why:'Existe señal detectable antes de la falla funcional con P-F interval suficiente. El CBM es la estrategia óptima: maximiza la vida útil del componente y previene la falla funcional.',norm:'ISO 17359:2018 + EN 13306 §7.2.2'},
+  {id:'r_tbm',result:true,type:'⏱️ Mantenimiento Preventivo TBM (Basado en Tiempo)',color:'#10b981',why:'El modo de falla es edad-dependiente (β>1) y no existe señal detectable antes de la falla. El TBM con intervalo calculado estadísticamente es la estrategia más efectiva.',norm:'EN 13306 §7.2.1 + ISO 14224 §8.3'},
+  {id:'r_preventivo_econ',result:true,type:'🟢 Mantenimiento Preventivo (TBM o CBM según patrón)',color:'#10b981',why:'El análisis económico demuestra que el programa preventivo es más rentable que los correctivos acumulados. Seleccionar TBM si β>1, o CBM si hay señal detectable.',norm:'EN 13306 §7.2 + ISO 55001 §8.1'},
+  {id:'r_rtf',result:true,type:'🟡 Run-To-Failure (RTF) – Correctivo planificado',color:'#f59e0b',why:'No hay consecuencias de seguridad/ambiente, y el costo del programa preventivo supera el costo total de los correctivos esperados. El RTF es la estrategia económicamente racional.',norm:'EN 13306 §7.4 – Scheduled corrective maintenance'},
+  {id:'r_rtf_red',result:true,type:'🟡 RTF con Redundancia – Correctivo planificado + backup',color:'#f59e0b',why:'Las fallas son aleatorias (β≈1) y no hay tecnología viable de monitoreo. Sin consecuencias de seguridad, el RTF es aceptable si existe redundancia.',norm:'EN 13306 §7.4 + SAE JA1011 §6.2'},
+];
+let dtHistory=[];
+const stepMap=Object.fromEntries(dtSteps.map(s=>[s.id,s]));
+const totalSteps=5;
+function renderDT(stepId){
+  const step=stepMap[stepId];
+  const container=document.getElementById('dt-container');
+  const prog=document.getElementById('dt-progress');
+  const stepNum=parseInt((step.q||'').match(/PASO (\d)/)?.[1]||'0');
+  prog.innerHTML=Array.from({length:totalSteps},(_,i)=>
+    `<div class="dp-step ${i<stepNum-1?'done':i===stepNum-1?'current':''}"></div>`).join('');
+  if(step.result){
+    container.innerHTML=`<div class="dt-result">
+      <div class="result-type" style="color:${step.color}">${step.type}</div>
+      <div class="result-why"><strong style="color:var(--text)">¿Por qué?</strong><br/>${step.why}</div>
+      <div class="result-norm">📋 Referencia normativa: ${step.norm}</div>
+    </div>
+    <button class="btn-restart" onclick="restartDT()">↩ Evaluar otro modo de falla</button>`;
+    prog.innerHTML=Array.from({length:totalSteps},()=>`<div class="dp-step done"></div>`).join('');
+    return;
+  }
+  let html=`<div class="dt-step active">
+    <div class="dt-question">${step.q}</div>
+    <div class="dt-context">${step.ctx}</div>
+    <div class="dt-options">
+    ${step.opts.map(o=>`<button class="dt-btn" onclick="dtGoTo('${o.next}')">${o.txt}</button>`).join('')}
+    </div>`;
+  if(dtHistory.length>0) html+=`<button class="btn-restart" style="margin-top:.8rem" onclick="dtBack()">← Volver</button>`;
+  html+='</div>';
+  container.innerHTML=html;
+  gsap.from('.dt-step.active',{opacity:0,x:12,duration:.3});
+}
+function dtGoTo(id){dtHistory.push(document.getElementById('dt-container').querySelector('.dt-step')?.dataset?.id||'');renderDT(id);}
+function dtBack(){const prev=dtHistory.pop();if(prev)renderDT(prev);}
+function restartDT(){dtHistory=[];renderDT('s0');}
+renderDT('s0');
+
+// ══════════════════════════════════
+// EXAMPLE CHIPS (Variables section)
+// ══════════════════════════════════
+// Inject styles for chips
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`
+  .ex-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem}
+  .ex-chip{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);color:var(--text);font-size:.78rem;font-weight:700;padding:.38rem .85rem;border-radius:20px;cursor:pointer;transition:all .2s}
+  .ex-chip:hover,.ex-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(-1px)}
+  .ex-result{background:rgba(255,255,255,.03);border:1px solid rgba(124,58,237,.25);border-radius:10px;padding:1rem 1.1rem;font-size:.82rem;color:var(--muted);line-height:1.7;margin-top:.4rem;animation:fadeSlide .3s ease}
+  .ex-result .ex-tag{display:inline-block;padding:.15rem .65rem;border-radius:5px;font-size:.72rem;font-weight:800;color:#fff;margin-right:.4rem;margin-bottom:.4rem}
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  `;
+  document.head.appendChild(s);
+})();
+
+const exData={
+  v1:{
+    bomba:`<span class="ex-tag" style="background:#ef4444">🔴 CLASE A – ALTA</span><br/><strong style="color:var(--text)">Bomba de proceso (única, sin respaldo):</strong><br/>
+    • Consecuencia en seguridad: Media-alta si maneja fluido peligroso (ácidos, productos inflamables).<br/>
+    • Impacto operacional: Alto — su parada detiene toda la línea.<br/>
+    • Costo de parada: $5.000–$30.000/hora según planta.<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> Predictivo (vibración + análisis de aceite) + Preventivo TBM para sellos. Nunca RTF.`,
+    compresor:`<span class="ex-tag" style="background:#ef4444">🔴 CLASE A – ALTA</span><br/><strong style="color:var(--text)">Compresor de aire central (planta sin respaldo):</strong><br/>
+    • Un solo compresor puede parar toda la instrumentación neumática de la planta.<br/>
+    • Costo de parada: impacto total en producción.<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> Preventivo TBM (cambio de filtros, aceite, válvulas) + termografía de motor. Considerar compresor de respaldo.`,
+    ventilador:`<span class="ex-tag" style="background:#10b981">🟢 CLASE C – BAJA</span><br/><strong style="color:var(--text)">Ventilador de techo (oficina o área no crítica):</strong><br/>
+    • Sin impacto en producción ni seguridad.<br/>
+    • Costo de falla: solo el costo de reposición (~$80–$200).<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> RTF consciente. Se tiene repuesto y se reemplaza cuando falla. No se justifica programa preventivo.`,
+    ups:`<span class="ex-tag" style="background:#f59e0b">🟡 CLASE B – MEDIA/ALTA</span><br/><strong style="color:var(--text)">UPS eléctrico (respaldo de sistemas de control):</strong><br/>
+    • Función oculta: solo falla cuando se necesita (corte de energía).<br/>
+    • Si falla sin saberlo → el sistema de control queda desprotegido.<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> Búsqueda de falla (prueba funcional periódica). Verificar carga de baterías cada 6 meses.`
+  },
+  v2:{
+    rodamiento:`<span class="ex-tag" style="background:#10b981">β &gt; 1 · Desgaste progresivo</span><br/><strong style="color:var(--text)">Rodamiento de motor (falla por fatiga de pistas):</strong><br/>
+    • La probabilidad de falla aumenta con las horas de operación.<br/>
+    • El fabricante especifica vida útil (ej: 20.000 horas L10).<br/>
+    • Hay señal detectable (vibración, temperatura) semanas antes.<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> CBM (vibrometría mensual) + TBM como respaldo según horas.`,
+    electronica:`<span class="ex-tag" style="background:#06b6d4">β ≈ 1 · Falla aleatoria</span><br/><strong style="color:var(--text)">Tarjeta electrónica (PLC, variador de frecuencia):</strong><br/>
+    • Las fallas no dependen de la edad del componente.<br/>
+    • Un TBM de "reemplazar cada X años" no tiene sustento — la tarjeta puede fallar a los 6 meses o durar 15 años.<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> RTF con repuesto en bodega, o redundancia. Termografía periódica para detectar puntos calientes.`,
+    sello:`<span class="ex-tag" style="background:#10b981">β &gt; 1 · Desgaste progresivo</span><br/><strong style="color:var(--text)">Sello mecánico de bomba:</strong><br/>
+    • El desgaste de las caras del sello es acumulativo con las horas de operación.<br/>
+    • Señal: aumento de goteo. Si se monitorea, se detecta deterioro progresivo.<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> Inspección visual de goteo (CBM simple) + TBM como límite máximo según fabricante.`,
+    correa:`<span class="ex-tag" style="background:#10b981">β &gt; 1 · Desgaste + edad</span><br/><strong style="color:var(--text)">Correa en V de transmisión:</strong><br/>
+    • Se degrada con el uso y con el tiempo (envejecimiento del elastómero).<br/>
+    • El fabricante indica vida útil en horas o años (lo que ocurra primero).<br/>
+    <strong style="color:var(--accent)">→ Estrategia:</strong> TBM — inspección de tensión y desgaste cada mantenimiento periódico. Cambio preventivo según programa.`
+  },
+  v3:{
+    vibracion:`<span class="ex-tag" style="background:#10b981">P-F Largo: 3–8 semanas</span><br/><strong style="color:var(--text)">Falla por vibración excesiva (rodamiento en motor):</strong><br/>
+    • Ultrasonido detecta hasta 3 meses antes.<br/>
+    • Vibración (FFT) detecta semanas antes.<br/>
+    • Temperatura elevada detecta días antes (P-F corto en esa etapa).<br/>
+    <strong style="color:var(--accent)">→ Técnica recomendada:</strong> Vibrometría periódica. Frecuencia de inspección: cada 3–4 semanas. Umbral según ISO 10816.`,
+    corrosion:`<span class="ex-tag" style="background:#10b981">P-F Muy largo: meses a años</span><br/><strong style="color:var(--text)">Corrosión interna en tubería de proceso:</strong><br/>
+    • El proceso de adelgazamiento de pared es muy lento.<br/>
+    • Ultrasonido de espesores detecta el adelgazamiento mucho antes de la fuga.<br/>
+    <strong style="color:var(--accent)">→ Técnica recomendada:</strong> Medición de espesores por ultrasonido semestral o anual. Mapa de puntos críticos. Límite de retiro según ASME B31.3.`,
+    fatiga:`<span class="ex-tag" style="background:#ef4444">P-F Corto: días a semanas</span><br/><strong style="color:var(--text)">Fisura por fatiga en estructura o eje:</strong><br/>
+    • Una vez que la fisura inicia, puede crecer rápidamente.<br/>
+    • Requiere END (Ensayos No Destructivos): partículas magnéticas, líquidos penetrantes o ultrasonido avanzado.<br/>
+    <strong style="color:var(--accent)">→ Técnica recomendada:</strong> Inspección periódica por END. Si P-F es muy corto → aumentar frecuencia. Considerar rediseño si es recurrente.`,
+    hidraulico:`<span class="ex-tag" style="background:#f59e0b">P-F Variable: horas a días</span><br/><strong style="color:var(--text)">Fuga hidráulica interna (bypass en válvula de control):</strong><br/>
+    • Puede manifestarse como aumento de temperatura del aceite o pérdida de presión.<br/>
+    • El P-F puede ser corto si la fuga escala rápidamente.<br/>
+    <strong style="color:var(--accent)">→ Técnica recomendada:</strong> Monitoreo de presión de sistema. Termografía en líneas y manifolds. Análisis de aceite para detectar partículas.`
+  },
+  v4:{
+    bombillo:`<span class="ex-tag" style="background:#10b981">✅ RTF válido</span><br/><strong style="color:var(--text)">Bombillo de alumbrado de pasillo:</strong><br/>
+    • Costo de falla: $8.000–$25.000 (costo del bombillo + mano de obra de reemplazo).<br/>
+    • Costo preventivo: cambiar mensualmente bombillos buenos = $25.000/bombillo × 50 = $1.250.000/mes innecesarios.<br/>
+    • No hay riesgo de seguridad (hay alumbrado de emergencia).<br/>
+    <strong style="color:var(--accent)">→ Decisión:</strong> RTF. Se tiene stock de repuestos y se reemplaza cuando falla.`,
+    motorbomba:`<span class="ex-tag" style="background:#ef4444">❌ RTF NO válido</span><br/><strong style="color:var(--text)">Motobomba única de proceso:</strong><br/>
+    • Costo de falla: parada de línea + reparación mayor = $50.000–$500.000.<br/>
+    • Costo preventivo: programa CBM + TBM = $15.000/año.<br/>
+    • Análisis: costo falla >> costo preventivo.<br/>
+    <strong style="color:var(--accent)">→ Decisión:</strong> Preventivo/Predictivo. RTF es económica y operacionalmente inaceptable.`,
+    filtrored:`<span class="ex-tag" style="background:#10b981">✅ RTF con condiciones</span><br/><strong style="color:var(--text)">Filtro de aceite (sistema con filtro de respaldo en paralelo):</strong><br/>
+    • Si el filtro primario se tapa, el sistema automáticamente pasa al secundario.<br/>
+    • Hay alarma de presión diferencial que indica el cambio.<br/>
+    • Costo de reemplazo bajo.<br/>
+    <strong style="color:var(--accent)">→ Decisión:</strong> RTF viable — la redundancia neutraliza el impacto operacional. Reemplazar cuando la alarma se active.`,
+    compresorppal:`<span class="ex-tag" style="background:#ef4444">❌ RTF NO válido</span><br/><strong style="color:var(--text)">Compresor principal (único en planta):</strong><br/>
+    • Una falla puede parar toda la planta por 8–48 horas.<br/>
+    • Costo de parada: $100.000+ por evento.<br/>
+    • Con frecuencia de 1 falla/año → costo anual de fallas $100.000 vs preventivo $20.000/año.<br/>
+    <strong style="color:var(--accent)">→ Decisión:</strong> Preventivo TBM + inspección periódica. Invertir en compresor de respaldo si es posible.`
+  },
+  v5:{
+    vibrometria:`<span class="ex-tag" style="background:#7c3aed">📳 Vibrometría</span><br/><strong style="color:var(--text)">¿Qué necesito para implementar análisis de vibraciones?</strong><br/>
+    • <strong>Instrumento:</strong> Vibrómetro portátil (aprox. COP$3M–$25M) o analizador espectral FFT profesional.<br/>
+    • <strong>Personal:</strong> Técnico con certificación en análisis de vibraciones (ISO 18436-2, niveles I o II).<br/>
+    • <strong>Software:</strong> Para análisis espectral y gestión de rutas de medición.<br/>
+    • <strong>Puntos de medición:</strong> Deben estar accesibles con el equipo en operación (diseño de planta).<br/>
+    • <strong>Tiempo de implementación:</strong> 2–6 meses para establecer líneas base de referencia.`,
+    termografia:`<span class="ex-tag" style="background:#06b6d4">🌡️ Termografía infrarroja</span><br/><strong style="color:var(--text)">¿Qué necesito para implementar termografía?</strong><br/>
+    • <strong>Instrumento:</strong> Cámara termográfica (aprox. COP$15M–$80M según resolución).<br/>
+    • <strong>Personal:</strong> Técnico certificado en termografía infrarroja (nivel I ASNT o ITC).<br/>
+    • <strong>Software:</strong> Software de análisis de imágenes térmicas (generalmente incluido).<br/>
+    • <strong>Condiciones:</strong> Las inspecciones eléctricas requieren carga mínima del 40% para ser representativas.<br/>
+    • <strong>Alternativa económica:</strong> Termómetro infrarrojo de punto simple (~$200.000 COP) para inspecciones básicas.`,
+    aceite:`<span class="ex-tag" style="background:#f59e0b">🛢️ Análisis de aceite</span><br/><strong style="color:var(--text)">¿Qué necesito para implementar análisis de aceite?</strong><br/>
+    • <strong>Instrumento:</strong> Toma de muestras (kits de muestreo ~$50.000/muestra) + laboratorio externo.<br/>
+    • <strong>Personal:</strong> Cualquier técnico puede tomar la muestra con el kit correcto. Interpretación la hace el laboratorio.<br/>
+    • <strong>Costo por análisis:</strong> $150.000–$400.000 COP por muestra (incluye reporte con recomendaciones).<br/>
+    • <strong>Frecuencia típica:</strong> Trimestral para equipos críticos.<br/>
+    • <strong>Lo que detecta:</strong> Metales de desgaste (Fe, Cu, Cr), contaminación (agua, silicio), degradación del lubricante.`,
+    ultrasonido:`<span class="ex-tag" style="background:#10b981">🔊 Ultrasonido industrial</span><br/><strong style="color:var(--text)">¿Qué necesito para implementar ultrasonido industrial?</strong><br/>
+    • <strong>Instrumento:</strong> Detector de ultrasonido portátil (aprox. COP$4M–$20M).<br/>
+    • <strong>Personal:</strong> Técnico con formación básica en ultrasonido (SDT o UE Systems).<br/>
+    • <strong>Aplicaciones:</strong> Detección de fugas de aire/gas comprimido, fallas en rodamientos a baja velocidad (&lt;100 RPM), verificación de trampas de vapor.<br/>
+    • <strong>Ventaja:</strong> Detecta fallas en etapas muy tempranas, antes que la vibración.`
+  },
+  v6:{
+    vasopresion:`<span class="ex-tag" style="background:#ef4444">⚖️ Normativa obligatoria</span><br/><strong style="color:var(--text)">Vaso a presión (reactores, intercambiadores, recipientes de gas):</strong><br/>
+    • <strong>Colombia:</strong> Decreto 1609/2002 y Res. 90708/2013 (Reglamento Técnico de Instalaciones Eléctricas para uso industrial).<br/>
+    • <strong>Norma de referencia:</strong> ASME Sección VIII + NTC 2832.<br/>
+    • <strong>Obligación:</strong> Inspección periódica por inspector certificado ASME. Prueba hidrostática cada período definido.<br/>
+    • <strong>Consecuencia de incumplimiento:</strong> Suspensión de operación + multas + nulidad del seguro.`,
+    grua:`<span class="ex-tag" style="background:#ef4444">⚖️ Normativa obligatoria</span><br/><strong style="color:var(--text)">Grúas, polipastos y elementos de izaje:</strong><br/>
+    • <strong>Colombia:</strong> Resolución 4272/2021 del Ministerio del Trabajo — estándares mínimos de SST.<br/>
+    • <strong>Obligación:</strong> Inspección anual por entidad certificada. Prueba de carga. Certificado de aptitud vigente.<br/>
+    • <strong>NTC:</strong> NTC-OHSAS 18001 / ISO 45001 exigen gestión de equipos de izaje.<br/>
+    • Sin certificado vigente → no se puede operar el equipo. Riesgo penal en caso de accidente.`,
+    extintor:`<span class="ex-tag" style="background:#ef4444">⚖️ Normativa obligatoria</span><br/><strong style="color:var(--text)">Sistemas contra incendios (extintores, rociadores, sprinklers):</strong><br/>
+    • <strong>Colombia:</strong> Resolución 0256/2014 (Bomberos) + NFPA 10 (extintores) + NFPA 25 (sistemas húmedos).<br/>
+    • <strong>Obligación:</strong> Recarga y revisión anual de extintores. Inspección semestral de redes húmedas.<br/>
+    • <strong>Función oculta:</strong> Estos sistemas solo fallan cuando se necesitan. Se aplica Búsqueda de Falla obligatoria.<br/>
+    • Sin mantenimiento → seguro de incendio puede quedar nulo.`,
+    electrico:`<span class="ex-tag" style="background:#f59e0b">⚖️ Normativa vigente</span><br/><strong style="color:var(--text)">Instalaciones eléctricas industriales:</strong><br/>
+    • <strong>Colombia:</strong> RETIE (Resolución 90708/2013 y sus actualizaciones) — Reglamento Técnico de Instalaciones Eléctricas.<br/>
+    • <strong>Obligación:</strong> Mantenimiento preventivo periódico de tableros, puestas a tierra, interruptores y conductores.<br/>
+    • <strong>Inspección:</strong> Termografía eléctrica anual recomendada en tableros de distribución.<br/>
+    • <strong>Certificación:</strong> Las instalaciones deben tener certificado RETIE vigente para operar legalmente.`
+  }
+};
+
+function showEx(varId, key){
+  // Mark active chip
+  const allChips = document.querySelectorAll(`.ex-chips[data-var="${varId}"] .ex-chip`);
+  allChips.forEach(b=>b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  // Render result with card layout
+  const el = document.getElementById(`ex-${varId}`);
+  const raw = exData[varId][key] || '';
+
+  // Convert bullet lines into proper list items
+  const lines = raw.split('<br/>').map(l=>l.trim()).filter(l=>l);
+  let html = '';
+  let titleLine = '';
+  let tagLine = '';
+  const bullets = [];
+  const strategies = [];
+
+  lines.forEach(l => {
+    if(l.startsWith('<span class="ex-tag"')) tagLine = l;
+    else if(l.includes('<strong style="color:var(--text)')){ titleLine = l; }
+    else if(l.startsWith('•')){ bullets.push(l.replace(/^•\s*/,'')); }
+    else if(l.trim().startsWith('<strong style="color:var(--accent)')){ strategies.push(l); }
+  });
+
+  html = `<div style="display:flex;flex-direction:column;gap:.7rem">`;
+
+  // Tag + title row
+  if(tagLine || titleLine){
+    html += `<div style="display:flex;align-items:flex-start;gap:.7rem;flex-wrap:wrap">`;
+    if(tagLine) html += tagLine;
+    if(titleLine) html += `<span style="font-size:.84rem;font-weight:700;color:var(--text)">${titleLine.replace(/<strong[^>]*>|<\/strong>/g,'')}</span>`;
+    html += `</div>`;
+  }
+
+  // Bullets as proper cards
+  if(bullets.length){
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.5rem">`;
+    bullets.forEach(b => {
+      const clean = b;
+      html += `<div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;font-size:.79rem;color:var(--muted);line-height:1.6">${clean}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Strategy line highlighted
+  strategies.forEach(s => {
+    const inner = s.replace(/<strong[^>]*>/,'').replace(/<\/strong>/,'');
+    html += `<div style="background:rgba(124,58,237,.12);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:.55rem .9rem;font-size:.82rem;font-weight:700;color:var(--accent)">${inner}</div>`;
+  });
+
+  html += `</div>`;
+
+  el.style.display = 'block';
+  el.innerHTML = html;
+
+  // Re-expand the open accordion to fit new content
+  const accBody = el.closest('.acc-body');
+  if(accBody && accBody.closest('.acc-item.open')){
+    // allow layout to settle then recalculate
+    requestAnimationFrame(()=>{
+      accBody.style.maxHeight = accBody.scrollHeight + 60 + 'px';
+    });
+  }
+
+  // Smooth scroll into view if partially hidden
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth', block:'nearest'}), 120);
+}
+
+</script>
+</body>
+</html>

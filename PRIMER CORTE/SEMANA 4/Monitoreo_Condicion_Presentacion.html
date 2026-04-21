@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Monitoreo de Condición — UNIPAZ</title><style>
+*{margin:0;padding:0;box-sizing:border-box;}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+body{font-family:'Montserrat',sans-serif;background:#0d1b2a;}
+.slide{width:1280px;min-height:720px;margin:30px auto;background:#fff;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);border-radius:6px;page-break-after:always;}
+.slide::before{content:'';position:absolute;bottom:0;left:0;width:100%;height:120px;background:linear-gradient(135deg,rgba(26,58,92,0.07),rgba(26,58,92,0.03));clip-path:ellipse(80% 100% at 50% 100%);}
+.hb{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);padding:18px 50px;display:flex;justify-content:space-between;align-items:center;}
+.hb .lo{color:#fff;font-size:14px;font-weight:700;letter-spacing:2px;}.hb .su{color:rgba(255,255,255,0.85);font-size:12px;}
+.ct{padding:28px 50px 40px;position:relative;z-index:1;}
+h1{color:#1a3a5c;font-size:28px;font-weight:800;margin-bottom:8px;border-bottom:3px solid #daa520;padding-bottom:10px;display:inline-block;}
+h2{color:#1a3a5c;font-size:22px;font-weight:700;margin:12px 0 8px;}
+h3{color:#daa520;font-size:17px;font-weight:700;margin:10px 0 5px;}
+p,li{color:#2c2c2c;font-size:13.5px;line-height:1.6;}
+ul{margin-left:25px;}ul li{margin-bottom:4px;list-style:disc;}ul li::marker{color:#daa520;}
+.hl{background:linear-gradient(135deg,#f0f4f8,#e8eef5);border-left:4px solid #1a3a5c;padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;}
+.gb{background:linear-gradient(135deg,#fdf6e3,#fceabb);border-left:4px solid #daa520;padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;}
+.gnb{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-left:4px solid #27ae60;padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;}
+.rb{background:linear-gradient(135deg,#fde8e8,#fcc);border-left:4px solid #c0392b;padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px;}
+.trc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:8px;}
+.cd{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;}
+.cd h3{margin-top:0;}
+.tg{display:inline-block;background:#1a3a5c;color:#fff;padding:3px 10px;border-radius:12px;font-size:10px;margin:2px;}
+.tg-g{background:#daa520;}.tg-r{background:#c0392b;}.tg-gn{background:#27ae60;}
+.ft{position:absolute;bottom:0;left:0;width:100%;padding:8px 50px;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#888;}
+.ft .ln{width:100%;height:2px;background:linear-gradient(90deg,#1a3a5c,#daa520,#1a3a5c);position:absolute;top:0;left:0;}
+.ts .ct{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:620px;text-align:center;}
+.ts h1{font-size:36px;border-bottom:4px solid #daa520;margin-bottom:15px;}
+.ts .st{color:#daa520;font-size:20px;font-weight:600;margin-bottom:25px;}
+.ts .inf{color:#555;font-size:14px;line-height:2;}
+.nt{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px;}
+.nt th{background:#1a3a5c;color:#fff;padding:8px;text-align:left;}
+.nt td{padding:7px 8px;border-bottom:1px solid #e2e8f0;}
+.nt tr:nth-child(even){background:#f8fafc;}
+.sf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.si{background:#1a3a5c;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+.sa{color:#daa520;font-size:18px;font-weight:700;}
+.en{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#1a3a5c;color:#fff;border-radius:50%;font-weight:700;font-size:12px;margin-right:6px;}
+.icon-big{font-size:40px;margin-bottom:8px;}
+</style></head><body>
+<div class="slide ts"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct"><h1>Herramientas de Monitoreo de Condición</h1><p class="st">Mantenimiento Predictivo · Diagnóstico de Fallas</p><div class="inf"><strong>Unidad Formativa 2:</strong> Diagnóstico de Fallas<br><strong>Programa:</strong> TOSEM — UNIPAZ<br><strong>Periodo:</strong> 2026-I</div></div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 1</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>¿Qué es el Monitoreo de Condición?</h1>
+<div class="hl"><p><strong>Definición:</strong> Es el proceso de medir periódica o continuamente <strong>parámetros físicos</strong> de un equipo en operación (vibración, temperatura, condición del aceite, ultrasonido, etc.) para detectar <strong>cambios que indiquen deterioro</strong> o falla incipiente, permitiendo planificar intervenciones antes de la falla catastrófica.</p></div>
+<div class="tc">
+<div class="cd">
+<h3>📊 Contexto: Estrategias de mantenimiento</h3>
+<div class="sf">
+<span class="si" style="background:#c0392b;">Correctivo → Reaccionar</span>
+<span class="si" style="background:#e67e22;">Preventivo → Programar por tiempo</span>
+<span class="si" style="background:#27ae60;">Predictivo → Monitorear condición</span>
+<span class="si" style="background:#2980b9;">Proactivo → Eliminar causa raíz</span>
+</div>
+<p>El monitoreo de condición es la <strong>columna vertebral del mantenimiento predictivo</strong>: en lugar de cambiar piezas "por si acaso" (preventivo), se interviene solo cuando los datos indican que es necesario.</p>
+</div>
+<div class="cd">
+<h3>🎯 Beneficios clave</h3>
+<ul>
+<li>Detecta fallas en etapa temprana (semanas/meses antes)</li>
+<li>Reduce paradas no programadas hasta un <strong>70%</strong></li>
+<li>Optimiza costos: no se cambian piezas aún en buen estado</li>
+<li>Aumenta la vida útil de los equipos</li>
+<li>Mejora la seguridad del personal y planta</li>
+<li>Permite planificar repuestos, mano de obra y logística</li>
+<li>Genera datos para mejorar diseños y procedimientos</li>
+</ul>
+</div>
+</div>
+<div class="gb"><p><strong>Curva P-F:</strong> Es el concepto central del monitoreo predictivo. Desde el punto <strong>P</strong> (falla potencial detectable) hasta el punto <strong>F</strong> (falla funcional), hay un intervalo de tiempo llamado <strong>"ventana de oportunidad"</strong> donde se puede intervenir de manera planificada.</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 2</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>La Curva P-F: Base del Monitoreo Predictivo</h1>
+<div class="hl"><p>La curva P-F muestra cómo se <strong>degrada un activo</strong> desde su condición normal hasta la falla funcional, y en qué puntos cada técnica de monitoreo puede detectar el deterioro.</p></div>
+<svg viewBox="0 0 1100 380" style="width:100%;margin:8px 0;" xmlns="http://www.w3.org/2000/svg">
+<!-- Axes -->
+<line x1="100" y1="320" x2="1050" y2="320" stroke="#1a3a5c" stroke-width="2"/>
+<line x1="100" y1="320" x2="100" y2="30" stroke="#1a3a5c" stroke-width="2"/>
+<text x="580" y="365" text-anchor="middle" fill="#1a3a5c" font-size="13" font-weight="700">TIEMPO →</text>
+<text x="40" y="180" text-anchor="middle" fill="#1a3a5c" font-size="12" font-weight="700" transform="rotate(-90,40,180)">CONDICIÓN →</text>
+<!-- Curve -->
+<path d="M120,80 C300,80 400,85 500,100 C550,110 600,130 650,170 C700,210 750,250 850,290 C900,305 950,315 1000,318" fill="none" stroke="#c0392b" stroke-width="3"/>
+<!-- Normal zone -->
+<rect x="120" y="60" width="280" height="30" rx="4" fill="#27ae60" opacity="0.15"/>
+<text x="260" y="82" text-anchor="middle" fill="#27ae60" font-size="11" font-weight="700">CONDICIÓN NORMAL</text>
+<!-- P point -->
+<circle cx="480" cy="97" r="8" fill="#e67e22"/>
+<text x="480" y="55" text-anchor="middle" fill="#e67e22" font-size="14" font-weight="800">P</text>
+<text x="480" y="70" text-anchor="middle" fill="#e67e22" font-size="10">Falla Potencial</text>
+<!-- Detection zones -->
+<line x1="480" y1="97" x2="480" y2="320" stroke="#e67e22" stroke-width="1" stroke-dasharray="4"/>
+<rect x="490" y="100" width="130" height="22" rx="4" fill="#3498db" opacity="0.9"/>
+<text x="555" y="116" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">Ultrasonido</text>
+<rect x="540" y="130" width="130" height="22" rx="4" fill="#9b59b6" opacity="0.9"/>
+<text x="605" y="146" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">Análisis de vibración</text>
+<rect x="590" y="160" width="130" height="22" rx="4" fill="#e74c3c" opacity="0.9"/>
+<text x="655" y="176" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">Termografía IR</text>
+<rect x="640" y="190" width="130" height="22" rx="4" fill="#27ae60" opacity="0.9"/>
+<text x="705" y="206" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">Análisis de aceite</text>
+<rect x="720" y="230" width="130" height="22" rx="4" fill="#f39c12" opacity="0.9"/>
+<text x="785" y="246" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">Ruido audible</text>
+<rect x="800" y="260" width="130" height="22" rx="4" fill="#e74c3c" opacity="0.9"/>
+<text x="865" y="276" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">Calor al tacto</text>
+<!-- F point -->
+<circle cx="990" cy="316" r="8" fill="#c0392b"/>
+<text x="990" y="300" text-anchor="middle" fill="#c0392b" font-size="14" font-weight="800">F</text>
+<text x="990" y="345" text-anchor="middle" fill="#c0392b" font-size="10">Falla Funcional</text>
+<line x1="990" y1="316" x2="990" y2="320" stroke="#c0392b" stroke-width="2"/>
+<!-- P-F interval -->
+<line x1="480" y1="340" x2="990" y2="340" stroke="#daa520" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="735" y="358" text-anchor="middle" fill="#daa520" font-size="12" font-weight="700">Intervalo P-F (ventana de oportunidad)</text>
+</svg>
+<div class="tc">
+<div class="gnb"><p><strong>Punto P:</strong> Momento en que la falla es detectable con instrumentos. Cuanto más temprano se detecte, más tiempo hay para planificar.</p></div>
+<div class="rb"><p><strong>Punto F:</strong> Falla funcional: el equipo ya no cumple su función. Paro no programado, daño potencialmente catastrófico.</p></div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 3</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>Principales Técnicas de Monitoreo de Condición</h1>
+<div class="trc">
+<div class="cd" style="border-top:4px solid #9b59b6;text-align:center;">
+<div class="icon-big">📳</div>
+<h3 style="color:#9b59b6;">Análisis de Vibración</h3>
+<p>Detecta desbalance, desalineación, soltura mecánica, fallas en rodamientos y engranajes.</p>
+<div><span class="tg" style="background:#9b59b6;">La más usada</span></div>
+</div>
+<div class="cd" style="border-top:4px solid #e74c3c;text-align:center;">
+<div class="icon-big">🌡️</div>
+<h3 style="color:#e74c3c;">Termografía Infrarroja</h3>
+<p>Detecta puntos calientes en equipos eléctricos, mecánicos, refractarios y aislamientos.</p>
+<div><span class="tg" style="background:#e74c3c;">Sin contacto</span></div>
+</div>
+<div class="cd" style="border-top:4px solid #27ae60;text-align:center;">
+<div class="icon-big">🛢️</div>
+<h3 style="color:#27ae60;">Análisis de Aceite</h3>
+<p>Detecta desgaste de componentes, contaminación, degradación del lubricante.</p>
+<div><span class="tg" style="background:#27ae60;">Laboratorio</span></div>
+</div>
+<div class="cd" style="border-top:4px solid #3498db;text-align:center;">
+<div class="icon-big">🔊</div>
+<h3 style="color:#3498db;">Ultrasonido</h3>
+<p>Detecta fugas de aire/gas, descargas parciales en equipos eléctricos, cavitación en válvulas.</p>
+<div><span class="tg" style="background:#3498db;">Detección más temprana</span></div>
+</div>
+<div class="cd" style="border-top:4px solid #f39c12;text-align:center;">
+<div class="icon-big">🔬</div>
+<h3 style="color:#f39c12;">Ensayos No Destructivos</h3>
+<p>Tintas penetrantes, partículas magnéticas, ultrasonido de espesores, radiografía industrial.</p>
+<div><span class="tg" style="background:#f39c12;">Integridad</span></div>
+</div>
+<div class="cd" style="border-top:4px solid #1abc9c;text-align:center;">
+<div class="icon-big">⚡</div>
+<h3 style="color:#1abc9c;">Análisis Eléctrico</h3>
+<p>Análisis de corriente del motor (MCSA), resistencia de aislamiento, factor de potencia.</p>
+<div><span class="tg" style="background:#1abc9c;">Motores</span></div>
+</div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 4</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>Análisis de Vibración</h1>
+<div class="hl"><p>Es la técnica de monitoreo <strong>más utilizada en la industria</strong>. Mide el movimiento oscilatorio de los componentes de un equipo rotativo para detectar anomalías mecánicas en etapa temprana.</p></div>
+<div class="tc">
+<div>
+<h3>📊 Parámetros que se miden:</h3>
+<table class="nt">
+<thead><tr><th>Parámetro</th><th>Unidad</th><th>¿Qué detecta?</th></tr></thead>
+<tbody>
+<tr><td><strong>Desplazamiento</strong></td><td>micrones (μm)</td><td>Problemas a baja frecuencia (desbalance)</td></tr>
+<tr><td><strong>Velocidad</strong></td><td>mm/s RMS</td><td>Condición general del equipo</td></tr>
+<tr><td><strong>Aceleración</strong></td><td>g (9.81 m/s²)</td><td>Problemas a alta frecuencia (rodamientos)</td></tr>
+<tr><td><strong>Envolvente</strong></td><td>gE</td><td>Fallas incipientes en rodamientos</td></tr>
+</tbody></table>
+<h3>📏 Norma ISO 10816 — Límites de vibración:</h3>
+<table class="nt">
+<thead><tr><th>Zona</th><th>mm/s RMS</th><th>Estado</th></tr></thead>
+<tbody>
+<tr style="background:#e8f5e9;"><td style="color:#27ae60;font-weight:700;">A</td><td>0 — 2.8</td><td>Bueno (equipo nuevo)</td></tr>
+<tr style="background:#fff3e0;"><td style="color:#f39c12;font-weight:700;">B</td><td>2.8 — 7.1</td><td>Aceptable (operación continua)</td></tr>
+<tr style="background:#fde8e8;"><td style="color:#e67e22;font-weight:700;">C</td><td>7.1 — 18.0</td><td>Alerta (planificar intervención)</td></tr>
+<tr style="background:#f5b7b1;"><td style="color:#c0392b;font-weight:700;">D</td><td>> 18.0</td><td>Peligro (parar equipo)</td></tr>
+</tbody></table>
+</div>
+<div>
+<h3>🔍 Fallas detectables:</h3>
+<ul>
+<li><strong>Desbalance:</strong> Vibración a 1× RPM. Causa: masa desigual en el rotor</li>
+<li><strong>Desalineación:</strong> Vibración a 2× RPM axial. Causa: ejes no colineales</li>
+<li><strong>Soltura mecánica:</strong> Múltiples armónicos. Causa: pernos flojos, holgura</li>
+<li><strong>Falla en rodamientos:</strong> Frecuencias características (BPFO, BPFI, BSF, FTF)</li>
+<li><strong>Falla en engranajes:</strong> Frecuencia de engrane y bandas laterales</li>
+<li><strong>Resonancia:</strong> Amplificación a frecuencia natural de la estructura</li>
+<li><strong>Cavitación:</strong> Vibración broadband en bombas</li>
+</ul>
+<h3>🔧 Equipos de medición:</h3>
+<ul>
+<li>Acelerómetros piezoeléctricos</li>
+<li>Colectores de datos portátiles</li>
+<li>Sensores de proximidad (equipos críticos)</li>
+<li>Sistemas de monitoreo en línea (24/7)</li>
+</ul>
+</div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 5</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>Termografía Infrarroja</h1>
+<div class="hl"><p>Técnica de monitoreo <strong>sin contacto</strong> que captura la radiación infrarroja emitida por los cuerpos para generar <strong>imágenes térmicas</strong> (termogramas) que revelan patrones de temperatura anormales.</p></div>
+<div class="tc">
+<div>
+<h3>🌡️ Principio de funcionamiento:</h3>
+<p>Todo cuerpo con temperatura superior al cero absoluto (-273.15°C) emite <strong>radiación infrarroja</strong>. La cámara termográfica detecta esta radiación y la convierte en una imagen visible donde los colores representan diferentes temperaturas.</p>
+<h3>🔍 Aplicaciones principales:</h3>
+<table class="nt">
+<thead><tr><th>Área</th><th>Detecta</th><th>Ejemplo</th></tr></thead>
+<tbody>
+<tr><td><strong>Eléctrica</strong></td><td>Conexiones flojas, sobrecarga, desbalance de fases</td><td>Terminal de transformador a 120°C vs 40°C</td></tr>
+<tr><td><strong>Mecánica</strong></td><td>Rodamientos calientes, fricción anormal, desalineación</td><td>Rodamiento de motor a 95°C (normal: 60°C)</td></tr>
+<tr><td><strong>Refractaria</strong></td><td>Pérdida de revestimiento en hornos/calderas</td><td>Punto caliente en carcasa de horno</td></tr>
+<tr><td><strong>Aislamiento</strong></td><td>Aislamiento térmico dañado en tuberías/tanques</td><td>Fuga de calor en tubería de vapor</td></tr>
+<tr><td><strong>Edificaciones</strong></td><td>Filtraciones, puentes térmicos</td><td>Humedad en paredes no visible</td></tr>
+</tbody></table>
+</div>
+<div>
+<h3>📊 Criterios de evaluación (ΔT):</h3>
+<table class="nt">
+<thead><tr><th>ΔT sobre referencia</th><th>Prioridad</th><th>Acción</th></tr></thead>
+<tbody>
+<tr style="background:#e8f5e9;"><td>1°C — 10°C</td><td style="color:#27ae60;font-weight:700;">Posible deficiencia</td><td>Monitorear evolución</td></tr>
+<tr style="background:#fff3e0;"><td>11°C — 20°C</td><td style="color:#f39c12;font-weight:700;">Probable deficiencia</td><td>Programar reparación</td></tr>
+<tr style="background:#fde8e8;"><td>21°C — 40°C</td><td style="color:#e67e22;font-weight:700;">Deficiencia confirmada</td><td>Reparar pronto</td></tr>
+<tr style="background:#f5b7b1;"><td>> 40°C</td><td style="color:#c0392b;font-weight:700;">Crítico</td><td>Reparar INMEDIATAMENTE</td></tr>
+</tbody></table>
+<h3>🔧 Equipos:</h3>
+<ul>
+<li>Cámaras termográficas (FLIR, Fluke, HIKMICRO)</li>
+<li>Termómetros infrarrojos (pistola IR)</li>
+<li>Software de análisis termográfico</li>
+</ul>
+<div class="gb"><p><strong>Requisito:</strong> El termógrafo debe estar certificado (Nivel I, II o III según ISO 18436-7) para emitir diagnósticos confiables.</p></div>
+</div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 6</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>Análisis de Aceite y Ultrasonido</h1>
+<div class="tc">
+<div class="cd" style="border-top:4px solid #27ae60;">
+<h3 style="color:#27ae60;">🛢️ Análisis de Aceite (Tribología)</h3>
+<p>Evalúa la condición del <strong>lubricante</strong> y detecta <strong>partículas de desgaste</strong> de los componentes internos.</p>
+<h3>Ensayos principales:</h3>
+<table class="nt" style="font-size:11px;">
+<thead><tr><th>Ensayo</th><th>¿Qué mide?</th><th>Indica</th></tr></thead>
+<tbody>
+<tr><td><strong>Viscosidad</strong></td><td>Resistencia al flujo</td><td>Degradación o contaminación del aceite</td></tr>
+<tr><td><strong>TAN/TBN</strong></td><td>Acidez/Alcalinidad</td><td>Oxidación del aceite</td></tr>
+<tr><td><strong>Conteo de partículas</strong></td><td>Cantidad y tamaño (ISO 4406)</td><td>Limpieza del sistema</td></tr>
+<tr><td><strong>Espectrometría</strong></td><td>Metales (Fe, Cu, Pb, Sn)</td><td>Desgaste de componentes específicos</td></tr>
+<tr><td><strong>Ferrografía</strong></td><td>Morfología de partículas</td><td>Tipo y severidad de desgaste</td></tr>
+<tr><td><strong>Contenido de agua</strong></td><td>ppm de agua</td><td>Contaminación por agua</td></tr>
+</tbody></table>
+<div class="gb" style="font-size:12px;"><p><strong>💡</strong> El aceite es el "análisis de sangre" del equipo: revela su estado interno sin necesidad de abrirlo.</p></div>
+</div>
+<div class="cd" style="border-top:4px solid #3498db;">
+<h3 style="color:#3498db;">🔊 Ultrasonido Industrial</h3>
+<p>Detecta ondas sonoras de <strong>alta frecuencia</strong> (20 kHz — 100 kHz) que el oído humano no percibe, generadas por fricción, impactos, turbulencia y descargas eléctricas.</p>
+<h3>Aplicaciones principales:</h3>
+<ul>
+<li><strong>Detección de fugas:</strong> Aire comprimido, vapor, gas, vacío</li>
+<li><strong>Rodamientos:</strong> Detección más temprana que vibración</li>
+<li><strong>Trampas de vapor:</strong> Verificar funcionamiento correcto</li>
+<li><strong>Descargas parciales:</strong> En transformadores, switchgear</li>
+<li><strong>Cavitación:</strong> En bombas y válvulas</li>
+<li><strong>Lubricación:</strong> Guía para engrasar "justo lo necesario"</li>
+</ul>
+<h3>Ventajas del ultrasonido:</h3>
+<ul>
+<li>Detecta fallas <strong>antes que la vibración</strong></li>
+<li>No requiere contacto directo con el equipo</li>
+<li>Identifica fugas de aire comprimido (ahorro energético)</li>
+<li>Equipos portátiles y fáciles de usar</li>
+</ul>
+<div class="gb" style="font-size:12px;"><p><strong>💡</strong> Un programa de detección de fugas de aire comprimido puede ahorrar entre <strong>20-30% del costo energético</strong> de compresión.</p></div>
+</div>
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 7</span></div></div>
+<div class="slide"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>Comparativa de Técnicas de Monitoreo</h1>
+<table class="nt">
+<thead><tr><th>Técnica</th><th>Equipos aplicables</th><th>Detección temprana</th><th>Costo</th><th>Complejidad</th><th>Intervalo típico</th></tr></thead>
+<tbody>
+<tr><td><strong>Análisis de Vibración</strong></td><td>Rotativos (bombas, motores, compresores, turbinas)</td><td style="color:#27ae60;font-weight:700;">⭐⭐⭐⭐</td><td>Medio-Alto</td><td>Alta (analista certificado)</td><td>Mensual / En línea</td></tr>
+<tr><td><strong>Termografía IR</strong></td><td>Eléctricos, mecánicos, refractarios, tuberías</td><td style="color:#f39c12;font-weight:700;">⭐⭐⭐</td><td>Medio</td><td>Media (certificación requerida)</td><td>Trimestral / Semestral</td></tr>
+<tr><td><strong>Análisis de Aceite</strong></td><td>Equipos lubricados (reductores, compresores, motores)</td><td style="color:#27ae60;font-weight:700;">⭐⭐⭐⭐</td><td>Bajo-Medio</td><td>Baja (toma de muestra simple)</td><td>Mensual / Trimestral</td></tr>
+<tr><td><strong>Ultrasonido</strong></td><td>Todos (fugas, rodamientos, eléctricos, trampas)</td><td style="color:#27ae60;font-weight:700;">⭐⭐⭐⭐⭐</td><td>Bajo</td><td>Baja-Media</td><td>Mensual</td></tr>
+<tr><td><strong>END (Tintas, PM, UT)</strong></td><td>Estáticos (recipientes, tuberías, soldaduras)</td><td style="color:#f39c12;font-weight:700;">⭐⭐⭐</td><td>Medio</td><td>Alta (certificación ASNT)</td><td>Anual / Parada de planta</td></tr>
+<tr><td><strong>Análisis Eléctrico</strong></td><td>Motores eléctricos, transformadores, cables</td><td style="color:#27ae60;font-weight:700;">⭐⭐⭐⭐</td><td>Medio</td><td>Alta (especialista)</td><td>Semestral</td></tr>
+</tbody></table>
+<div class="gb"><p><strong>💡 Recomendación:</strong> Las técnicas son <strong>complementarias</strong>, no excluyentes. Un programa de monitoreo robusto combina al menos <strong>vibración + termografía + aceite</strong> para equipos críticos, y <strong>ultrasonido</strong> como herramienta de apoyo universal.</p></div>
+<div class="gnb"><p><strong>📊 Regla práctica para seleccionar la técnica:</strong> Equipo rotativo → Vibración · Equipo eléctrico → Termografía · Equipo lubricado → Aceite · Fugas/trampas → Ultrasonido · Integridad estructural → END</p></div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 8</span></div></div>
+<div class="slide ts"><div class="hb"><span class="lo">UNIPAZ</span><span class="su">Monitoreo de Condición · UF2</span></div><div class="ct">
+<h1>¡Practiquemos!</h1>
+<p class="st">Simulador de Monitoreo de Condición</p>
+<div class="inf">
+<strong>Archivo:</strong> Simulador_Monitoreo.html<br><br>
+<strong>El simulador incluye:</strong><br>
+📳 Análisis de vibración con espectro en tiempo real<br>
+🌡️ Mapa térmico de equipo con detección de puntos calientes<br>
+🛢️ Panel de análisis de aceite con tendencias<br>
+🔊 Detector de ultrasonido con nivel de dB<br><br>
+<strong>"Lo que no se mide, no se puede mejorar"</strong><br>— Lord Kelvin<br><br>
+Instituto Universitario de la Paz — UNIPAZ<br>
+TOSEM · UF2 · 2026-I
+</div>
+</div><div class="ft"><div class="ln"></div><span>Instituto Universitario de la Paz — UNIPAZ</span><span>Diapositiva 9</span></div></div>
+
+</body>
+</html>

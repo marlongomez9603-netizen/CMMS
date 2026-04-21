@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Simulador Ishikawa — UNIPAZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Montserrat',sans-serif;background:#0d1b2a;color:#e0e0e0;min-height:100vh;}
+
+.header{background:linear-gradient(135deg,#1a3a5c,#2a5a8c);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.4);flex-wrap:wrap;gap:8px;}
+.header .logo{font-size:15px;font-weight:800;color:#fff;letter-spacing:2px;}
+.header .title{color:#daa520;font-size:14px;font-weight:600;}
+
+.container{max-width:1400px;margin:0 auto;padding:20px;}
+
+/* Problem input */
+.problem-section{background:linear-gradient(135deg,#2a1a1a,#3a2020);border:2px solid rgba(192,57,43,0.4);border-radius:16px;padding:20px;margin-bottom:20px;text-align:center;}
+.problem-section h2{color:#e74c3c;font-size:16px;margin-bottom:10px;text-transform:uppercase;letter-spacing:2px;}
+.problem-input{width:100%;max-width:700px;background:rgba(255,255,255,0.06);border:2px solid rgba(192,57,43,0.3);border-radius:12px;padding:14px 18px;color:#fff;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:600;text-align:center;}
+.problem-input:focus{outline:none;border-color:#e74c3c;background:rgba(192,57,43,0.08);}
+.problem-input::placeholder{color:rgba(255,255,255,0.3);}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.btn{padding:10px 18px;border:none;border-radius:10px;font-family:'Montserrat',sans-serif;font-weight:600;font-size:12px;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:5px;}
+.btn-gold{background:linear-gradient(135deg,#daa520,#c9941a);color:#1a3a5c;}
+.btn-blue{background:linear-gradient(135deg,#2a5a8c,#1a3a5c);color:#fff;border:1px solid rgba(218,165,32,0.3);}
+.btn-red{background:linear-gradient(135deg,#c0392b,#a93226);color:#fff;}
+.btn-green{background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;}
+
+/* SVG Diagram */
+.diagram-container{background:linear-gradient(135deg,#fff,#f8fafc);border-radius:16px;padding:20px;margin-bottom:20px;overflow-x:auto;border:1px solid rgba(218,165,32,0.15);}
+#fishbone{width:100%;min-width:900px;}
+
+/* Categories grid */
+.categories{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+@media(max-width:900px){.categories{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.categories{grid-template-columns:1fr;}}
+
+.cat-card{background:linear-gradient(135deg,#152238,#1a2a42);border-radius:14px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;transition:box-shadow 0.2s;}
+.cat-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.cat-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.cat-count{background:rgba(255,255,255,0.1);padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;}
+.cat-body{padding:0 16px 14px;}
+.cat-body.collapsed{display:none;}
+
+.cause-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.cause-item:last-child{border-bottom:none;}
+.cause-bullet{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cause-text{flex:1;font-size:13px;}
+.cause-delete{background:none;border:none;color:#e74c3c;font-size:16px;cursor:pointer;padding:4px 8px;opacity:0.5;min-width:30px;min-height:30px;display:flex;align-items:center;justify-content:center;}
+.cause-delete:hover{opacity:1;}
+
+.add-cause{display:flex;gap:8px;margin-top:8px;}
+.add-cause input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#e0e0e0;font-family:'Montserrat',sans-serif;font-size:12px;}
+.add-cause input:focus{border-color:#daa520;outline:none;}
+.add-cause button{background:#daa520;color:#1a3a5c;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:16px;min-width:44px;min-height:44px;}
+
+/* Colors per category */
+.cat-maquina .cat-header{background:linear-gradient(135deg,rgba(192,57,43,0.15),rgba(192,57,43,0.08));border-bottom:2px solid rgba(192,57,43,0.3);}
+.cat-maquina .cat-title{color:#e74c3c;}
+.cat-maquina .cause-bullet{background:#e74c3c;}
+
+.cat-metodo .cat-header{background:linear-gradient(135deg,rgba(230,126,34,0.15),rgba(230,126,34,0.08));border-bottom:2px solid rgba(230,126,34,0.3);}
+.cat-metodo .cat-title{color:#e67e22;}
+.cat-metodo .cause-bullet{background:#e67e22;}
+
+.cat-mano .cat-header{background:linear-gradient(135deg,rgba(41,128,185,0.15),rgba(41,128,185,0.08));border-bottom:2px solid rgba(41,128,185,0.3);}
+.cat-mano .cat-title{color:#3498db;}
+.cat-mano .cause-bullet{background:#3498db;}
+
+.cat-material .cat-header{background:linear-gradient(135deg,rgba(39,174,96,0.15),rgba(39,174,96,0.08));border-bottom:2px solid rgba(39,174,96,0.3);}
+.cat-material .cat-title{color:#2ecc71;}
+.cat-material .cause-bullet{background:#2ecc71;}
+
+.cat-ambiente .cat-header{background:linear-gradient(135deg,rgba(142,68,173,0.15),rgba(142,68,173,0.08));border-bottom:2px solid rgba(142,68,173,0.3);}
+.cat-ambiente .cat-title{color:#9b59b6;}
+.cat-ambiente .cause-bullet{background:#9b59b6;}
+
+.cat-medicion .cat-header{background:linear-gradient(135deg,rgba(26,188,156,0.15),rgba(26,188,156,0.08));border-bottom:2px solid rgba(26,188,156,0.3);}
+.cat-medicion .cat-title{color:#1abc9c;}
+.cat-medicion .cause-bullet{background:#1abc9c;}
+
+/* Stats bar */
+.stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.stat{background:linear-gradient(135deg,#1e3454,#253d5e);padding:10px 16px;border-radius:10px;font-size:12px;border:1px solid rgba(218,165,32,0.1);}
+.stat strong{color:#daa520;}
+
+/* Print */
+@media print{
+    body{background:#fff;color:#000;}
+    .header,.toolbar,.add-cause,.cause-delete,.btn{display:none!important;}
+    .cat-card{border:1px solid #ccc;break-inside:avoid;}
+    .diagram-container{border:1px solid #ccc;}
+    .problem-section{border:2px solid #c0392b;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">UNIPAZ</div>
+    <div class="title">Simulador Ishikawa Interactivo</div>
+</div>
+
+<div class="container">
+
+<div class="problem-section">
+    <h2>🎯 Defina el Problema (Efecto)</h2>
+    <input type="text" class="problem-input" id="problemInput" placeholder="Ej: La bomba P-101 presenta vibración alta cada 45 días" oninput="updateDiagram()">
+</div>
+
+<div class="toolbar">
+    <button class="btn btn-gold" onclick="loadExample()">📋 Cargar Ejemplo</button>
+    <button class="btn btn-blue" onclick="expandAll()">📂 Expandir Todo</button>
+    <button class="btn btn-blue" onclick="collapseAll()">📁 Colapsar Todo</button>
+    <button class="btn btn-green" onclick="exportText()">📥 Exportar Texto</button>
+    <button class="btn btn-blue" onclick="window.print()">🖨️ Imprimir</button>
+    <button class="btn btn-red" onclick="clearAll()">🗑️ Limpiar Todo</button>
+</div>
+
+<div class="stats" id="statsBar">
+    <div class="stat">Total causas: <strong id="totalCauses">0</strong></div>
+</div>
+
+<!-- SVG Fishbone Diagram -->
+<div class="diagram-container">
+    <svg id="fishbone" viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a3a5c"/></marker></defs>
+    </svg>
+</div>
+
+<!-- 6M Category Cards -->
+<div class="categories" id="categoriesContainer"></div>
+
+</div>
+
+<script>
+const CATS = [
+    { id:'maquina', name:'Máquina', icon:'🔧', color:'#e74c3c', causes:[] },
+    { id:'metodo', name:'Método', icon:'📋', color:'#e67e22', causes:[] },
+    { id:'mano', name:'Mano de Obra', icon:'👷', color:'#3498db', causes:[] },
+    { id:'material', name:'Material', icon:'📦', color:'#2ecc71', causes:[] },
+    { id:'ambiente', name:'Medio Ambiente', icon:'🌡️', color:'#9b59b6', causes:[] },
+    { id:'medicion', name:'Medición', icon:'📏', color:'#1abc9c', causes:[] },
+];
+
+function init() {
+    const container = document.getElementById('categoriesContainer');
+    CATS.forEach(cat => {
+        const div = document.createElement('div');
+        div.className = `cat-card cat-${cat.id}`;
+        div.id = `cat-${cat.id}`;
+        div.innerHTML = `
+            <div class="cat-header" onclick="toggleCat('${cat.id}')">
+                <div class="cat-title">${cat.icon} ${cat.name}</div>
+                <div class="cat-count" id="count-${cat.id}">0</div>
+            </div>
+            <div class="cat-body" id="body-${cat.id}">
+                <div id="causes-${cat.id}"></div>
+                <div class="add-cause">
+                    <input type="text" id="input-${cat.id}" placeholder="Escriba una causa..." onkeydown="if(event.key==='Enter')addCause('${cat.id}')">
+                    <button onclick="addCause('${cat.id}')">+</button>
+                </div>
+            </div>`;
+        container.appendChild(div);
+    });
+    updateDiagram();
+}
+
+function toggleCat(id) {
+    document.getElementById('body-'+id).classList.toggle('collapsed');
+}
+
+function addCause(catId) {
+    const input = document.getElementById('input-'+catId);
+    const text = input.value.trim();
+    if (!text) return;
+    const cat = CATS.find(c=>c.id===catId);
+    cat.causes.push(text);
+    input.value = '';
+    renderCauses(catId);
+    updateDiagram();
+}
+
+function removeCause(catId, index) {
+    CATS.find(c=>c.id===catId).causes.splice(index, 1);
+    renderCauses(catId);
+    updateDiagram();
+}
+
+function renderCauses(catId) {
+    const cat = CATS.find(c=>c.id===catId);
+    const el = document.getElementById('causes-'+catId);
+    document.getElementById('count-'+catId).textContent = cat.causes.length;
+    el.innerHTML = cat.causes.map((c,i) => `
+        <div class="cause-item">
+            <div class="cause-bullet"></div>
+            <div class="cause-text">${c}</div>
+            <button class="cause-delete" onclick="removeCause('${catId}',${i})">✕</button>
+        </div>
+    `).join('');
+    // Update total
+    const total = CATS.reduce((s,c)=>s+c.causes.length, 0);
+    document.getElementById('totalCauses').textContent = total;
+}
+
+function updateDiagram() {
+    const problem = document.getElementById('problemInput').value || 'PROBLEMA';
+    const svg = document.getElementById('fishbone');
+
+    // Calculate needed height based on max causes
+    const maxCauses = Math.max(3, ...CATS.map(c=>c.causes.length));
+    const h = Math.max(420, 200 + maxCauses * 30);
+    const cy = h / 2; // center Y
+
+    svg.setAttribute('viewBox', `0 0 1100 ${h}`);
+
+    let s = `<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a3a5c"/></marker></defs>`;
+
+    // Main spine
+    s += `<line x1="60" y1="${cy}" x2="920" y2="${cy}" stroke="#1a3a5c" stroke-width="3" marker-end="url(#arrow)"/>`;
+
+    // Effect box
+    const pLines = wrapText(problem, 18);
+    const boxH = Math.max(60, pLines.length * 18 + 20);
+    s += `<rect x="920" y="${cy-boxH/2}" width="170" height="${boxH}" rx="10" fill="#c0392b" stroke="#922b21" stroke-width="1.5"/>`;
+    pLines.forEach((line, i) => {
+        s += `<text x="1005" y="${cy - (pLines.length-1)*9 + i*18}" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">${esc(line)}</text>`;
+    });
+
+    // Branch positions
+    const topCats = CATS.slice(0, 3); // maquina, metodo, mano
+    const botCats = CATS.slice(3);    // material, ambiente, medicion
+    const xPositions = [250, 500, 730];
+
+    // Top branches
+    topCats.forEach((cat, i) => {
+        const x = xPositions[i];
+        const bx = x + 100;
+        const topY = cy - 140;
+
+        s += `<line x1="${x}" y1="${topY}" x2="${bx}" y2="${cy}" stroke="${cat.color}" stroke-width="2.5" marker-end="url(#arrow)" opacity="0.8"/>`;
+        const tw = cat.name.length * 8 + 30;
+        s += `<rect x="${x - tw/2}" y="${topY-30}" width="${tw}" height="28" rx="6" fill="${cat.color}"/>`;
+        s += `<text x="${x}" y="${topY-11}" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">${cat.icon} ${esc(cat.name)}</text>`;
+
+        cat.causes.forEach((cause, j) => {
+            const causeY = topY + 10 + j * 18;
+            if (causeY < cy - 10) {
+                s += `<line x1="${x-10}" y1="${causeY}" x2="${x + 50 + (cy-causeY)*0.55}" y2="${causeY}" stroke="${cat.color}" stroke-width="1" opacity="0.4"/>`;
+                s += `<text x="${x-15}" y="${causeY+4}" text-anchor="end" fill="#333" font-size="9">${esc(cause.substring(0,35))}</text>`;
+            }
+        });
+    });
+
+    // Bottom branches
+    botCats.forEach((cat, i) => {
+        const x = xPositions[i];
+        const bx = x + 100;
+        const botY = cy + 140;
+
+        s += `<line x1="${x}" y1="${botY}" x2="${bx}" y2="${cy}" stroke="${cat.color}" stroke-width="2.5" marker-end="url(#arrow)" opacity="0.8"/>`;
+        const tw = cat.name.length * 8 + 30;
+        s += `<rect x="${x - tw/2}" y="${botY+5}" width="${tw}" height="28" rx="6" fill="${cat.color}"/>`;
+        s += `<text x="${x}" y="${botY+24}" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">${cat.icon} ${esc(cat.name)}</text>`;
+
+        cat.causes.forEach((cause, j) => {
+            const causeY = botY - 10 - j * 18;
+            if (causeY > cy + 10) {
+                s += `<line x1="${x-10}" y1="${causeY}" x2="${x + 50 + (causeY-cy)*0.55}" y2="${causeY}" stroke="${cat.color}" stroke-width="1" opacity="0.4"/>`;
+                s += `<text x="${x-15}" y="${causeY+4}" text-anchor="end" fill="#333" font-size="9">${esc(cause.substring(0,35))}</text>`;
+            }
+        });
+    });
+
+    svg.innerHTML = s;
+}
+
+function wrapText(text, maxLen) {
+    if (text.length <= maxLen) return [text];
+    const words = text.split(' ');
+    const lines = []; let line = '';
+    words.forEach(w => {
+        if ((line + ' ' + w).trim().length > maxLen) { lines.push(line.trim()); line = w; }
+        else { line += ' ' + w; }
+    });
+    if (line.trim()) lines.push(line.trim());
+    return lines.slice(0, 4);
+}
+
+function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function expandAll() { CATS.forEach(c => document.getElementById('body-'+c.id).classList.remove('collapsed')); }
+function collapseAll() { CATS.forEach(c => document.getElementById('body-'+c.id).classList.add('collapsed')); }
+
+function clearAll() {
+    if (!confirm('¿Limpiar todo el diagrama?')) return;
+    CATS.forEach(c => { c.causes = []; renderCauses(c.id); });
+    document.getElementById('problemInput').value = '';
+    updateDiagram();
+}
+
+function loadExample() {
+    if (CATS.some(c=>c.causes.length>0) && !confirm('Esto reemplazará los datos actuales.')) return;
+    document.getElementById('problemInput').value = 'Bomba P-101: vibración > 8 mm/s cada 45 días';
+    CATS[0].causes = ['Desgaste de impulsor','Rodamientos dañados','Sello mecánico con fuga','Desbalance del rotor'];
+    CATS[1].causes = ['Sin procedimiento de arranque','Operación fuera del BEP','No se purga antes de arrancar','Sin plan de mantenimiento preventivo'];
+    CATS[2].causes = ['Falta de capacitación','Error en alineación','No sigue procedimiento','Fatiga por turnos largos'];
+    CATS[3].causes = ['Fluido con partículas abrasivas','Lubricante incorrecto','Repuestos no originales'];
+    CATS[4].causes = ['Alta temperatura ambiental','Vibración de equipos cercanos','Polvo y contaminación'];
+    CATS[5].causes = ['Sin monitoreo de vibración','Manómetros descalibrados','No se mide temperatura'];
+    CATS.forEach(c => renderCauses(c.id));
+    updateDiagram();
+    expandAll();
+}
+
+function exportText() {
+    const problem = document.getElementById('problemInput').value || 'No definido';
+    let txt = `DIAGRAMA DE ISHIKAWA\n${'='.repeat(50)}\n\nPROBLEMA: ${problem}\n\n`;
+    CATS.forEach(c => {
+        txt += `${c.icon} ${c.name.toUpperCase()}\n${'-'.repeat(30)}\n`;
+        if (c.causes.length === 0) txt += '  (Sin causas identificadas)\n';
+        else c.causes.forEach((cause,i) => txt += `  ${i+1}. ${cause}\n`);
+        txt += '\n';
+    });
+    txt += `\nTotal de causas identificadas: ${CATS.reduce((s,c)=>s+c.causes.length,0)}\n`;
+    txt += `Generado: ${new Date().toLocaleString('es-CO')}\nUNIPAZ — TOSEM — UF2\n`;
+
+    const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Ishikawa_${problem.substring(0,30).replace(/[^a-zA-Z0-9]/g,'_')}.txt`;
+    a.click();
+}
+
+init();
+</script>
+</body>
+</html>

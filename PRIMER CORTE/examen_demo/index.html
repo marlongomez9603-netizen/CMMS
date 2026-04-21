@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMO: Simulador Examen TOSEM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0a0f1e;
+            --bg-card: #111827;
+            --bg-input: #1f2937;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #2d3748;
+            --font-heading: 'Orbitron', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(0,229,255,0.04) 0%, transparent 60%),
+                              radial-gradient(ellipse at 80% 20%, rgba(124,58,237,0.04) 0%, transparent 60%);
+        }
+
+        /* ── DEMO BANNER ── */
+        .demo-banner {
+            background: linear-gradient(90deg, #92400e, #d97706);
+            text-align: center;
+            padding: 8px;
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        /* ── SCREENS ── */
+        .screen { display: none; min-height: 100vh; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* ── LOGIN ── */
+        #login-screen { justify-content: center; align-items: center; padding: 2rem; }
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 640px;
+            width: 100%;
+            box-shadow: 0 0 40px rgba(0,229,255,0.08);
+        }
+        .login-card h1 {
+            font-family: var(--font-heading);
+            color: var(--accent);
+            font-size: 1.4rem;
+            margin-bottom: 0.4rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .login-card h2 { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+        .demo-tag {
+            display: inline-block;
+            background: rgba(245,158,11,0.2);
+            border: 1px solid #d97706;
+            color: #f59e0b;
+            font-size: 0.7rem;
+            font-family: var(--font-heading);
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+        }
+
+        /* ── RULES SECTION ── */
+        .rules { list-style: none; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
+        .rules li {
+            display: flex; align-items: flex-start; gap: 10px;
+            background: var(--bg-input);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            border-left: 3px solid var(--accent);
+        }
+        .rules li.rule-danger { border-left-color: var(--danger); }
+        .rules li.rule-warning { border-left-color: var(--warning); }
+        .rules li i { color: var(--accent); margin-top: 2px; min-width: 16px; }
+        .rules li.rule-danger i { color: var(--danger); }
+        .rules li.rule-warning i { color: var(--warning); }
+
+        .fraud-box {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .fraud-box h3 {
+            color: var(--danger);
+            font-family: var(--font-heading);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.6rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .fraud-box ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .fraud-box ul li { font-size: 0.85rem; display: flex; gap: 8px; align-items: center; color: #fca5a5; }
+        .fraud-box ul li::before { content: "✕"; color: var(--danger); font-weight: bold; }
+
+        /* ── FORM INPUTS ── */
+        input[type="text"] {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus { border-color: var(--accent); }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 8px;
+            font-family: var(--font-heading); font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), #0099cc); color: #000; width: 100%; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,229,255,0.3); }
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent2), #5b21b6);
+            color: white; margin-top: 1.5rem; display: block; width: 100%;
+        }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.3); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; }
+
+        /* ── HEADER ── */
+        .dashboard-header {
+            background: rgba(17,24,39,0.95);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .header-info { display: flex; flex-direction: column; gap: 2px; }
+        .pilot-name { font-family: var(--font-heading); font-size: 0.75rem; color: var(--accent); }
+        .warning-count { font-size: 0.8rem; color: var(--warning); }
+        .timer {
+            font-family: var(--font-heading); font-size: 1.8rem;
+            color: var(--accent); text-shadow: 0 0 20px rgba(0,229,255,0.5);
+        }
+        .timer.danger { color: var(--danger); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+        /* ── VIOLATION FLASH ── */
+        @keyframes violationFlash {
+            0%   { background: rgba(239,68,68,0); }
+            20%  { background: rgba(239,68,68,0.25); }
+            60%  { background: rgba(239,68,68,0.15); }
+            100% { background: rgba(239,68,68,0); }
+        }
+        .violation-flash { animation: violationFlash 0.8s ease-out; }
+
+        /* ── BLOCKED SCREEN ── */
+        #blocked-screen {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: #0a0000;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 2rem;
+        }
+        #blocked-screen.active { display: flex; }
+        .blocked-icon { font-size: 5rem; color: var(--danger); margin-bottom: 1rem; animation: pulse 1.5s infinite; }
+        .blocked-title { font-family: var(--font-heading); font-size: 1.8rem; color: var(--danger); margin-bottom: 1rem; }
+        .blocked-msg { color: var(--text-muted); max-width: 500px; line-height: 1.8; font-size: 0.95rem; }
+        .blocked-badge {
+            margin-top: 2rem; background: rgba(239,68,68,0.1); border: 1px solid var(--danger);
+            border-radius: 12px; padding: 1rem 2rem; color: #fca5a5; font-size: 0.85rem;
+        }
+        .warning-count.critical { color: var(--danger) !important; font-weight: bold; animation: pulse 1s infinite; }
+        .header-health { display: flex; align-items: center; gap: 8px; justify-content: flex-end; font-size: 0.8rem; }
+        .health-bar-container { width: 120px; height: 12px; background: var(--bg-input); border-radius: 6px; overflow: hidden; }
+        .health-bar { height: 100%; border-radius: 6px; transition: width 0.5s, background 0.5s; }
+        .gradebadge {
+            font-family: var(--font-heading); font-size: 1rem;
+            background: rgba(0,229,255,0.1); border: 1px solid var(--accent);
+            color: var(--accent); padding: 2px 10px; border-radius: 20px;
+        }
+
+        /* ── MAIN CONTENT ── */
+        .dashboard-content { padding: 1.5rem; max-width: 900px; margin: 0 auto; width: 100%; flex: 1; }
+
+        /* ── ROOM ── */
+        .room { display: none; }
+        .room.active { display: block; }
+        .room-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .room-header h2 {
+            font-family: var(--font-heading); font-size: 1rem;
+            color: var(--accent); margin-bottom: 0.4rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .room-header p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+
+        /* ── CASE CARDS ── */
+        .case-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .case-number {
+            background: linear-gradient(135deg, var(--accent2), #5b21b6);
+            color: white; font-family: var(--font-heading);
+            font-size: 0.7rem; letter-spacing: 2px;
+            padding: 4px 12px; border-radius: 20px;
+            display: inline-block; margin-bottom: 0.8rem;
+        }
+        .case-desc { font-size: 0.9rem; line-height: 1.7; color: var(--text-muted); margin-bottom: 1rem; font-style: italic; }
+        .decisions { display: flex; flex-direction: column; gap: 12px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .decision-group label { display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+        .cyber-select {
+            width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 12px; color: var(--text);
+            font-size: 0.85rem; outline: none; cursor: pointer; transition: border-color 0.2s;
+        }
+        .cyber-select:focus { border-color: var(--accent); }
+        .small-select-wide { font-size: 0.8rem; }
+
+        /* ── RESULT SCREEN ── */
+        #result-screen { justify-content: center; align-items: center; padding: 2rem; }
+        .giant-score {
+            font-family: var(--font-heading); font-size: 5rem;
+            color: var(--success); text-shadow: 0 0 30px rgba(16,185,129,0.5);
+            margin: 1rem 0;
+        }
+        .giant-score.score-fail { color: var(--danger); text-shadow: 0 0 30px rgba(239,68,68,0.5); }
+        .final-score-box { text-align: center; background: var(--bg-input); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 1rem 0; text-align: left; }
+        .detail-item { background: var(--bg-input); border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; }
+        .detail-item span { color: var(--text-muted); display: block; font-size: 0.75rem; margin-bottom: 2px; }
+        .detail-item strong { color: var(--accent); font-family: var(--font-heading); }
+        .demo-note {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 0.85rem;
+            color: #fcd34d;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 999; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem; max-width: 480px; width: 90%;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+        .modal.modal-danger { border-color: var(--danger); box-shadow: 0 0 40px rgba(239,68,68,0.2); }
+        .modal h2 { font-family: var(--font-heading); font-size: 1rem; margin-bottom: 0.8rem; color: var(--accent); }
+        .modal p { font-size: 0.88rem; line-height: 1.7; color: var(--text-muted); white-space: pre-line; }
+        .modal .btn { margin-top: 1.2rem; width: 100%; }
+
+        /* ── PHASE PROGRESS ── */
+        .phase-progress {
+            display: flex; gap: 8px; margin-bottom: 1.5rem; align-items: center;
+        }
+        .phase-step {
+            flex: 1; text-align: center; padding: 8px;
+            border-radius: 8px; font-family: var(--font-heading);
+            font-size: 0.65rem; letter-spacing: 1px;
+            border: 1px solid var(--border); color: var(--text-muted);
+            background: var(--bg-card);
+        }
+        .phase-step.done { border-color: var(--success); color: var(--success); background: rgba(16,185,129,0.1); }
+        .phase-step.current { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
+
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .dashboard-header { grid-template-columns: 1fr; gap: 8px; }
+            .timer { font-size: 1.2rem; }
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;" oncopy="return false;" onpaste="return false;" oncut="return false;">
+
+    <div class="demo-banner">⚠️ VERSIÓN DEMO — EJERCICIO DE PRÁCTICA — NO APLICA NOTA REAL ⚠️</div>
+
+    <!-- BLOCKED SCREEN (recarga/F5 detectada) -->
+    <div id="blocked-screen">
+        <div class="blocked-icon"><i class="fas fa-ban"></i></div>
+        <div class="blocked-title">INTENTO BLOQUEADO</div>
+        <p class="blocked-msg">
+            El sistema detectó que <strong style="color:var(--danger)">recargaste la página (F5 / Ctrl+R)</strong> o cerraste el navegador durante el intento activo.<br><br>
+            En el examen real, este intento queda <strong style="color:var(--danger)">ANULADO permanentemente</strong> y no podrás volver a ingresar. Tu nota sería registrada como <strong style="color:var(--danger)">0.0 – FRAUDE</strong>.
+        </p>
+        <div class="blocked-badge">
+            <i class="fas fa-info-circle"></i> Esta es la demo, puedes cerrar y volver a abrir la página para reiniciar.<br>
+            En el examen real <strong>no existe esta opción</strong>.
+        </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-screen" class="screen active">
+        <div class="login-card">
+            <div class="demo-tag">⚙ DEMO / PRÁCTICA</div>
+            <h1><i class="fas fa-industry"></i> SIMULADOR DE EXAMEN TOSEM</h1>
+            <h2>Ejercicio de Práctica — Corte 1 | Ingeniería de Confiabilidad</h2>
+
+            <ul class="rules">
+                <li><i class="fas fa-heartbeat"></i>
+                    <div>La <strong>Integridad de Planta</strong> empieza al <strong>100% = Nota 5.0</strong>. Cada respuesta incorrecta reduce la integridad y baja tu nota directamente. No hay forma de recuperar puntos perdidos.</div>
+                </li>
+                <li><i class="fas fa-clock"></i>
+                    <div>El examen real tendrá <strong>2h 30min</strong>. Esta demo tiene <strong>15 minutos</strong> y 2 fases. Cuando el tiempo se acabe, el sistema envía automáticamente con la nota actual.</div>
+                </li>
+                <li class="rule-warning"><i class="fas fa-list-ol"></i>
+                    <div>El examen tiene <strong>4 Fases</strong> secuenciales. En esta demo practicarás con <strong>2 Fases</strong>: Triaje de Fallas y Análisis de Causas (5 Por Qué).</div>
+                </li>
+            </ul>
+
+            <div class="fraud-box">
+                <h3><i class="fas fa-shield-alt"></i> SISTEMA ANTI-FRAUDE — LO QUE NO ESTÁ PERMITIDO</h3>
+                <ul>
+                    <li>Cambiar de pestaña o ventana del navegador durante el examen</li>
+                    <li>Minimizar el navegador o abrir otras aplicaciones</li>
+                    <li>Cerrar o recargar la página (F5 / Ctrl+R) — el intento queda BLOQUEADO</li>
+                    <li>Intentar copiar, pegar o hacer clic derecho sobre el contenido</li>
+                    <li>Cada infracción descuenta integridad. A la <strong>3ra infracción: examen ANULADO</strong></li>
+                </ul>
+            </div>
+
+            <form id="login-form">
+                <input type="text" id="studentName" placeholder="Nombres y Apellidos completos" required autocomplete="off">
+                <input type="text" id="studentId" placeholder="Código Estudiantil" required autocomplete="off">
+                <button type="submit" class="btn btn-primary">INICIAR PRÁCTICA <i class="fas fa-play-circle"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- EXAM DASHBOARD -->
+    <div id="exam-dashboard" class="screen">
+        <header class="dashboard-header">
+            <div class="header-info">
+                <span class="pilot-name">Ing. <span id="display-name"></span></span>
+                <span class="warning-count"><i class="fas fa-exclamation-triangle"></i> Infracciones: <span id="warnings">0</span>/3</span>
+            </div>
+            <div style="text-align:center">
+                <div class="timer" id="timer">00:15:00</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:1px;">TIEMPO RESTANTE</div>
+            </div>
+            <div class="header-health">
+                <span style="font-size:0.75rem;">Integridad:</span>
+                <div class="health-bar-container">
+                    <div id="health-bar" class="health-bar" style="width:100%;background:linear-gradient(90deg,#10b981,#059669)"></div>
+                </div>
+                <span id="health-text">100%</span>
+                <span id="grade-text" class="gradebadge">5.0</span>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <div class="phase-progress">
+                <div class="phase-step current" id="step-1">FASE 1<br>Triaje</div>
+                <div style="color:var(--border)">→</div>
+                <div class="phase-step" id="step-2">FASE 2<br>5 Por Qué</div>
+                <div style="color:var(--border)">→</div>
+                <div class="phase-step" id="step-final">Resultado</div>
+            </div>
+
+            <!-- ROOM 1: TIPOS DE FALLA -->
+            <section id="room-1" class="room active">
+                <div class="room-header">
+                    <h2><i class="fas fa-stethoscope"></i> FASE 1: Triaje Operativo — Tipos de Falla y Mantenimiento</h2>
+                    <p>Analiza los siguientes reportes de campo. Para cada situación, identifica el <strong>tipo de falla</strong> y la <strong>táctica de mantenimiento</strong> más apropiada. Recuerda: una mala clasificación cuesta integridad de planta.</p>
+                </div>
+
+                <div class="case-card">
+                    <div class="case-number">SITUACIÓN A</div>
+                    <p class="case-desc">"Sensor de temperatura del horno de tratamiento térmico comenzó a registrar lecturas 15°C por encima del valor real desde hace 2 semanas. El operario lo notó porque la pieza final salía con menor dureza. El horno aún produce, pero con menor calidad."</p>
+                    <div class="decisions grid-2">
+                        <div class="decision-group">
+                            <label><i class="fas fa-search"></i> 1. Tipo de falla presente:</label>
+                            <select id="r1-q1a" class="cyber-select">
+                                <option value="">Seleccione...</option>
+                                <option value="evidente">Falla Evidente (pérdida total de función)</option>
+                                <option value="incipiente">Falla Incipiente / Degradación progresiva</option>
+                                <option value="oculta">Falla Oculta (no detectable en operación normal)</option>
+                            </select>
+                        </div>
+                        <div class="decision-group">
+                            <label><i class="fas fa-tools"></i> 2. Táctica de mantenimiento a aplicar:</label>
+                            <select id="r1-q1b" class="cyber-select">
+                                <option value="">Seleccione...</option>
+                                <option value="correctivo">Correctivo de Emergencia (esperar fallo total)</option>
+                                <option value="predictivo">Predictivo / Monitoreo de condición</option>
+                                <option value="preventivo_sistematico">Preventivo Sistemático (cambio por horas fijas)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="case-card">
+                    <div class="case-number">SITUACIÓN B</div>
+                    <p class="case-desc">"La válvula de venteo de emergencia del tanque de almacenamiento de GLP nunca ha fallado durante los 3 años de operación. En la revisión anual de turno obligatoria se descubrió que el mecanismo de apertura estaba atascado por corrosión y no habría respondido ante una sobrepresión real."</p>
+                    <div class="decisions grid-2">
+                        <div class="decision-group">
+                            <label><i class="fas fa-search"></i> 3. Tipo de falla presente:</label>
+                            <select id="r1-q2a" class="cyber-select">
+                                <option value="">Seleccione...</option>
+                                <option value="evidente">Falla Evidente</option>
+                                <option value="incipiente">Falla Incipiente / Degradación</option>
+                                <option value="oculta">Falla Oculta</option>
+                            </select>
+                        </div>
+                        <div class="decision-group">
+                            <label><i class="fas fa-tools"></i> 4. La inspección anual es parte de un mantenimiento:</label>
+                            <select id="r1-q2b" class="cyber-select">
+                                <option value="">Seleccione...</option>
+                                <option value="correctivo">Correctivo (reactivo al fallo)</option>
+                                <option value="predictivo">Predictivo (basado en parámetros)</option>
+                                <option value="preventivo">Preventivo — Búsqueda de Fallas Ocultas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-action" onclick="demo.submitRoom1()">EVALUAR DIAGNÓSTICO (Avanzar a Fase 2) <i class="fas fa-arrow-right"></i></button>
+            </section>
+
+            <!-- ROOM 2: 5 POR QUE -->
+            <section id="room-2" class="room">
+                <div class="room-header">
+                    <h2><i class="fas fa-question-circle"></i> FASE 2: Análisis de Causa Raíz — Los 5 Por Qué</h2>
+                    <p>En el turno nocturno, el compresor de aire del taller de pintura se detuvo inesperadamente por sobrecalentamiento, parando la línea de producción durante 4 horas. Construye el árbol de causa raíz seleccionando la respuesta lógica encadenada para cada nivel.</p>
+                </div>
+
+                <div class="case-card">
+                    <div class="case-number" style="background:linear-gradient(135deg,#dc2626,#991b1b)">ANOMALÍA: Paro por Sobrecalentamiento del Compresor</div>
+                    <div class="decisions" style="gap:16px">
+                        <div class="decision-group">
+                            <label><strong>1er ¿Por Qué?</strong> — El compresor se sobrecalentó porque...</label>
+                            <select id="r2-q1" class="cyber-select small-select-wide">
+                                <option value="">Elige la causa inmediata...</option>
+                                <option value="pq_filtro">...el filtro de aire de admisión estaba completamente obstruido por polvo de pintura.</option>
+                                <option value="pq_aceite">...el nivel de aceite lubricante había llegado al mínimo permitido.</option>
+                                <option value="pq_mantenimiento">...no existía un programa de mantenimiento preventivo para el compresor.</option>
+                                <option value="pq_operario">...el operario no reportó las alarmas de temperatura previas al turno.</option>
+                            </select>
+                        </div>
+                        <div class="decision-group">
+                            <label><strong>2do ¿Por Qué?</strong> — El filtro estaba obstruido porque...</label>
+                            <select id="r2-q2" class="cyber-select small-select-wide">
+                                <option value="">Elige la segunda causa lógica...</option>
+                                <option value="pq_filtro">...el filtro nunca se había reemplazado desde la instalación del equipo (3 años).</option>
+                                <option value="pq_aceite">...el aceite se degradó por las altas temperaturas del entorno.</option>
+                                <option value="pq_mantenimiento">...no existía un programa de mantenimiento preventivo para el compresor.</option>
+                                <option value="pq_operario">...el operario no reportó las alarmas de temperatura previas al turno.</option>
+                            </select>
+                        </div>
+                        <div class="decision-group">
+                            <label><strong>3er ¿Por Qué?</strong> — El filtro nunca se reemplazó porque...</label>
+                            <select id="r2-q3" class="cyber-select small-select-wide">
+                                <option value="">Elige la tercera causa lógica...</option>
+                                <option value="pq_filtro">...el filtro de aire de admisión estaba completamente obstruido por polvo de pintura.</option>
+                                <option value="pq_aceite">...el aceite se degradó por las altas temperaturas del entorno.</option>
+                                <option value="pq_mantenimiento">...no existía un programa de mantenimiento preventivo documentado para el compresor.</option>
+                                <option value="pq_operario">...el operario no sabía que debía revisar el filtro.</option>
+                            </select>
+                        </div>
+                        <div class="decision-group">
+                            <label><strong>4to ¿Por Qué?</strong> — No existía un programa de mantenimiento porque...</label>
+                            <select id="r2-q4" class="cyber-select small-select-wide">
+                                <option value="">Elige la cuarta causa lógica...</option>
+                                <option value="pq_filtro">...el compresor es un equipo auxiliar que no estaba incluido en el inventario crítico de activos.</option>
+                                <option value="pq_aceite">...el aceite era de mala calidad y no cumplía las especificaciones del fabricante.</option>
+                                <option value="pq_mantenimiento">...no existía un programa de mantenimiento preventivo para el compresor.</option>
+                                <option value="pq_operario">...los operarios no tenían capacitación en mantenimiento autónomo.</option>
+                            </select>
+                        </div>
+                        <div class="decision-group">
+                            <label><strong>5to ¿Por Qué? (Causa Raíz Sistémica)</strong> — El compresor no estaba en el inventario porque...</label>
+                            <select id="r2-q5" class="cyber-select small-select-wide">
+                                <option value="">Elige la causa raíz del sistema...</option>
+                                <option value="pq_filtro">...el filtro de aire nunca fue revisado por ningún técnico.</option>
+                                <option value="pq_aceite">...el aceite utilizado no era el correcto para ese compresor.</option>
+                                <option value="pq_mantenimiento">...la empresa no tenía un sistema formal de gestión de activos (CMMS) ni política de criticidad de equipos.</option>
+                                <option value="pq_operario">...el operario asignado no era el responsable habitual del área.</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top: 1.5rem;">
+                    <button class="btn btn-danger" onclick="demo.submitRoom2()" style="font-size:0.8rem;padding:14px 28px;">
+                        ENVIAR ANÁLISIS FINAL Y TERMINAR PRÁCTICA <i class="fas fa-lock"></i>
+                    </button>
+                    <p style="margin-top:8px;font-size:0.8rem;color:var(--text-muted)"><i class="fas fa-info-circle"></i> En el examen real, al terminar los datos se envían automáticamente al docente.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result-screen" class="screen" style="justify-content:center;align-items:center;padding:2rem;">
+        <div class="login-card" style="max-width:580px;">
+            <h1 id="final-title" style="justify-content:center;margin-bottom:0.5rem;"><i class="fas fa-clipboard-check"></i> PRÁCTICA FINALIZADA</h1>
+            <div class="final-score-box">
+                <p style="color:var(--text-muted);font-size:0.9rem;">Nota Obtenida en esta Práctica:</p>
+                <div id="final-score-display" class="giant-score">5.0</div>
+            </div>
+            <p id="final-feedback" style="font-size:0.95rem;text-align:center;margin-bottom:1rem;line-height:1.6;"></p>
+
+            <div class="detail-grid" id="detail-grid">
+                <div class="detail-item"><span>Infracciones registradas</span><strong id="d-infractions">0</strong></div>
+                <div class="detail-item"><span>Errores Fase 1 (Triaje)</span><strong id="d-r1">0</strong></div>
+                <div class="detail-item"><span>Errores Fase 2 (5 Por Qué)</span><strong id="d-r2">0</strong></div>
+                <div class="detail-item"><span>Integridad final</span><strong id="d-integrity">100%</strong></div>
+            </div>
+
+            <div class="demo-note">
+                <i class="fas fa-exclamation-circle"></i> <strong>RECORDATORIO:</strong> Esta es una práctica. En el examen real, estos datos se envían automáticamente al docente al terminar. No habrá posibilidad de repetir el intento.
+            </div>
+
+            <button class="btn btn-primary" style="margin-top:1.2rem;" onclick="location.reload()">
+                <i class="fas fa-redo"></i> VOLVER A INTENTAR LA PRÁCTICA
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal" id="modal-box">
+            <h2 id="modal-title">Atención</h2>
+            <p id="modal-msg">Mensaje</p>
+            <button class="btn btn-primary" onclick="demo.closeModal()">Continuar <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <script>
+    const demo = {
+        integrity: 100,
+        warnings: 0,
+        maxWarnings: 3,
+        examActive: false,
+        timerInterval: null,
+        timeLeft: 15 * 60,
+        studentData: { name: '', id: '' },
+        results: { r1_errors: 0, r2_errors: 0, warnings_count: 0, final_grade: 5.0 },
+        _modalOnClose: null,
+
+        // Clave localStorage para detectar recarga (prefijo demo para no colisionar con el examen real)
+        LS_INPROGRESS: 'tosem_demo_inprogress',
+        LS_FINISHED: 'tosem_demo_finished',
+
+        init() {
+            // ── DETECCIÓN DE RECARGA / F5 ──────────────────────────────
+            // Si había un intento en progreso y se recargó, mostrar pantalla bloqueada
+            if (localStorage.getItem(this.LS_INPROGRESS) === 'true') {
+                // El estudiante recargó durante el examen → BLOQUEAR
+                localStorage.removeItem(this.LS_INPROGRESS);
+                localStorage.setItem(this.LS_FINISHED, 'true');
+                document.getElementById('blocked-screen').classList.add('active');
+                return; // Detener todo el init
+            }
+
+            // Si ya terminó, no dejar volver a entrar (en demo sí permitimos, solo informamos)
+            // En el examen real aquí se mostraría el bloqueo permanente
+
+            document.getElementById('login-form').addEventListener('submit', e => {
+                e.preventDefault();
+                this.startExam();
+            });
+
+            // ── DETECCIÓN DE CAMBIO DE PESTAÑA/VENTANA ─────────────────
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && this.examActive) this.registerViolation();
+            });
+
+            // ── ADVERTENCIA AL INTENTAR CERRAR ─────────────────────────
+            window.onbeforeunload = e => {
+                if (this.examActive) {
+                    e.preventDefault();
+                    e.returnValue = 'Si cierras o recargas la página, tu intento quedará BLOQUEADO en el examen real.';
+                    return e.returnValue;
+                }
+            };
+        },
+
+        startExam() {
+            const name = document.getElementById('studentName').value.trim();
+            const id   = document.getElementById('studentId').value.trim();
+            if (!name || !id) return;
+
+            this.studentData = { name, id };
+
+            // GUARDAR en localStorage: si hay recarga, el sistema lo detecta
+            localStorage.setItem(this.LS_INPROGRESS, 'true');
+            localStorage.setItem('tosem_demo_name', name);
+
+            document.getElementById('display-name').textContent = name;
+            document.getElementById('login-screen').classList.remove('active');
+            document.getElementById('exam-dashboard').classList.add('active');
+            this.examActive = true;
+            this.startTimer();
+            this.updateHealthUI();
+        },
+
+        startTimer() {
+            const el = document.getElementById('timer');
+            this.timerInterval = setInterval(() => {
+                this.timeLeft--;
+                const m = Math.floor(this.timeLeft / 60);
+                const s = this.timeLeft % 60;
+                el.textContent = `00:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                if (this.timeLeft <= 60) el.classList.add('danger');
+                if (this.timeLeft <= 0) {
+                    clearInterval(this.timerInterval);
+                    this.forceEnd('El tiempo de la práctica se agotó. Examen enviado automáticamente.');
+                }
+            }, 1000);
+        },
+
+        registerViolation() {
+            this.warnings++;
+            const warnEl = document.getElementById('warnings');
+            warnEl.textContent = this.warnings;
+            this.results.warnings_count = this.warnings;
+
+            // Flash rojo en el body para impacto visual inmediato
+            document.body.classList.add('violation-flash');
+            setTimeout(() => document.body.classList.remove('violation-flash'), 800);
+
+            // Contador se vuelve rojo al llegar a 2
+            const warnCount = document.querySelector('.warning-count');
+            if (this.warnings >= 2) warnCount.classList.add('critical');
+
+            if (this.warnings >= this.maxWarnings) {
+                // 3ra infracción: ANULAR EXAMEN
+                this.integrity = 0;
+                this.updateHealthUI();
+                this.forceEnd(
+                    '🚨 TERCERA INFRACCIÓN — EXAMEN ANULADO\n\nEn el examen real, superaste el límite de cambios de ventana/pestaña. El sistema cierra automáticamente con la nota obtenida hasta ese momento (en caso de fraude confirmado, con nota 0.0).'
+                );
+            } else {
+                this.applyDamage(5);
+                const remaining = this.maxWarnings - this.warnings;
+                this.showModal(
+                    `🚨 INFRACCIÓN #${this.warnings} REGISTRADA\n\nEl sistema detectó que cambiaste de ventana, pestaña o minimizaste el navegador.\n\n⚠️ Esto está PROHIBIDO durante el examen.\n\nPenalización aplicada: -5% de Integridad de planta.\nInfracciones restantes antes del CIERRE AUTOMÁTICO: ${remaining}`,
+                    true
+                );
+            }
+        },
+
+        applyDamage(amount) {
+            this.integrity -= amount;
+            if (this.integrity < 0) this.integrity = 0;
+            this.updateHealthUI();
+            if (this.integrity === 0) {
+                this.forceEnd('La integridad llegó a 0%. En el examen real la planta habría colapsado.');
+            }
+        },
+
+        updateHealthUI() {
+            const bar  = document.getElementById('health-bar');
+            const text = document.getElementById('health-text');
+            const grade= document.getElementById('grade-text');
+            bar.style.width = this.integrity + '%';
+            text.textContent = Math.round(this.integrity) + '%';
+            if (this.integrity > 60) bar.style.background = 'linear-gradient(90deg,#10b981,#059669)';
+            else if (this.integrity > 30) bar.style.background = 'linear-gradient(90deg,#f59e0b,#d97706)';
+            else bar.style.background = 'linear-gradient(90deg,#ef4444,#dc2626)';
+            const nota = (this.integrity / 20).toFixed(1);
+            grade.textContent = nota;
+            this.results.final_grade = nota;
+        },
+
+        showModal(msg, isDanger = false, onClose = null) {
+            const box = document.getElementById('modal-box');
+            const title = document.getElementById('modal-title');
+            title.textContent = isDanger ? '⚠️ ALERTA DE SISTEMA' : '✅ Evaluación Completada';
+            title.style.color = isDanger ? 'var(--danger)' : 'var(--success)';
+            document.getElementById('modal-msg').innerText = msg;
+            box.classList.toggle('modal-danger', isDanger);
+            this._modalOnClose = onClose || null;
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        },
+
+        closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            if (typeof this._modalOnClose === 'function') {
+                const cb = this._modalOnClose;
+                this._modalOnClose = null;
+                cb();
+            }
+        },
+
+        switchRoom(from, to) {
+            document.getElementById(from).classList.remove('active');
+            document.getElementById(to).classList.add('active');
+            window.scrollTo(0, 0);
+        },
+
+        submitRoom1() {
+            const q1a = document.getElementById('r1-q1a').value;
+            const q1b = document.getElementById('r1-q1b').value;
+            const q2a = document.getElementById('r1-q2a').value;
+            const q2b = document.getElementById('r1-q2b').value;
+
+            if (!q1a || !q1b || !q2a || !q2b) {
+                alert('Debes responder todas las preguntas antes de avanzar.');
+                return;
+            }
+
+            let errors = 0, msgs = [];
+            // Situación A: Incipiente / Predictivo
+            if (q1a !== 'incipiente') { errors++; msgs.push('A-1: Es Falla Incipiente porque sigue funcionando pero con degradación detectable.'); }
+            if (q1b !== 'predictivo') { errors++; msgs.push('A-2: Al existir tendencia medible, la táctica es Predictivo/Monitoreo de condición.'); }
+            // Situación B: Oculta / Preventivo búsqueda
+            if (q2a !== 'oculta')    { errors++; msgs.push('B-1: Es Falla Oculta porque no es detectable durante la operación normal.'); }
+            if (q2b !== 'preventivo'){ errors++; msgs.push('B-2: La inspección anual programada es un Mantenimiento Preventivo de Búsqueda de Fallas.'); }
+
+            this.results.r1_errors = errors;
+
+            // Update progress
+            document.getElementById('step-1').className = 'phase-step done';
+            document.getElementById('step-2').className = 'phase-step current';
+
+            if (errors > 0) {
+                const dmg = errors * 8;
+                this.applyDamage(dmg);
+                if (this.integrity <= 0) {
+                    this.showModal(`Diagnóstico incorrecto (${errors} errores). Penalización: -${dmg}%.\n\n` + msgs.join('\n'), true);
+                    return;
+                }
+                this.showModal(
+                    `Diagnóstico con ${errors} error(es). Penalización: -${dmg}% de Integridad.\n\n📋 Retroalimentación:\n` + msgs.join('\n'),
+                    true,
+                    () => this.switchRoom('room-1', 'room-2')
+                );
+            } else {
+                this.showModal(
+                    'Diagnóstico perfecto. Clasificaste correctamente todos los tipos de falla y tácticas. La planta sigue operativa.',
+                    false,
+                    () => this.switchRoom('room-1', 'room-2')
+                );
+            }
+        },
+
+        submitRoom2() {
+            const q1 = document.getElementById('r2-q1').value;
+            const q2 = document.getElementById('r2-q2').value;
+            const q3 = document.getElementById('r2-q3').value;
+            const q4 = document.getElementById('r2-q4').value;
+            const q5 = document.getElementById('r2-q5').value;
+
+            if (!q1 || !q2 || !q3 || !q4 || !q5) {
+                if (!confirm('Tienes preguntas sin responder. ¿Terminar de todas formas?')) return;
+            }
+
+            let errors = 0;
+            // Cadena correcta: filtro → filtro → mantenimiento → filtro → mantenimiento
+            if (q1 !== 'pq_filtro')       errors++;
+            if (q2 !== 'pq_filtro')       errors++;
+            if (q3 !== 'pq_mantenimiento') errors++;
+            if (q4 !== 'pq_filtro')       errors++;
+            if (q5 !== 'pq_mantenimiento') errors++;
+
+            this.results.r2_errors = errors;
+            if (errors > 0) this.applyDamage(errors * 6);
+
+            this.forceEnd(
+                errors === 0
+                    ? 'Análisis de causa raíz perfecto. Identificaste correctamente la ausencia de gestión de activos como causa raíz sistémica.'
+                    : `Análisis con ${errors} nivel(es) incorrecto(s). La cadena correcta iba: Filtro obstruido → Sin reemplazo → Sin plan mantenimiento → Equipo sin inventario → Sin CMMS/política de activos.`
+            );
+        },
+
+        forceEnd(reason) {
+            this.examActive = false;
+            clearInterval(this.timerInterval);
+
+            // Limpiar localStorage (examen terminado)
+            localStorage.removeItem(this.LS_INPROGRESS);
+            localStorage.setItem(this.LS_FINISHED, 'true');
+
+            document.getElementById('exam-dashboard').classList.remove('active');
+            document.getElementById('modal-overlay').classList.add('hidden');
+
+            const rs = document.getElementById('result-screen');
+            rs.classList.add('active');
+
+            const nota = parseFloat(this.results.final_grade);
+            const scoreEl = document.getElementById('final-score-display');
+            scoreEl.textContent = nota.toFixed(1);
+            scoreEl.className = nota >= 3.0 ? 'giant-score' : 'giant-score score-fail';
+
+            const title = document.getElementById('final-title');
+            if (nota < 3.0) {
+                title.innerHTML = '<i class="fas fa-biohazard"></i> PRÁCTICA: REPROBADO';
+                title.style.color = 'var(--danger)';
+            } else {
+                title.innerHTML = '<i class="fas fa-trophy"></i> PRÁCTICA: APROBADO';
+                title.style.color = 'var(--success)';
+            }
+
+            document.getElementById('final-feedback').textContent = reason;
+            document.getElementById('d-infractions').textContent = this.results.warnings_count;
+            document.getElementById('d-r1').textContent = this.results.r1_errors;
+            document.getElementById('d-r2').textContent = this.results.r2_errors;
+            document.getElementById('d-integrity').textContent = Math.round(this.integrity) + '%';
+
+            document.getElementById('step-1').className = 'phase-step done';
+            document.getElementById('step-2').className = 'phase-step done';
+            document.getElementById('step-final').className = 'phase-step done';
+        }
+    };
+
+    window.onload = () => demo.init();
+    </script>
+</body>
+</html>

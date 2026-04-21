@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Semana 3 · Mantenimiento Preventivo – Programación y Planes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070e16;--surface:#0d1825;--card:#111f30;--border:#1e3a52;
+  --accent:#00e5a0;--accent2:#0ea5e9;--accent3:#f59e0b;
+  --red:#ef4444;--text:#e2e8f0;--muted:#7a9db8;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:900px;padding:0 2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:var(--accent);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.8rem;font-weight:700}
+.hero-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 20%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem}
+.hero-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin:0 auto 2.5rem}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:1rem}
+.meta-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;color:var(--muted)}
+.meta-chip span{color:var(--text);font-weight:700}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.72rem}
+.arrow{width:22px;height:22px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);animation:bounce 1.4s ease infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(7px)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,14,22,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.4rem;padding:.65rem 1rem;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:.8rem;padding:.35rem .9rem;border-radius:8px;transition:.2s;font-weight:600}
+nav a:hover,nav a.active{background:rgba(0,229,160,.12);color:var(--accent)}
+
+/* LAYOUT */
+main{max-width:1160px;margin:0 auto;padding:0 1.5rem}
+section{padding:5rem 0}
+.section-label{display:inline-flex;align-items:center;gap:.5rem;color:var(--accent);font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;margin-bottom:.8rem}
+.section-label::before{content:'';display:block;width:28px;height:2px;background:var(--accent);border-radius:2px}
+h2{font-size:clamp(1.7rem,3vw,2.6rem);font-weight:800;margin-bottom:1.2rem}
+.section-intro{color:var(--muted);font-size:1rem;max-width:700px;margin-bottom:3rem;line-height:1.8}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* CARDS */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 10px 36px rgba(0,229,160,.1)}
+.card-icon{font-size:2.2rem;margin-bottom:.9rem}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.card p{font-size:.87rem;color:var(--muted);line-height:1.65}
+.card.hl{border-color:rgba(0,229,160,.4);background:linear-gradient(135deg,rgba(0,229,160,.07),var(--card))}
+
+/* CONCEPT BOX */
+.concept-box{background:linear-gradient(135deg,rgba(0,229,160,.07),rgba(14,165,233,.05));border:1px solid rgba(0,229,160,.22);border-radius:var(--radius);padding:1.8rem 2rem;margin-bottom:1.6rem}
+.concept-box .quote{font-size:1.02rem;font-style:italic;color:var(--text);border-left:3px solid var(--accent);padding-left:1.2rem;margin-bottom:.7rem}
+.concept-box .source{font-size:.78rem;color:var(--muted)}
+
+/* COMPARE */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr}}
+.compare-col{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.col-header{padding:1rem 1.3rem;font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:.5rem}
+.col-tbm .col-header{background:rgba(0,229,160,.12);color:var(--accent)}
+.col-cbm .col-header{background:rgba(14,165,233,.12);color:var(--accent2)}
+.compare-col ul{list-style:none;padding:1rem 1.3rem;display:flex;flex-direction:column;gap:.6rem}
+.compare-col li{font-size:.86rem;color:var(--muted);padding-left:1.2rem;position:relative}
+.compare-col li::before{content:'›';position:absolute;left:0;font-weight:700}
+.col-tbm li::before{color:var(--accent)}
+.col-cbm li::before{color:var(--accent2)}
+
+/* PILL TABS */
+.pill-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.6rem}
+.pill-tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.42rem 1.1rem;border-radius:99px;font-size:.83rem;cursor:pointer;transition:.2s;font-family:'Inter',sans-serif;font-weight:600}
+.pill-tab.active,.pill-tab:hover{background:var(--accent);border-color:var(--accent);color:#000}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* ACCORDION */
+.accordion{display:flex;flex-direction:column;gap:.6rem}
+.acc-item{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.acc-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.3rem;cursor:pointer;font-weight:700;font-size:.9rem;transition:background .2s;user-select:none}
+.acc-header:hover{background:rgba(0,229,160,.06)}
+.acc-icon{font-size:1.1rem;transition:transform .3s;color:var(--accent)}
+.acc-item.open .acc-icon{transform:rotate(45deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.acc-body-inner{padding:0 1.3rem 1.2rem;font-size:.87rem;color:var(--muted);line-height:1.7}
+.acc-body-inner ul{list-style:disc;padding-left:1.2rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem}
+.acc-body-inner strong{color:var(--text)}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:2.5rem}
+.timeline::before{content:'';position:absolute;left:.65rem;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent),var(--accent2))}
+.tl-item{position:relative;padding:0 0 2.2rem 1.5rem}
+.tl-dot{position:absolute;left:-1.85rem;top:.3rem;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(0,229,160,.25)}
+.tl-item h4{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.tl-item p{font-size:.85rem;color:var(--muted)}
+.tl-step-num{display:inline-block;background:rgba(0,229,160,.15);color:var(--accent);font-size:.72rem;font-weight:800;padding:.15rem .5rem;border-radius:4px;margin-bottom:.4rem;letter-spacing:.05em}
+
+/* PLAN BUILDER */
+.plan-builder{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2rem 0}
+.plan-builder h3{font-size:1rem;font-weight:700;margin-bottom:1.4rem;color:var(--accent)}
+.builder-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.2rem}
+.builder-field label{display:block;font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.builder-field select,.builder-field input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.5rem .8rem;border-radius:8px;font-size:.85rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.builder-field select:focus,.builder-field input:focus{border-color:var(--accent)}
+.btn-gen{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:800;border:none;padding:.7rem 1.8rem;border-radius:8px;cursor:pointer;font-size:.88rem;font-family:'Inter',sans-serif;transition:opacity .2s}
+.btn-gen:hover{opacity:.85}
+.plan-result{background:var(--surface);border:1px solid rgba(0,229,160,.25);border-radius:10px;padding:1.2rem 1.4rem;margin-top:1.2rem;display:none;font-size:.86rem;line-height:1.8}
+.plan-result.show{display:block}
+.plan-result .result-title{font-weight:800;color:var(--accent);margin-bottom:.6rem;font-size:.95rem}
+.plan-result table{width:100%;border-collapse:collapse;margin-top:.8rem}
+.plan-result td{padding:.4rem .6rem;border-bottom:1px solid var(--border);color:var(--muted);font-size:.82rem}
+.plan-result td:first-child{color:var(--text);font-weight:600;width:40%}
+
+/* KPI CARDS */
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;text-align:center}
+.kpi-value{font-size:1.9rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.kpi-label{font-size:.78rem;color:var(--muted);margin-top:.3rem}
+.kpi-formula{font-family:'JetBrains Mono',monospace;font-size:.76rem;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--accent);padding:.3rem .8rem;border-radius:6px;margin-top:.6rem;display:inline-block}
+
+/* CHECKLIST */
+.checklist-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.checklist-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.checklist-item{display:flex;align-items:center;gap:.9rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;transition:background .2s;user-select:none}
+.checklist-item:hover{background:rgba(0,229,160,.05)}
+.checklist-item.checked{opacity:.6}
+.chk-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-size:.8rem}
+.checklist-item.checked .chk-box{background:var(--accent);border-color:var(--accent);color:#000}
+.chk-label{font-size:.88rem;color:var(--muted);transition:color .2s}
+.checklist-item.checked .chk-label{text-decoration:line-through;color:rgba(122,157,184,.5)}
+.chk-tag{font-size:.7rem;padding:.15rem .5rem;border-radius:4px;margin-left:.5rem;font-weight:700}
+.chk-tag.m{background:rgba(0,229,160,.12);color:var(--accent)}
+.chk-tag.e{background:rgba(239,68,68,.12);color:var(--red)}
+.chk-tag.s{background:rgba(14,165,233,.12);color:var(--accent2)}
+.chk-progress{height:6px;background:var(--surface);border-radius:3px;margin-top:1.2rem;overflow:hidden}
+.chk-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease;width:0%}
+.chk-count{font-size:.78rem;color:var(--muted);margin-top:.5rem;text-align:right}
+
+/* CHART */
+.chart-wrapper{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.chart-wrapper h3{font-size:.95rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin-bottom:1.2rem}
+.quiz-question{font-weight:700;font-size:.95rem;margin-bottom:1rem;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;font-size:.87rem;color:var(--text);transition:.2s}
+.quiz-option:hover{border-color:var(--accent);background:rgba(0,229,160,.05)}
+.quiz-option.correct{border-color:var(--accent);background:rgba(0,229,160,.1);color:var(--accent)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.08);color:var(--red)}
+.quiz-option input[type=radio]{accent-color:var(--accent)}
+.quiz-feedback{margin-top:.8rem;font-size:.85rem;padding:.6rem 1rem;border-radius:8px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.quiz-feedback.err{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.score-display{background:var(--card);border:1px solid rgba(0,229,160,.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-top:2rem;display:none}
+.score-display.show{display:block}
+.score-num{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-quiz{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.84rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-quiz:hover{border-color:var(--accent);color:var(--accent)}
+.btn-quiz.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;font-weight:800}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.83rem}
+footer strong{color:var(--accent)}
+
+/* UTILS */
+.fade-in{opacity:0;transform:translateY(24px)}
+@media(max-width:768px){nav{gap:.2rem}nav a{font-size:.74rem;padding:.3rem .6rem}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">🛡️ Programación y Control del Mantenimiento</div>
+    <h1 class="hero-title">Mantenimiento Preventivo<br/>Programación y Planes</h1>
+    <p class="hero-sub">Aprende a diseñar, estructurar y ejecutar programas de mantenimiento preventivo orientados a maximizar la disponibilidad y extender la vida útil de los activos.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Ing. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>Asignatura 730502</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="arrow"></div><span>Desplázate</span></div>
+</section>
+
+<nav id="main-nav">
+  <a href="#s-intro" class="active">Fundamentos</a>
+  <a href="#s-tbm-cbm">TBM vs CBM</a>
+  <a href="#s-plan">Diseño del Plan</a>
+  <a href="#s-freq">Frecuencias</a>
+  <a href="#s-checklist">Checklist</a>
+  <a href="#s-quiz">Autoevaluación</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════ SECCIÓN 1 · FUNDAMENTOS ═══════════════ -->
+<section id="s-intro">
+  <div class="section-label">01 · Base conceptual</div>
+  <h2>¿Qué es el Mantenimiento Preventivo?</h2>
+  <p class="section-intro">El mantenimiento preventivo es el conjunto de actividades planificadas ejecutadas <em>antes</em> de que ocurra la falla, con el objetivo de preservar la funcionalidad de los equipos y extender su vida útil.</p>
+
+  <div class="concept-box fade-in">
+    <div class="quote">"El mantenimiento preventivo es el conjunto de acciones planificadas ejecutadas periódicamente sobre el equipo, para reducir la frecuencia e impacto de las fallas no planeadas."</div>
+    <div class="source">— Dounce, E. · <em>Un enfoque analítico del mantenimiento industrial</em></div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card fade-in">
+      <div class="card-icon">🕐</div>
+      <h3>Carácter preventivo</h3>
+      <p>Actúa <strong>antes</strong> de la falla. No espera que el equipo falle para intervenir. Es sistemático, periódico y documentado.</p>
+    </div>
+    <div class="card fade-in hl">
+      <div class="card-icon">📉</div>
+      <h3>Impacto en costos</h3>
+      <p>Un buen programa preventivo reduce los costos de mantenimiento hasta un <strong style="color:var(--accent)">30–40%</strong> frente al mantenimiento exclusivamente correctivo.</p>
+    </div>
+    <div class="card fade-in">
+      <div class="card-icon">⚙️</div>
+      <h3>Equipos electromecánicos</h3>
+      <p>Motores, bombas, compresores, reductores y sistemas hidráulicos son los principales candidatos a programas preventivos estructurados.</p>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:2.5rem">
+    <div class="acc-item">
+      <div class="acc-header">🎯 ¿Por qué implementar mantenimiento preventivo?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">El mantenimiento preventivo permite:
+        <ul>
+          <li><strong>Reducir paradas no planificadas:</strong> que pueden costar entre 10 y 100 veces más que una intervención programada.</li>
+          <li><strong>Extender la vida útil:</strong> activos bien mantenidos viven hasta 2–3 veces más.</li>
+          <li><strong>Mejorar la seguridad:</strong> equipos en buen estado reducen el riesgo de accidentes laborales.</li>
+          <li><strong>Cumplir normativa:</strong> muchas normas ISO y regulaciones industriales exigen programas preventivos documentados.</li>
+        </ul>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">📊 Curva de la Bañera (Bathtub Curve)<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">La curva de la bañera describe la tasa de fallas de los equipos a lo largo de su vida:
+        <ul>
+          <li><strong>Mortalidad infantil (zona I):</strong> fallas tempranas por defectos de fabricación o instalación. Alta tasa de fallas que decrece.</li>
+          <li><strong>Vida útil (zona II):</strong> tasa de fallas baja y aproximadamente constante. Es aquí donde el preventivo es más efectivo.</li>
+          <li><strong>Envejecimiento (zona III):</strong> fallas por desgaste. La tasa vuelve a crecer. El preventivo o rediseño son necesarios.</li>
+        </ul>
+        <br/>El mantenimiento preventivo busca <strong>mantener al equipo en la zona II</strong> el mayor tiempo posible.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">🏭 Contexto en la industria colombiana<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">En el sector industrial de Santander y Colombia:
+        <ul>
+          <li>El <strong>70% de las empresas</strong> aún opera con mantenimiento mayoritariamente correctivo (reactivo).</li>
+          <li>El costo promedio de un paro no planificado en una planta mediana es de <strong>USD 15,000–80,000/día</strong>.</li>
+          <li>Las empresas que implementan programas estructurados reportan un <strong>ROI de 3:1 a 5:1</strong> en el primer año.</li>
+        </ul>
+      </div></div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 2 · TBM vs CBM ═══════════════ -->
+<section id="s-tbm-cbm">
+  <div class="section-label">02 · Estrategias preventivas</div>
+  <h2>TBM vs CBM: Dos enfoques del preventivo</h2>
+  <p class="section-intro">Existen dos grandes estrategias para implementar mantenimiento preventivo. La elección depende del tipo de equipo, su criticidad y la infraestructura tecnológica disponible.</p>
+
+  <div class="compare-grid fade-in">
+    <div class="compare-col col-tbm">
+      <div class="col-header">⏱️ TBM – Basado en Tiempo (Time-Based Maintenance)</div>
+      <ul>
+        <li>Intervención programada cada <strong>intervalo fijo</strong> de tiempo, horas de operación o ciclos</li>
+        <li>No considera el estado real del equipo</li>
+        <li>Fácil de planificar y administrar</li>
+        <li>Requiere datos históricos de fallas para definir intervalos</li>
+        <li>Puede generar <strong>sobre-mantenimiento</strong> (cambio de piezas aún útiles)</li>
+        <li>Ejemplo: cambio de aceite cada 250 horas de operación</li>
+        <li>Ideal para: componentes con desgaste predecible</li>
+      </ul>
+    </div>
+    <div class="compare-col col-cbm">
+      <div class="col-header">📡 CBM – Basado en Condición (Condition-Based Maintenance)</div>
+      <ul>
+        <li>Intervención basada en el <strong>estado real medido</strong> del equipo</li>
+        <li>Usa sensores, inspecciones y análisis de parámetros</li>
+        <li>Maximiza el uso de vida útil de componentes</li>
+        <li>Requiere inversión en instrumentación y monitoreo</li>
+        <li>Reduce intervenciones innecesarias y costos</li>
+        <li>Ejemplo: cambio de rodamiento al detectar vibración anormal</li>
+        <li>Ideal para: equipos críticos con alto costo de parada</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem" class="fade-in">
+    <div class="pill-tabs">
+      <button class="pill-tab active" data-tab="tab-costo">💰 Comparación de costos</button>
+      <button class="pill-tab" data-tab="tab-tecnicas">🔬 Técnicas de monitoreo (CBM)</button>
+    </div>
+    <div id="tab-costo" class="tab-content active">
+      <div class="grid-2">
+        <div class="chart-wrapper"><h3>Distribución de costos por estrategia</h3><canvas id="chart-costos" height="240"></canvas></div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div class="kpi-card"><div class="kpi-value">−35%</div><div class="kpi-label">Reducción de costos con TBM vs. correctivo puro</div></div>
+          <div class="kpi-card"><div class="kpi-value">−55%</div><div class="kpi-label">Reducción de costos con CBM bien implementado</div></div>
+          <div class="kpi-card"><div class="kpi-value">8–12×</div><div class="kpi-label">Costo de falla vs. costo de prevención</div></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-tecnicas" class="tab-content">
+      <div class="grid-3">
+        <div class="card fade-in"><div class="card-icon">📳</div><h3>Análisis de vibraciones</h3><p>Detecta desbalance, desalineación, fallas en rodamientos y engranajes antes de que sean críticas. Equipo: acelerómetros y analizadores de espectro.</p></div>
+        <div class="card fade-in"><div class="card-icon">🌡️</div><h3>Termografía infrarroja</h3><p>Identifica puntos calientes en motores, conexiones eléctricas, rodamientos y sistemas de vapor. Inspección sin contacto y en operación.</p></div>
+        <div class="card fade-in"><div class="card-icon">🧪</div><h3>Análisis de aceite</h3><p>Detecta contaminación, desgaste de metales y degradación del lubricante en reductores, compresores y sistemas hidráulicos.</p></div>
+        <div class="card fade-in"><div class="card-icon">🔊</div><h3>Ultrasonido</h3><p>Detecta fugas de aire comprimido, problemas en válvulas y fallas en rodamientos a baja velocidad. Muy efectivo y económico.</p></div>
+        <div class="card fade-in"><div class="card-icon">⚡</div><h3>Análisis de corriente</h3><p>Monitorea el consumo de corriente del motor para detectar problemas mecánicos o eléctricos sin necesidad de parar el equipo.</p></div>
+        <div class="card fade-in"><div class="card-icon">👁️</div><h3>Inspección visual</h3><p>La técnica más simple y económica. Con listas de verificación estructuradas, un operador entrenado puede detectar anomalías tempranas.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 3 · DISEÑO DEL PLAN ═══════════════ -->
+<section id="s-plan">
+  <div class="section-label">03 · Metodología</div>
+  <h2>Cómo diseñar un Plan de Mantenimiento Preventivo</h2>
+  <p class="section-intro">Diseñar un plan preventivo no es simplemente crear una lista de tareas. Requiere un proceso metodológico estructurado en pasos bien definidos.</p>
+
+  <div class="timeline">
+    <div class="tl-item fade-in">
+      <div class="tl-dot"></div>
+      <div class="tl-step-num">PASO 1</div>
+      <h4>Inventario y clasificación de activos</h4>
+      <p>Listar todos los equipos de la planta, asignar un código único y clasificarlos por tipo, función y ubicación. Incluir datos técnicos: marca, modelo, año, capacidad.</p>
+    </div>
+    <div class="tl-item fade-in">
+      <div class="tl-dot" style="background:var(--accent2)"></div>
+      <div class="tl-step-num">PASO 2</div>
+      <h4>Análisis de criticidad</h4>
+      <p>Evaluar cada equipo según su impacto en producción, seguridad y costos de falla. Los equipos críticos reciben planes más intensivos. Herramienta: Matriz de Criticidad.</p>
+    </div>
+    <div class="tl-item fade-in">
+      <div class="tl-dot" style="background:var(--accent3)"></div>
+      <div class="tl-step-num">PASO 3</div>
+      <h4>Identificación de actividades de mantenimiento</h4>
+      <p>Para cada equipo: revisar manual del fabricante, historial de fallas y recomendaciones de FMEA. Definir qué se inspecciona, limpia, lubrica, ajusta o reemplaza.</p>
+    </div>
+    <div class="tl-item fade-in">
+      <div class="tl-dot" style="background:var(--accent)"></div>
+      <div class="tl-step-num">PASO 4</div>
+      <h4>Definición de frecuencias</h4>
+      <p>Establecer cada cuánto tiempo se ejecuta cada tarea: diario, semanal, mensual, trimestral, anual o por horas de operación. Balancear costo vs. riesgo.</p>
+    </div>
+    <div class="tl-item fade-in">
+      <div class="tl-dot" style="background:var(--accent2)"></div>
+      <div class="tl-step-num">PASO 5</div>
+      <h4>Estimación de recursos</h4>
+      <p>Para cada tarea: estimar horas-hombre, materiales, repuestos, herramientas y competencias del personal. Calcular costo total del programa.</p>
+    </div>
+    <div class="tl-item fade-in">
+      <div class="tl-dot" style="background:var(--accent3)"></div>
+      <div class="tl-step-num">PASO 6</div>
+      <h4>Elaboración de hojas de ruta y procedimientos</h4>
+      <p>Documentar paso a paso cómo ejecutar cada intervención: secuencia de pasos, medidas de seguridad (LOTO), herramientas requeridas y valores de referencia.</p>
+    </div>
+    <div class="tl-item fade-in" style="padding-bottom:0">
+      <div class="tl-dot" style="background:var(--accent)"></div>
+      <div class="tl-step-num">PASO 7</div>
+      <h4>Programación, ejecución y mejora continua</h4>
+      <p>Cargar el plan en el CMMS, emitir órdenes de trabajo, ejecutar, registrar resultados y analizar indicadores. Ajustar el plan según hallazgos.</p>
+    </div>
+  </div>
+
+  <!-- Plan Builder Interactive -->
+  <div class="plan-builder fade-in">
+    <h3>🛠️ Generador de Plan Preventivo (Demostración)</h3>
+    <div class="builder-row">
+      <div class="builder-field">
+        <label>Tipo de equipo</label>
+        <select id="pb-equipo">
+          <option value="motor">Motor eléctrico</option>
+          <option value="bomba">Bomba centrífuga</option>
+          <option value="compresor">Compresor</option>
+          <option value="reductor">Reductor de velocidad</option>
+          <option value="hidraulico">Sistema hidráulico</option>
+        </select>
+      </div>
+      <div class="builder-field">
+        <label>Criticidad</label>
+        <select id="pb-criticidad">
+          <option value="alta">Alta</option>
+          <option value="media">Media</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+      <div class="builder-field">
+        <label>Horas operación/mes</label>
+        <input type="number" id="pb-horas" value="200" min="10" max="720"/>
+      </div>
+      <div class="builder-field" style="display:flex;align-items:flex-end">
+        <button class="btn-gen" onclick="generatePlan()">⚡ Generar Plan</button>
+      </div>
+    </div>
+    <div class="plan-result" id="plan-result"></div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 4 · FRECUENCIAS ═══════════════ -->
+<section id="s-freq">
+  <div class="section-label">04 · Programación</div>
+  <h2>Frecuencias de Intervención</h2>
+  <p class="section-intro">La correcta definición de frecuencias es uno de los aspectos más críticos del plan preventivo. Una frecuencia demasiado alta representa sobre-costo; demasiado baja genera fallas prematuras.</p>
+
+  <div class="grid-4 fade-in">
+    <div class="kpi-card">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">📆</div>
+      <div class="kpi-value" style="font-size:1.3rem">Diaria</div>
+      <div class="kpi-label">Inspección visual, niveles, temperatura, presión. Ejecutada por operadores.</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">🗓️</div>
+      <div class="kpi-value" style="font-size:1.3rem">Semanal</div>
+      <div class="kpi-label">Limpieza profunda, lubricación de puntos críticos, ajuste de tensiones.</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">📅</div>
+      <div class="kpi-value" style="font-size:1.3rem">Mensual</div>
+      <div class="kpi-label">Revisión de acoplamientos, filtros, medición de vibraciones, análisis eléctrico.</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">🔄</div>
+      <div class="kpi-value" style="font-size:1.3rem">Anual</div>
+      <div class="kpi-label">Overhaul completo, reemplazo de rodamientos, revisión de devanados, calibración.</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:2rem">
+    <div class="chart-wrapper fade-in">
+      <h3>Distribución típica de actividades por frecuencia</h3>
+      <canvas id="chart-freq" height="260"></canvas>
+    </div>
+    <div>
+      <div class="concept-box fade-in">
+        <div class="quote"><strong>Criterios para definir frecuencias:</strong></div>
+        <div class="source" style="font-size:.84rem;color:var(--muted);line-height:1.8;margin-top:.5rem">
+          1. <strong style="color:var(--text)">Recomendación del fabricante:</strong> siempre el punto de partida.<br/>
+          2. <strong style="color:var(--text)">Historial de fallas:</strong> si el equipo falla cada 500 h, intervenir a las 400 h.<br/>
+          3. <strong style="color:var(--text)">Condiciones de operación:</strong> ambientes corrosivos, polvorientos o húmedos requieren mayor frecuencia.<br/>
+          4. <strong style="color:var(--text)">Criticidad:</strong> equipos críticos → mayor frecuencia.<br/>
+          5. <strong style="color:var(--text)">Análisis costo-riesgo:</strong> costo de intervención vs. costo de falla.
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-item">
+          <div class="acc-header">📖 ¿Qué es una Hoja de Ruta?<span class="acc-icon">+</span></div>
+          <div class="acc-body"><div class="acc-body-inner">Una hoja de ruta (route sheet o task list) es el documento que guía al técnico en la ejecución de la tarea preventiva. Contiene:
+            <ul>
+              <li>Código y nombre del equipo</li>
+              <li>Descripción detallada de cada paso</li>
+              <li>Herramientas y materiales requeridos</li>
+              <li>Valores de referencia (temperaturas, presiones, holguras)</li>
+              <li>Medidas de seguridad: bloqueo/etiquetado (LOTO), EPP</li>
+              <li>Tiempo estimado de ejecución</li>
+            </ul>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header">📋 ¿Qué es un Procedimiento Estándar de Mantenimiento?<span class="acc-icon">+</span></div>
+          <div class="acc-body"><div class="acc-body-inner">El PEM o SOP (Standard Operating Procedure) de mantenimiento documenta la secuencia exacta y segura para realizar una intervención. Garantiza:
+            <ul>
+              <li>Reproducibilidad: cualquier técnico entrenado puede ejecutar la tarea correctamente</li>
+              <li>Calidad y seguridad constante en las intervenciones</li>
+              <li>Base para auditorías de calidad (ISO 9001, ISO 55001)</li>
+              <li>Capacitación eficiente de personal nuevo</li>
+            </ul>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 5 · CHECKLIST ═══════════════ -->
+<section id="s-checklist">
+  <div class="section-label">05 · Herramienta práctica</div>
+  <h2>Lista de Verificación Preventiva</h2>
+  <p class="section-intro">Las listas de verificación (checklists) son la herramienta más utilizada en mantenimiento preventivo. Estandarizan las inspecciones y garantizan que ningún punto sea olvidado.</p>
+
+  <div class="grid-2 fade-in">
+    <div class="checklist-wrap">
+      <h3>✅ Checklist: Motor Eléctrico Trifásico (Inspección Mensual)</h3>
+      <div id="checklist-items"></div>
+      <div class="chk-progress"><div class="chk-progress-bar" id="chk-bar"></div></div>
+      <div class="chk-count" id="chk-count">0 / 10 verificados</div>
+      <button class="btn-quiz" style="margin-top:1rem" onclick="resetChecklist()">↩ Reiniciar</button>
+    </div>
+    <div>
+      <div class="concept-box fade-in">
+        <div class="quote"><strong>Tipos de checklist según periodicidad</strong></div>
+        <div class="source" style="color:var(--muted);font-size:.84rem;line-height:1.9;margin-top:.5rem">
+          🔵 <strong style="color:var(--text)">Operacional (diario):</strong> lo realiza el operador antes/después del turno. Niveles, temperatura, ruidos anormales.<br/>
+          🟢 <strong style="color:var(--text)">Preventivo (semanal/mensual):</strong> lo ejecuta el técnico de mantenimiento. Más detallado.<br/>
+          🟡 <strong style="color:var(--text)">Mayor (anual/overhaul):</strong> inspección completa con desmontaje parcial o total.
+        </div>
+      </div>
+      <div class="concept-box">
+        <div class="quote"><strong>Buenas prácticas para diseñar checklists</strong></div>
+        <div class="source" style="color:var(--muted);font-size:.84rem;line-height:1.9;margin-top:.5rem">
+          ✔ Usar lenguaje claro y accionable (verbo + objeto)<br/>
+          ✔ Incluir valores de referencia cuando aplique<br/>
+          ✔ Diferenciar tareas por especialidad (M=Mecánica, E=Eléctrica, S=Seguridad)<br/>
+          ✔ Incluir espacio para observaciones y firma del técnico<br/>
+          ✔ Vincular con la Orden de Trabajo correspondiente
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 6 · QUIZ ═══════════════ -->
+<section id="s-quiz">
+  <div class="section-label">06 · Autoevaluación</div>
+  <h2>Pon a prueba tu comprensión</h2>
+  <p class="section-intro">Responde las siguientes preguntas sobre mantenimiento preventivo. Recibirás retroalimentación inmediata.</p>
+
+  <div id="quiz-container"></div>
+  <div class="score-display" id="score-display">
+    <div style="font-size:2rem;margin-bottom:.5rem">🎉</div>
+    <div class="score-num" id="score-num"></div>
+    <div style="color:var(--muted);margin-top:.5rem;font-size:.9rem" id="score-msg"></div>
+    <button class="btn-quiz primary" onclick="restartQuiz()" style="margin-top:1.5rem">↩ Reintentar</button>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Ing. Marlon Gómez · Asignatura 730502</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// HERO CANVAS – Floating particles (gears)
+// ═══════════════════════════════════════════
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const ACCENT = '#00e5a0';
+  class Particle {
+    constructor(){
+      this.x = Math.random()*W; this.y = Math.random()*H;
+      this.r = 2 + Math.random()*3;
+      this.vx = (Math.random()-.5)*.4; this.vy = (Math.random()-.5)*.4;
+      this.alpha = .15 + Math.random()*.35;
+      this.gear = Math.random() > .6;
+      this.gearR = 12 + Math.random()*22;
+      this.gearAngle = Math.random()*Math.PI*2;
+      this.gearSpeed = (Math.random()-.5)*.008;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; this.gearAngle+=this.gearSpeed;
+      if(this.x<-50)this.x=W+50; if(this.x>W+50)this.x=-50;
+      if(this.y<-50)this.y=H+50; if(this.y>H+50)this.y=-50; }
+    draw(){
+      ctx.save(); ctx.globalAlpha=this.alpha;
+      if(this.gear){
+        drawGear(ctx, this.x, this.y, this.gearR, this.gearR*.6, 8, this.gearAngle, ACCENT);
+      } else {
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=ACCENT; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  function drawGear(ctx,cx,cy,ro,ri,teeth,ang,color){
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath();
+    for(let i=0;i<teeth;i++){
+      const a1=(i/teeth)*Math.PI*2, a2=((i+.5)/teeth)*Math.PI*2, a3=((i+1)/teeth)*Math.PI*2;
+      if(i===0) ctx.moveTo(Math.cos(a1)*ro,Math.sin(a1)*ro);
+      ctx.lineTo(Math.cos(a2)*ro,Math.sin(a2)*ro);
+      ctx.lineTo(Math.cos(a2)*(ro+4),Math.sin(a2)*(ro+4));
+      const h=(a2+a3)/2;
+      ctx.lineTo(Math.cos(h)*(ro+4),Math.sin(h)*(ro+4));
+      ctx.lineTo(Math.cos(a3)*ro,Math.sin(a3)*ro);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,ri,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  for(let i=0;i<60;i++) particles.push(new Particle());
+  // Lines between close particles
+  function drawLines(){
+    for(let i=0;i<particles.length;i++)
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<130){
+          ctx.save(); ctx.globalAlpha=.08*(1-d/130);
+          ctx.strokeStyle=ACCENT; ctx.lineWidth=.8;
+          ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); ctx.restore();
+        }
+      }
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    // dark gradient overlay
+    const g=ctx.createRadialGradient(W/2,H/2,H*.1,W/2,H/2,H*.7);
+    g.addColorStop(0,'rgba(7,14,22,0)'); g.addColorStop(1,'rgba(7,14,22,.7)');
+    drawLines();
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ═══════════════════════════════════════════
+// GSAP SCROLL ANIMATIONS
+// ═══════════════════════════════════════════
+gsap.registerPlugin(ScrollTrigger);
+document.querySelectorAll('.fade-in').forEach(el=>{
+  gsap.to(el,{ opacity:1, y:0, duration:.7, ease:'power2.out',
+    scrollTrigger:{ trigger:el, start:'top 88%', toggleActions:'play none none none' }});
+});
+
+// ═══════════════════════════════════════════
+// NAV ACTIVE STATE
+// ═══════════════════════════════════════════
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-120) cur=s.id; });
+  navLinks.forEach(a=>{ a.classList.toggle('active',a.getAttribute('href')==='#'+cur); });
+});
+
+// ═══════════════════════════════════════════
+// ACCORDION
+// ═══════════════════════════════════════════
+document.querySelectorAll('.acc-header').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const item=h.parentElement;
+    const body=item.querySelector('.acc-body');
+    const isOpen=item.classList.contains('open');
+    document.querySelectorAll('.acc-item.open').forEach(o=>{
+      o.classList.remove('open'); o.querySelector('.acc-body').style.maxHeight='0';
+    });
+    if(!isOpen){ item.classList.add('open'); body.style.maxHeight=body.scrollHeight+40+'px'; }
+  });
+});
+
+// ═══════════════════════════════════════════
+// PILL TABS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.pill-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const group=btn.closest('div');
+    group.querySelectorAll('.pill-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId=btn.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById(tabId)?.classList.add('active');
+    if(tabId==='tab-costo') setTimeout(()=>initChartCostos(),50);
+  });
+});
+
+// ═══════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════
+let chartCostosInit = false;
+function initChartCostos(){
+  if(chartCostosInit) return; chartCostosInit=true;
+  new Chart(document.getElementById('chart-costos'),{
+    type:'bar',
+    data:{
+      labels:['Correctivo puro','TBM','CBM'],
+      datasets:[
+        {label:'Costos de falla',data:[65,25,12],backgroundColor:'rgba(239,68,68,.7)'},
+        {label:'Costos de intervención',data:[10,35,28],backgroundColor:'rgba(0,229,160,.6)'},
+        {label:'Costos totales',data:[75,60,40],backgroundColor:'rgba(14,165,233,.5)'},
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{labels:{color:'#7a9db8',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#7a9db8'},grid:{color:'rgba(30,58,82,.6)'}},
+        y:{ticks:{color:'#7a9db8'},grid:{color:'rgba(30,58,82,.6)'},title:{display:true,text:'Índice de costos (%)',color:'#7a9db8'}}}}
+  });
+}
+window.addEventListener('load',()=>{
+  initChartCostos();
+  new Chart(document.getElementById('chart-freq'),{
+    type:'doughnut',
+    data:{labels:['Diarias','Semanales','Mensuales','Trimestrales','Anuales'],
+      datasets:[{data:[30,25,20,15,10],
+        backgroundColor:['#00e5a0','#0ea5e9','#f59e0b','#8b5cf6','#ef4444'],
+        borderColor:'#0d1825',borderWidth:3}]},
+    options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#7a9db8',font:{size:11}}}}}
+  });
+});
+
+// ═══════════════════════════════════════════
+// PLAN BUILDER
+// ═══════════════════════════════════════════
+const planData = {
+  motor:{ nombre:'Motor Eléctrico', tareas:{ d:['Verificar temperatura carcasa','Revisar ruidos anormales','Verificar nivel de vibración'],
+    s:['Limpiar filtros de ventilación','Verificar ajuste de bornes'],
+    m:['Medir resistencia de aislamiento','Lubricar rodamientos','Verificar alineación'],
+    a:['Overhaul completo','Reemplazar rodamientos','Revisar devanados'] }},
+  bomba:{ nombre:'Bomba Centrífuga', tareas:{ d:['Verificar caudal y presión','Revisar fugas en sellos','Comprobar temperatura cojinetes'],
+    s:['Lubricar cojinetes','Verificar tornillería de anclaje'],
+    m:['Revisar empaquetaduras / sellos mecánicos','Medir vibración','Revisar acoplamiento'],
+    a:['Overhaul impulsor','Reemplazar sellos y rodamientos','Revisar impeller'] }},
+  compresor:{ nombre:'Compresor', tareas:{ d:['Verificar presión de servicio','Drenar condensados','Revisar temperatura de descarga'],
+    s:['Limpiar filtro de aire','Verificar nivel de aceite'],
+    m:['Cambiar filtro aceite','Revisar válvulas','Analizar aceite lubricante'],
+    a:['Overhaul completo','Reemplazar válvulas','Revisar cilindros'] }},
+  reductor:{ nombre:'Reductor de Velocidad', tareas:{ d:['Verificar temperatura carcasa','Revisar fugas de aceite'],
+    s:['Verificar nivel de aceite','Revisar ruidos anormales'],
+    m:['Análisis de aceite','Verificar holguras en engranajes','Revisar retenes'],
+    a:['Cambio de aceite completo','Inspección de engranajes','Reemplazar retenes y rodamientos'] }},
+  hidraulico:{ nombre:'Sistema Hidráulico', tareas:{ d:['Verificar nivel de aceite hidráulico','Comprobar presión sistema','Revisar fugas en mangueras'],
+    s:['Limpiar filtros de retorno','Verificar temperatura aceite'],
+    m:['Analizar aceite hidráulico','Reemplazar filtros','Verificar válvulas de alivio'],
+    a:['Cambio completo de aceite','Overhaul bomba hidráulica','Inspección cilindros'] }}
+};
+const freqLabel = { d:'DIARIA', s:'SEMANAL', m:'MENSUAL', a:'ANUAL/OVERHAUL' };
+const freqColor = { d:'var(--accent)', s:'var(--accent2)', m:'var(--accent3)', a:'var(--red)' };
+function generatePlan(){
+  const equipo = document.getElementById('pb-equipo').value;
+  const crit = document.getElementById('pb-criticidad').value;
+  const horas = parseInt(document.getElementById('pb-horas').value);
+  const pd = planData[equipo];
+  const critMultiplier = { alta:1.3, media:1, baja:.8 }[crit];
+  const freqs = crit === 'baja' ? ['d','m','a'] : ['d','s','m','a'];
+  let html = `<div class="result-title">📋 Plan Preventivo – ${pd.nombre} (Criticidad ${crit.toUpperCase()})</div>`;
+  html += `<table><tr><td>Horas operación/mes</td><td>${horas} h</td></tr>
+    <tr><td>Horas preventivo/mes</td><td>${Math.round(horas*.03*critMultiplier)} h-persona</td></tr>
+    <tr><td>Costo estimado mensual</td><td>~${Math.round(horas*.05*critMultiplier*3500).toLocaleString()} COP</td></tr></table>`;
+  html += '<table style="margin-top:1rem">';
+  html += '<tr><td style="font-weight:700;color:var(--text)">Frecuencia</td><td style="font-weight:700;color:var(--text)">Actividades</td></tr>';
+  freqs.forEach(f=>{
+    if(pd.tareas[f]){
+      html += `<tr><td style="color:${freqColor[f]};font-weight:700">${freqLabel[f]}</td><td>${pd.tareas[f].join(' · ')}</td></tr>`;
+    }
+  });
+  html += '</table>';
+  const res = document.getElementById('plan-result');
+  res.innerHTML = html; res.classList.add('show');
+  gsap.from(res,{opacity:0,y:10,duration:.4});
+}
+
+// ═══════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════
+const checkItems = [
+  {label:'Verificar temperatura de carcasa (< 80°C)', tag:'m', tagLbl:'Mecánica'},
+  {label:'Medir corriente en las tres fases (±5% nominal)', tag:'e', tagLbl:'Eléctrica'},
+  {label:'Inspeccionar ventilación y filtros de aire', tag:'m', tagLbl:'Mecánica'},
+  {label:'Revisar alineación del acoplamiento', tag:'m', tagLbl:'Mecánica'},
+  {label:'Verificar sujeción y tornillería de anclaje', tag:'m', tagLbl:'Mecánica'},
+  {label:'Medir resistencia de aislamiento (>1 MΩ)', tag:'e', tagLbl:'Eléctrica'},
+  {label:'Lubricar rodamientos según ficha técnica', tag:'m', tagLbl:'Mecánica'},
+  {label:'Verificar ajuste de bornes y conexiones eléctricas', tag:'e', tagLbl:'Eléctrica'},
+  {label:'Limpiar y verificar tarjeta de identificación', tag:'s', tagLbl:'Seguridad'},
+  {label:'Confirmar bloqueo/etiquetado (LOTO) al finalizar', tag:'s', tagLbl:'Seguridad'},
+];
+const tagColors = {m:'m', e:'e', s:'s'};
+function buildChecklist(){
+  const container = document.getElementById('checklist-items');
+  container.innerHTML = '';
+  checkItems.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className = 'checklist-item';
+    div.dataset.idx = i;
+    div.innerHTML = `<div class="chk-box" id="chkbox-${i}"></div>
+      <span class="chk-label">${item.label} <span class="chk-tag ${item.tag}">${item.tagLbl}</span></span>`;
+    div.addEventListener('click',()=>toggleCheck(i,div));
+    container.appendChild(div);
+  });
+  updateCheckProgress();
+}
+let checked = new Set();
+function toggleCheck(i,el){
+  if(checked.has(i)){ checked.delete(i); el.classList.remove('checked'); document.getElementById(`chkbox-${i}`).textContent=''; }
+  else { checked.add(i); el.classList.add('checked'); document.getElementById(`chkbox-${i}`).textContent='✓'; }
+  updateCheckProgress();
+}
+function updateCheckProgress(){
+  const pct = (checked.size/checkItems.length)*100;
+  document.getElementById('chk-bar').style.width=pct+'%';
+  document.getElementById('chk-count').textContent=`${checked.size} / ${checkItems.length} verificados`;
+}
+function resetChecklist(){ checked.clear(); buildChecklist(); }
+buildChecklist();
+
+// ═══════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════
+const quizData = [
+  {q:'¿Cuál es la principal diferencia entre TBM y CBM?',
+   opts:['TBM usa sensores y CBM usa intervalos fijos','TBM interviene a intervalos fijos y CBM según el estado real del equipo','TBM es más costoso que CBM','No hay diferencia, son sinónimos'],
+   ans:1, exp:'TBM (Time-Based) interviene cada cierto tiempo fijo, mientras que CBM (Condition-Based) interviene según el estado real medido del equipo.'},
+  {q:'¿Cuál es el primer paso para diseñar un plan de mantenimiento preventivo?',
+   opts:['Definir frecuencias de intervención','Elaborar hojas de ruta','Inventario y clasificación de activos','Comprar repuestos'],
+   ans:2, exp:'El primer paso es siempre el inventario y clasificación de activos, para saber qué equipos existen y sus características.'},
+  {q:'La curva de la bañera (bathtub curve) permite identificar:',
+   opts:['El costo total del mantenimiento preventivo','Las tres fases de vida de un equipo y sus tasas de falla','La frecuencia óptima de cambio de aceite','El número de técnicos necesarios'],
+   ans:1, exp:'La curva de la bañera muestra las tres etapas: mortalidad infantil (fallas tempranas), vida útil (tasa constante) y envejecimiento (desgaste).'},
+  {q:'¿Qué significa LOTO en el contexto de mantenimiento?',
+   opts:['Lubricación, Operación, Temperatura, Orden','Lockout-Tagout: procedimiento de bloqueo y etiquetado para aislar la energía del equipo','Lista de Operaciones Técnicas Obligatorias','Ninguna de las anteriores'],
+   ans:1, exp:'LOTO (Lockout-Tagout) es el procedimiento de seguridad que asegura que el equipo está completamente aislado de sus fuentes de energía antes de cualquier intervención.'},
+  {q:'Un equipo con disponibilidad del 92% y buen plan preventivo ¿en qué zona de la curva de la bañera probablemente se encuentra?',
+   opts:['Zona I – Mortalidad infantil','Zona II – Vida útil (tasa de fallas estable)','Zona III – Envejecimiento','No es posible determinarlo'],
+   ans:1, exp:'Una alta disponibilidad con plan preventivo activo indica que el equipo está en la Zona II, donde la tasa de fallas es baja y constante.'},
+];
+let quizAnswers = {};
+function buildQuiz(){
+  const c = document.getElementById('quiz-container');
+  c.innerHTML = '';
+  quizData.forEach((q,qi)=>{
+    let optsHtml = q.opts.map((o,oi)=>`
+      <label class="quiz-option" id="qo-${qi}-${oi}">
+        <input type="radio" name="q${qi}" value="${oi}" onchange="selectOpt(${qi},${oi})"/> ${o}
+      </label>`).join('');
+    c.innerHTML += `<div class="quiz-card" id="qcard-${qi}">
+      <div class="quiz-question">Pregunta ${qi+1}: ${q.q}</div>
+      <div class="quiz-options">${optsHtml}</div>
+      <div class="quiz-feedback" id="qfb-${qi}"></div>
+    </div>`;
+  });
+  c.innerHTML += `<div style="text-align:center;margin-top:1rem">
+    <button class="btn-quiz primary" onclick="submitQuiz()">✅ Verificar respuestas</button>
+  </div>`;
+}
+function selectOpt(qi,oi){ quizAnswers[qi]=oi; }
+function submitQuiz(){
+  let score=0;
+  quizData.forEach((q,qi)=>{
+    const chosen = quizAnswers[qi];
+    const fb = document.getElementById(`qfb-${qi}`);
+    if(chosen===undefined){ fb.textContent='⚠️ No respondiste esta pregunta.'; fb.className='quiz-feedback show err'; return; }
+    q.opts.forEach((_,oi)=>{
+      const el=document.getElementById(`qo-${qi}-${oi}`);
+      el.classList.remove('correct','wrong');
+      if(oi===q.ans) el.classList.add('correct');
+      else if(oi===chosen) el.classList.add('wrong');
+      el.querySelector('input').disabled=true;
+    });
+    if(chosen===q.ans){ score++; fb.textContent='✅ '+q.exp; fb.className='quiz-feedback show ok'; }
+    else { fb.textContent='❌ '+q.exp; fb.className='quiz-feedback show err'; }
+  });
+  const pct=Math.round(score/quizData.length*100);
+  const msg = pct>=80?'¡Excelente dominio de los fundamentos!':pct>=60?'Buen resultado, repasa los temas con menor puntaje.':'Revisa el material y vuelve a intentarlo.';
+  document.getElementById('score-num').textContent=`${score}/${quizData.length} (${pct}%)`;
+  document.getElementById('score-msg').textContent=msg;
+  const sd=document.getElementById('score-display');
+  sd.classList.add('show'); gsap.from(sd,{opacity:0,y:20,duration:.5});
+  sd.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function restartQuiz(){ quizAnswers={}; buildQuiz(); document.getElementById('score-display').classList.remove('show'); }
+buildQuiz();
+</script>
+</body>
+</html>
