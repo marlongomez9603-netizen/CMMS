@@ -15,3 +15,9 @@ desktop.ini
 
 # Archivos de caché del navegador (localStorage no se sube)
 *.log
+
+# Archivos raiz obsoletos (la app correcta esta en PRIMER CORTE/cmms-app/)
+/css/
+/js/
+/p/
+/index.html
