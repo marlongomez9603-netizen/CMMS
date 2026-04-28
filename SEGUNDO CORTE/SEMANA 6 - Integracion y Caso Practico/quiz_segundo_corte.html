@@ -1,0 +1,318 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz Segundo Corte — TOSEM</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#f1f5f9;min-height:100vh}
+.bar{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.95);backdrop-filter:blur(12px);border-bottom:1px solid #1e293b;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800;font-size:.9rem;color:#3b82f6}
+.chip{background:#1a2332;border:1px solid #1e293b;padding:4px 12px;border-radius:16px;font-size:.75rem;color:#94a3b8}
+.chip b{color:#f1f5f9}
+.wrap{max-width:800px;margin:0 auto;padding:24px 16px 60px}
+.login-box{background:#1a2332;border:1px solid #1e293b;border-radius:14px;padding:32px;text-align:center;margin-top:40px}
+.login-box h1{font-size:1.6rem;margin-bottom:8px}
+.login-box h1 span{color:#3b82f6}
+.login-box p{color:#94a3b8;font-size:.88rem;margin-bottom:20px}
+.login-box input{background:#111827;border:1px solid #1e293b;color:#f1f5f9;padding:12px 16px;border-radius:10px;font-size:1rem;width:260px;outline:none;text-align:center}
+.login-box input:focus{border-color:#3b82f6}
+.btn{border:none;padding:10px 24px;border-radius:10px;font-weight:800;font-size:.88rem;cursor:pointer;transition:.2s;margin-top:16px}
+.btn-p{background:linear-gradient(135deg,#3b82f6,#06b6d4);color:#fff}
+.btn-p:hover{opacity:.85}
+.btn-s{background:#1a2332;border:1px solid #1e293b;color:#94a3b8}
+.err{color:#ef4444;font-size:.82rem;margin-top:8px;min-height:20px}
+.pbar{background:#1a2332;border:1px solid #1e293b;border-radius:10px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:12px}
+.pbar-bg{flex:1;height:6px;background:#111827;border-radius:3px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:3px;transition:width .4s;width:0}
+.pbar-txt{font-size:.8rem;color:#94a3b8;min-width:60px;text-align:right}
+.qc{background:#1a2332;border:1px solid #1e293b;border-radius:12px;padding:20px;margin-bottom:16px;transition:border-color .3s}
+.qc.ok{border-color:#10b981}.qc.bad{border-color:#ef4444}
+.qh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.qn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0}
+.qt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:10px}
+.qtxt{font-size:.9rem;font-weight:700;line-height:1.5;margin-bottom:14px}
+.qctx{font-size:.82rem;color:#94a3b8;line-height:1.5;margin-bottom:14px;padding:10px 14px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:8px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.02);border:1px solid #1e293b;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:.85rem;transition:.2s}
+.opt:hover:not(.dis){border-color:#3b82f6;background:rgba(59,130,246,.05)}
+.opt.sel{border-color:#3b82f6;background:rgba(59,130,246,.08)}
+.opt.ca{border-color:#10b981;background:rgba(16,185,129,.1);color:#10b981}
+.opt.wa{border-color:#ef4444;background:rgba(239,68,68,.06);color:#ef4444;opacity:.7}
+.opt.dis{cursor:default;pointer-events:none}
+.orad{width:16px;height:16px;border:2px solid #1e293b;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.2s;font-size:9px;font-weight:900}
+.opt.sel .orad{border-color:#3b82f6}.opt.sel .orad::after{content:'';width:7px;height:7px;border-radius:50%;background:#3b82f6}
+.opt.ca .orad{border-color:#10b981}.opt.ca .orad::after{content:'✓';color:#10b981}
+.opt.wa .orad{border-color:#ef4444}.opt.wa .orad::after{content:'✗';color:#ef4444}
+.fb{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.82rem;line-height:1.5;display:none}
+.fb.sh{display:block}.fb.fok{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);color:#10b981}
+.fb.ferr{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);color:#ef4444}
+.brow{display:flex;gap:10px;justify-content:center;margin-top:24px}
+.res{background:#1a2332;border:1px solid rgba(59,130,246,.3);border-radius:14px;padding:32px;text-align:center;display:none}
+.res.sh{display:block}
+.res .big{font-size:3.2rem;font-weight:900;background:linear-gradient(135deg,#3b82f6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.res .msg{color:#94a3b8;margin-top:6px;font-size:.95rem}
+.bd{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:20px}
+.bdi{background:#111827;border-radius:8px;padding:10px;text-align:center}
+.bdi .v{font-size:1.1rem;font-weight:800}.bdi .l{font-size:.68rem;color:#94a3b8}
+.annulled-overlay{position:fixed;inset:0;background:rgba(10,14,23,.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;display:none}
+.annulled-overlay.sh{display:flex}
+.annulled-overlay h1{color:#ef4444;font-size:2rem;margin-bottom:10px}
+.annulled-overlay p{color:#94a3b8;max-width:400px;text-align:center}
+.warn-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:8px 20px;border-radius:8px;font-size:.82rem;font-weight:700;z-index:200;display:none;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.7}}
+@media(max-width:600px){.wrap{padding:16px 10px 40px}.login-box{padding:20px}.login-box input{width:100%}}
+</style></head><body>
+<div class="bar"><div class="brand">⚙️ TOSEM — Quiz Segundo Corte</div>
+<div style="display:flex;gap:8px;align-items:center"><div class="chip">📘 <b>730502</b></div><div class="chip"><b id="ans">0</b>/<span id="tot">0</span></div></div></div>
+<div class="annulled-overlay" id="annulled"><h1>❌ Quiz Anulado</h1><p id="annulReason">Has abandonado la página. El quiz ha sido anulado automáticamente.</p></div>
+<div class="warn-banner" id="warnBanner">⚠️ ¡Advertencia! Saliste de la página. Una más y se anula el quiz.</div>
+<div class="wrap">
+<div id="loginSection">
+<div class="login-box"><h1>Quiz <span>Segundo Corte</span></h1>
+<p>Programación y Control del Mantenimiento<br>Ing. Marlon Gómez · UNIPAZ 2026-I</p>
+<input type="text" id="cedula" placeholder="Ingrese su número de cédula" inputmode="numeric">
+<div class="err" id="loginErr"></div>
+<button class="btn btn-p" onclick="doLogin()">Iniciar Quiz</button></div></div>
+<div id="quizSection" style="display:none">
+<div class="pbar"><div class="pbar-bg"><div class="pbar-fill" id="pFill"></div></div><div class="pbar-txt" id="pTxt">0/0</div></div>
+<div id="qWrap"></div>
+<div class="brow" id="subRow"><button class="btn btn-p" onclick="submit()">📊 Enviar y Calificar</button></div>
+<div class="res" id="resBox">
+<div style="font-size:2rem;margin-bottom:6px" id="rEmoji">🎯</div>
+<div class="big" id="rScore">0</div>
+<div class="msg" id="rMsg"></div>
+<div class="bd" id="rBd"></div>
+<div class="brow"><button class="btn btn-s" onclick="printR()">🖨️ Imprimir Resultados</button></div>
+</div></div></div>
+<script>
+// === STUDENTS ===
+const STU={
+"1097183856":"ACUNA MENESES, DANIEL EDUARDO","1096801641":"AGAMEZ SANTOS, JORGE ANDRES",
+"1097183668":"AMAYA DURAN, ARNULFO ELIAS","1096200627":"DIAZ MENDOZA, JOSE LUIS",
+"1096246370":"ESCOBAR MOSCOTE, LEONARDO","1051634628":"GAMARRA CAMPO, OSCAR DAMIAN",
+"1096802843":"GRIMALDO JARAMILLO, JUAN SEBASTIAN","1102373572":"HERNÁNDEZ PARRA, LUIS EDUARDO",
+"1005186689":"HOYOS TOLOZA, JHORJAN DANIEL","1051634775":"MEJIA MIELES, KEINER ANDRES",
+"1005185382":"OSPINO MONTOYA, HILLARY DANIELA","1005221431":"SALAS GALVAN, JHOEL FABIAN",
+"1097184508":"SEPULVEDA RUEDA, XAVI DAMEK","1096225235":"SUAREZ ROVIRA, YEISON DONATO",
+"1052954359":"TORRES VANEGAS, LUIS ALEXANDER","1097783299":"VARGAS RIVERA, SAMUEL",
+"1039681626":"VELEÑO JIMENEZ, SEBASTIAN","1005462180":"VILLAMIZAR MEJIA, MAICOL DANIEL",
+"1095800511":"YURANI GOMEZ, ANGELICA YURANI"};
+
+// === QUESTIONS ===
+const Q=[
+{t:"Planificación",c:"#3b82f6",q:"¿Cuál es la diferencia fundamental entre planificación y programación del mantenimiento?",
+o:["Son sinónimos","La planificación define QUÉ hacer y la programación define CUÁNDO y CON QUIÉN","La programación es para preventivo y la planificación para correctivo","La planificación solo aplica en empresas grandes"],a:1,
+e:"La planificación define actividades y recursos. La programación asigna fechas, horarios y técnicos."},
+
+{t:"Planificación",c:"#3b82f6",q:"El ciclo de gestión del mantenimiento sigue el orden:",
+o:["Ejecutar → Planificar → Controlar → Programar","Planificar → Programar → Ejecutar → Controlar","Programar → Ejecutar → Planificar → Controlar","Controlar → Planificar → Ejecutar → Programar"],a:1,
+e:"PPEC: Planificar, Programar, Ejecutar, Controlar."},
+
+{t:"Preventivo",c:"#10b981",q:"¿Cuál es el primer paso para diseñar un plan de mantenimiento preventivo?",
+o:["Definir frecuencias","Elaborar hojas de ruta","Inventario y clasificación de activos","Comprar repuestos"],a:2,
+e:"Primero se hace inventario y clasificación de activos."},
+
+{t:"Preventivo",c:"#10b981",q:"¿Qué técnica de monitoreo basado en condición detecta puntos calientes sin contacto?",
+o:["Análisis de vibraciones","Análisis de aceite","Termografía infrarroja","Ultrasonido"],a:2,
+e:"La termografía infrarroja detecta puntos calientes sin contacto y con equipo en operación."},
+
+{t:"Correctivo",c:"#f97316",q:"¿Cuál es la diferencia entre correctivo de emergencia y correctivo diferido?",
+o:["No hay diferencia","El de emergencia detiene producción y es inmediato; el diferido se puede planificar","El diferido es más costoso","El de emergencia solo aplica a equipos eléctricos"],a:1,
+e:"Emergencia (P1): para producción. Diferido (P2-P3): se puede programar."},
+
+{t:"Correctivo",c:"#f97316",ctx:"El backlog es el conjunto de órdenes de trabajo aprobadas y pendientes de ejecución. Representa el trabajo acumulado, medido en semanas.",
+q:"¿Cuál es el rango óptimo de backlog de mantenimiento?",
+o:["0 semanas","2 a 4 semanas","Más de 6 semanas","No importa"],a:1,
+e:"2-4 semanas. >6 = equipo subdimensionado. <1 = posible subutilización."},
+
+{t:"Correctivo",c:"#f97316",q:"¿Cuál es el documento que autoriza y registra toda intervención de mantenimiento?",
+o:["El reporte de falla","El plan preventivo","La Orden de Trabajo (OT)","El manual del fabricante"],a:2,
+e:"La OT es el corazón del mantenimiento. Sin OT = no hay trazabilidad."},
+
+{t:"Correctivo",c:"#f97316",q:"El ciclo de vida de una OT correctiva es:",
+o:["Creación → Ejecución → Cierre","Detección → Creación → Asignación → Ejecución → Cierre","Planificación → Programación → Ejecución","Solicitud → Compra → Reparación"],a:1,
+e:"5 pasos: Detección, Creación, Asignación, Ejecución, Cierre."},
+
+{t:"CMMS",c:"#8b5cf6",q:"¿Qué significa CMMS?",
+o:["Central Maintenance Management Software","Computerized Maintenance Management System","Computer-Made Mechanical Solutions","Controlled Measurement of Machine Status"],a:1,
+e:"CMMS = Computerized Maintenance Management System."},
+
+{t:"CMMS",c:"#8b5cf6",q:"¿Cuántos módulos principales tiene un CMMS profesional?",
+o:["4 módulos","6 módulos","8 módulos","12 módulos"],a:2,
+e:"8 módulos: Activos, OTs, Preventivo, Inventario, Personal, Compras, Dashboard y Reportes."},
+
+{t:"CMMS",c:"#8b5cf6",q:"En un CMMS, ¿quién es el responsable de registrar las averías o fallas detectadas en los equipos?",
+o:["Solo el gerente de planta","El operario que detecta la anomalía, reportándola al departamento de mantenimiento","Solo el técnico de mantenimiento asignado","El proveedor del equipo"],a:1,
+e:"El operario detecta y reporta. El planificador crea la OT en el CMMS."},
+
+{t:"CMMS",c:"#8b5cf6",q:"¿Qué norma ISO define la gestión de activos y es soportada operativamente por el CMMS?",
+o:["ISO 9001","ISO 14224","ISO 55000","ISO 13306"],a:2,
+e:"ISO 55000: Gestión de Activos. ISO 14224: Datos de confiabilidad. ISO 13306: Terminología."},
+
+{t:"KPIs",c:"#06b6d4",q:"Si se programaron 20 preventivos y se completaron 17, el CPM (Cumplimiento de Preventivo) es:",
+o:["70%","80%","85%","90%"],a:2,
+e:"CPM = (17/20)×100 = 85%. Meta: ≥85%."},
+];
+
+// === GLOBALS ===
+let student=null,answers={},done=false,startTime,leaveCount=0,leaveTimer=null,annulled=false;
+const SHEET_URL="https://script.google.com/macros/s/AKfycby6F4EkpasBMNEyuEWw3_GEwZf9GSWqU1l4Ea-CRWlLtQ9_DQmSMuZaMwL3shrgpkor/exec";
+
+// === ANTI-CHEAT ===
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('copy',e=>e.preventDefault());
+document.addEventListener('paste',e=>e.preventDefault());
+document.addEventListener('cut',e=>e.preventDefault());
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&['c','v','x','a','u','s','p'].includes(e.key.toLowerCase()))e.preventDefault();
+  if(e.key==='F12'||e.key==='F5')e.preventDefault();
+  if(e.ctrlKey&&e.shiftKey&&['i','j','c'].includes(e.key.toLowerCase()))e.preventDefault();
+});
+
+// Refresh detection
+if(sessionStorage.getItem('quiz_started')&&!sessionStorage.getItem('quiz_done')){
+  sessionStorage.setItem('quiz_annulled','refresh');
+}
+window.addEventListener('beforeunload',e=>{
+  if(student&&!done&&!annulled){e.preventDefault();e.returnValue='';}
+});
+
+// Tab visibility
+document.addEventListener('visibilitychange',()=>{
+  if(!student||done||annulled)return;
+  if(document.hidden){
+    leaveTimer=setTimeout(()=>annul('Saliste de la página por más de 8 segundos.'),8000);
+    leaveCount++;
+    if(leaveCount>=2)annul('Saliste de la página 2 veces.');
+  } else {
+    clearTimeout(leaveTimer);
+    if(!annulled&&leaveCount===1){
+      const w=document.getElementById('warnBanner');
+      w.style.display='block';
+      setTimeout(()=>w.style.display='none',5000);
+    }
+  }
+});
+
+function annul(reason){
+  annulled=true;
+  document.getElementById('annulReason').textContent=reason;
+  document.getElementById('annulled').classList.add('sh');
+  sendToSheet(0,true,reason);
+}
+
+// === LOGIN ===
+function doLogin(){
+  const c=document.getElementById('cedula').value.trim();
+  if(!STU[c]){document.getElementById('loginErr').textContent='Cédula no registrada.';return;}
+  if(sessionStorage.getItem('quiz_annulled')){
+    document.getElementById('loginErr').textContent='Quiz anulado por recarga de página.';
+    annul('Recargó la página durante el quiz.');return;
+  }
+  student={id:c,name:STU[c]};
+  sessionStorage.setItem('quiz_started','1');
+  startTime=Date.now();
+  document.getElementById('loginSection').style.display='none';
+  document.getElementById('quizSection').style.display='block';
+  buildQuiz();
+}
+
+// === QUIZ BUILD ===
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+let qs;
+function buildQuiz(){
+  qs=shuffle([...Q]);
+  // Also shuffle options per question
+  qs=qs.map(q=>{
+    const idxs=[...Array(q.o.length).keys()];
+    shuffle(idxs);
+    return{...q,o:idxs.map(i=>q.o[i]),a:idxs.indexOf(q.a),_oi:idxs};
+  });
+  document.getElementById('tot').textContent=qs.length;
+  const w=document.getElementById('qWrap');
+  w.innerHTML='';
+  qs.forEach((q,i)=>{
+    let h=`<div class="qc" id="qc${i}"><div class="qh"><div class="qn" style="background:${q.c}">${i+1}</div><span class="qt" style="background:${q.c}20;color:${q.c}">${q.t}</span></div>`;
+    if(q.ctx)h+=`<div class="qctx">💡 ${q.ctx}</div>`;
+    h+=`<div class="qtxt">${q.q}</div><div class="opts">`;
+    q.o.forEach((_,j)=>{h+=`<div class="opt" id="o${i}_${j}" onclick="sel(${i},${j})"><div class="orad"></div><span>${q.o[j]}</span></div>`;});
+    h+=`</div><div class="fb" id="fb${i}"></div></div>`;
+    w.innerHTML+=h;
+  });
+  updP();
+}
+
+function sel(qi,oi){
+  if(done||annulled)return;
+  answers[qi]=oi;
+  qs[qi].o.forEach((_,j)=>{document.getElementById(`o${qi}_${j}`).classList.toggle('sel',j===oi);});
+  updP();
+}
+function updP(){
+  const n=Object.keys(answers).length,t=qs.length;
+  document.getElementById('ans').textContent=n;
+  document.getElementById('pTxt').textContent=`${n}/${t}`;
+  document.getElementById('pFill').style.width=(n/t*100)+'%';
+}
+
+// === SUBMIT ===
+function submit(){
+  if(annulled)return;
+  const n=Object.keys(answers).length;
+  if(n<qs.length&&!confirm(`Respondiste ${n} de ${qs.length}. ¿Enviar?`))return;
+  done=true;
+  sessionStorage.setItem('quiz_done','1');
+  let ok=0;const ts={};
+  qs.forEach((q,i)=>{
+    const ua=answers[i],correct=ua===q.a;
+    if(correct)ok++;
+    if(!ts[q.t])ts[q.t]={ok:0,n:0,c:q.c};ts[q.t].n++;if(correct)ts[q.t].ok++;
+    q.o.forEach((_,j)=>{
+      const el=document.getElementById(`o${i}_${j}`);
+      el.classList.add('dis');el.classList.remove('sel');
+      if(j===q.a)el.classList.add('ca');
+      else if(j===ua&&!correct)el.classList.add('wa');
+    });
+    document.getElementById(`qc${i}`).classList.add(correct?'ok':'bad');
+    const fb=document.getElementById(`fb${i}`);
+    fb.className=`fb sh ${correct?'fok':'ferr'}`;
+    fb.innerHTML=correct?`✅ ¡Correcto! ${q.e}`:`❌ Incorrecto. ${q.e}`;
+  });
+  const score=Math.round(ok/qs.length*100);
+  let emoji='😟',msg='Necesitas repasar.';
+  if(ok/qs.length>=.9){emoji='🏆';msg='¡Excelente!';}
+  else if(ok/qs.length>=.7){emoji='😊';msg='¡Buen trabajo!';}
+  else if(ok/qs.length>=.5){emoji='🤔';msg='Aceptable, repasa los errores.';}
+  document.getElementById('rEmoji').textContent=emoji;
+  document.getElementById('rScore').textContent=score+' / 100';
+  document.getElementById('rMsg').innerHTML=`${ok} de ${qs.length} correctas — ${msg}<br><small style="color:#64748b">${student.name} · CC ${student.id}</small>`;
+  let bd='';for(const[t,d] of Object.entries(ts)){bd+=`<div class="bdi"><div class="v" style="color:${d.c}">${d.ok}/${d.n}</div><div class="l">${t}</div></div>`;}
+  document.getElementById('rBd').innerHTML=bd;
+  document.getElementById('resBox').classList.add('sh');
+  document.getElementById('subRow').style.display='none';
+  document.getElementById('resBox').scrollIntoView({behavior:'smooth'});
+  sendToSheet(score,false,'');
+}
+
+// === GOOGLE SHEETS ===
+function sendToSheet(score,wasAnnulled,reason){
+  const now=new Date().toLocaleString('es-CO',{timeZone:'America/Bogota'});
+  const elapsed=Math.floor((Date.now()-startTime)/1000);
+  const mins=Math.floor(elapsed/60),secs=elapsed%60;
+  const data={
+    nombre:student.name,
+    cedula:student.id,
+    calificacion:score,
+    correctas:Object.values(answers).filter((v,i)=>v===qs[i]?.a).length,
+    total:qs?qs.length:Q.length,
+    tiempo:`${mins}m ${secs}s`,
+    hora_entrega:now,
+    anulado:wasAnnulled?'SÍ':'NO',
+    razon_anulacion:reason||''
+  };
+  if(SHEET_URL&&SHEET_URL!=='%%SHEET_URL%%'){
+    fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)}).catch(()=>{});
+  }
+  console.log('Quiz result:',data);
+}
+function printR(){window.print();}
+</script></body></html>
