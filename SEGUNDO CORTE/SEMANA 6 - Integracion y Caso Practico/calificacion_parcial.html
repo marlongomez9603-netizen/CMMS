@@ -294,7 +294,7 @@ async function loadLockStatus(){
       <div class="name">${s.nombre.split(',').reverse().join(' ').trim()}<br><span class="cc">CC ${s.cedula}</span></div>
       <div class="status"><span class="badge ${locked?'b-locked':'b-open'}">${locked?'🔒 Bloqueado':'🟢 Disponible'}</span>
         ${locked?`<div class="detail">${d.loginTime||''}</div>`:''}</div>
-      <div class="btns">${locked?`<button class="btn btn-warn btn-sm" onclick="unlockTeoria('${s.cedula}')">🔓 Desbloquear</button>`:''}</div>
+      <div class="btns">${locked?`<button class="btn btn-warn btn-sm" id="btn-t-${s.cedula}" onclick="unlockTeoria('${s.cedula}', this)">🔓 Desbloquear</button>`:''}</div>
     </div>`;
   }
   document.getElementById('adminTeoria').innerHTML=teoriaHtml;
@@ -308,35 +308,67 @@ async function loadLockStatus(){
       <div class="status"><span class="badge ${locked?'b-locked':'b-open'}">${locked?'🔒 Enviado':'🟢 Disponible'}</span>
         ${locked?`<div class="detail">${d.submitTime||''}</div>`:''}</div>
       <div class="btns">
-        ${locked?`<button class="btn btn-warn btn-sm" onclick="unlockCMMS('${s.cedula}')">🔓 Desbloquear</button>`:''}
-        <button class="btn btn-danger btn-sm" onclick="resetData('${s.cedula}')">🗑️ Reset</button>
+        ${locked?`<button class="btn btn-warn btn-sm" id="btn-c-${s.cedula}" onclick="unlockCMMS('${s.cedula}', this)">🔓 Desbloquear</button>`:''}
+        <button class="btn btn-danger btn-sm" id="btn-r-${s.cedula}" onclick="resetData('${s.cedula}', this)">🗑️ Reset</button>
       </div>
     </div>`;
   }
   document.getElementById('adminCMMS').innerHTML=cmmsHtml;
 }
 
-async function unlockTeoria(c){
-  if(!confirm(`¿Desbloquear TEÓRICA de ${c}?`))return;
-  await db.collection('parcial_teorico_locks').doc(c).delete();
-  showToast(`✅ Teórica desbloqueada: ${c}`);loadLockStatus();
+async function unlockTeoria(c, btn){
+  const orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
+  try {
+    await db.collection('parcial_teorico_locks').doc(c).delete();
+    showToast('✅ Teórica desbloqueada: CC ' + c);
+    await loadLockStatus();
+  } catch(e) {
+    console.error('unlockTeoria error:', e);
+    showToastError('❌ Error: ' + e.message);
+    if(btn){ btn.disabled=false; btn.textContent=orig; }
+  }
 }
-async function unlockCMMS(c){
-  if(!confirm(`¿Desbloquear CMMS de ${c}?`))return;
-  await db.collection('parcial_cmms_locks').doc(c).delete();
-  showToast(`✅ CMMS desbloqueado: ${c}`);loadLockStatus();
+async function unlockCMMS(c, btn){
+  const orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
+  try {
+    await db.collection('parcial_cmms_locks').doc(c).delete();
+    showToast('✅ CMMS desbloqueado: CC ' + c);
+    await loadLockStatus();
+  } catch(e) {
+    console.error('unlockCMMS error:', e);
+    showToastError('❌ Error: ' + e.message);
+    if(btn){ btn.disabled=false; btn.textContent=orig; }
+  }
 }
-async function resetData(c){
-  if(!confirm(`⚠️ ¿RESETEAR datos CMMS de ${c}? Borra TODO.`))return;
-  if(!confirm(`SEGUNDA CONFIRMACIÓN: ¿Borrar TODO de ${c}?`))return;
-  await db.collection('students').doc(c).set({
-    companies:[{id:`company_${c}`,name:'Empresa Reset',sector:'',location:'',created:new Date().toISOString().split('T')[0]}],
-    assets:[],workOrders:[],preventivePlans:[],inventory:[],personnel:[],
-    purchases:[],inventoryMovements:[],faultReports:[],injectedAlerts:[],notifications:[],
-    activityLog:[{id:'log_reset',companyId:`company_${c}`,timestamp:new Date().toISOString(),action:'system',message:'Reseteado por docente.'}]
-  });
-  await db.collection('parcial_cmms_locks').doc(c).delete().catch(()=>{});
-  showToast(`✅ Reseteado y desbloqueado: ${c}`);loadLockStatus();
+async function resetData(c, btn){
+  if(!confirm('⚠️ ¿RESETEAR todos los datos CMMS de CC ' + c + '? Esta acción no se puede deshacer.'))return;
+  const orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
+  try {
+    await db.collection('students').doc(c).set({
+      companies:[{id:'company_'+c,name:'Empresa Reset',sector:'',location:'',created:new Date().toISOString().split('T')[0]}],
+      assets:[],workOrders:[],preventivePlans:[],inventory:[],personnel:[],
+      purchases:[],inventoryMovements:[],faultReports:[],injectedAlerts:[],notifications:[],
+      activityLog:[{id:'log_reset',companyId:'company_'+c,timestamp:new Date().toISOString(),action:'system',message:'Reseteado por docente.'}]
+    });
+    await db.collection('parcial_cmms_locks').doc(c).delete().catch(()=>{});
+    showToast('✅ Reseteado y desbloqueado: CC ' + c);
+    await loadLockStatus();
+  } catch(e) {
+    console.error('resetData error:', e);
+    showToastError('❌ Error: ' + e.message);
+    if(btn){ btn.disabled=false; btn.textContent=orig; }
+  }
+}
+function showToastError(m){
+  const t=document.createElement('div');
+  t.className='toast';
+  t.style.background='#ef4444';
+  t.textContent=m;
+  document.getElementById('toastArea').appendChild(t);
+  setTimeout(()=>t.remove(),5000);
 }
 </script>
 </body>
