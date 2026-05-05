@@ -166,7 +166,7 @@ textarea.ans:focus{border-color:#3b82f6}
   <div class="big">Enviado</div>
   <div class="msg" id="rMsg"></div>
   <div style="margin-top:20px">
-    <a href="../../PRIMER CORTE/cmms-app/index.html" class="btn btn-p" style="text-decoration:none;display:inline-block;margin-top:0">🔧 Ir a MaintPro CMMS — Parte 2</a>
+    <a href="../../PRIMER CORTE/cmms-app/index.html?parcial=1" class="btn btn-p" style="text-decoration:none;display:inline-block;margin-top:0">🔧 Ir a MaintPro CMMS — Parte 2</a>
   </div>
 </div>
 </div>
@@ -202,6 +202,34 @@ const STU={
 let student=null,done=false,startTime,leaveCount=0,leaveTimer=null,annulled=false;
 const EXAM_MINUTES=40;
 const SHEET_URL="https://script.google.com/macros/s/AKfycbxxvnDXjr3Ss0oqOPXfpiDzxHViPtIguKFKhX7cxUj6adaQ-CBmMyWSdpyD2W8BmP5OCQ/exec";
+
+// === RESTORE SESSION (survives page reload) ===
+try {
+  const saved = sessionStorage.getItem('parcial_session');
+  if (saved) {
+    const s = JSON.parse(saved);
+    student = s.student;
+    startTime = s.startTime;
+    annulled = s.annulled || false;
+    done = s.done || false;
+    leaveCount = s.leaveCount || 0;
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('loginSection').style.display = 'none';
+      if (done) {
+        document.getElementById('examSection').style.display = 'block';
+        document.getElementById('a0').disabled = true;
+        document.getElementById('a1').disabled = true;
+        document.getElementById('subRow').style.display = 'none';
+        document.getElementById('resBox').classList.add('sh');
+      } else if (annulled) {
+        document.getElementById('examSection').style.display = 'block';
+      } else {
+        document.getElementById('examSection').style.display = 'block';
+        startTimer();
+      }
+    });
+  }
+} catch(e) { console.warn('Session restore error:', e); }
 
 // === ANTI-CHEAT ===
 document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -300,6 +328,8 @@ async function doLogin(){
 
   student={id:c,name:STU[c]};
   startTime=Date.now();
+  // Save session for page reload survival
+  sessionStorage.setItem('parcial_session', JSON.stringify({student, startTime, annulled:false, done:false, leaveCount:0}));
   document.getElementById('loginSection').style.display='none';
   document.getElementById('examSection').style.display='block';
   startTimer();
@@ -316,7 +346,8 @@ function updProgress(){
 
 // === SUBMIT ===
 function submitExam(){
-  if(annulled)return;
+  if(annulled){alert('⚠️ El parcial fue anulado por salir de la página.');return;}
+  if(!student){alert('⚠️ Sesión expirada. Recargue e ingrese su cédula.');return;}
   const a0=document.getElementById('a0').value.trim();
   const a1=document.getElementById('a1').value.trim();
   let filled=0;
@@ -329,6 +360,8 @@ function submitExam(){
   document.getElementById('a0').disabled=true;
   document.getElementById('a1').disabled=true;
   document.getElementById('subRow').style.display='none';
+  // Save final state
+  try { sessionStorage.setItem('parcial_session', JSON.stringify({student, startTime, annulled, done:true, leaveCount})); } catch(e){}
 
   const elapsed=Math.floor((Date.now()-startTime)/1000);
   const mins=Math.floor(elapsed/60),secs=elapsed%60;
@@ -338,6 +371,7 @@ function submitExam(){
   document.getElementById('resBox').classList.add('sh');
   document.getElementById('resBox').scrollIntoView({behavior:'smooth'});
   sendToSheet(false,'');
+  alert('✅ Respuestas enviadas correctamente. Ahora pase a la Parte 2: Práctica CMMS.');
 }
 
 // === GOOGLE SHEETS ===
