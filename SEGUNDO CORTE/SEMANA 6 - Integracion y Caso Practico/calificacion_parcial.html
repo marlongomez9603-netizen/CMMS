@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calificación & Admin — Parcial CMMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0e17;color:#f1f5f9;padding:20px}
+h1{font-size:1.5rem;margin-bottom:4px}
+h1 span{background:linear-gradient(135deg,#3b82f6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.1rem;margin:24px 0 10px;color:#94a3b8;border-bottom:1px solid #1e293b;padding-bottom:6px}
+.sub{color:#94a3b8;font-size:.85rem;margin-bottom:20px}
+.btn{border:none;padding:10px 24px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s}
+.btn:hover{opacity:.85}
+.btn-p{background:linear-gradient(135deg,#3b82f6,#06b6d4);color:#fff}
+.btn-s{background:#1a2332;border:1px solid #1e293b;color:#94a3b8}
+.btn-d{background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff}
+.btn-warn{background:rgba(249,115,22,.2);border:1px solid rgba(249,115,22,.4);color:#f97316}
+.btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+.btn-sm{padding:5px 12px;font-size:.72rem;border-radius:6px}
+.actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;margin-bottom:16px}
+.tab{background:#1a2332;border:1px solid #1e293b;color:#94a3b8;padding:8px 18px;border-radius:8px 8px 0 0;cursor:pointer;font-weight:600;font-size:.82rem}
+.tab.active{background:#111827;color:#3b82f6;border-bottom-color:#111827}
+.panel{display:none}.panel.active{display:block}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{background:#1a2332;color:#94a3b8;padding:10px 8px;text-align:left;font-weight:600;border-bottom:1px solid #1e293b;position:sticky;top:0}
+td{padding:8px;border-bottom:1px solid #111827;vertical-align:top}
+tr:hover{background:rgba(59,130,246,.04)}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.7rem;font-weight:700}
+.b-ok{background:rgba(16,185,129,.15);color:#10b981}
+.b-warn{background:rgba(249,115,22,.15);color:#f97316}
+.b-err{background:rgba(239,68,68,.15);color:#ef4444}
+.b-locked{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.b-open{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+.score{font-size:1.1rem;font-weight:800}.score.pass{color:#10b981}.score.fail{color:#ef4444}
+.detail{font-size:.72rem;color:#64748b;margin-top:2px}
+.loading{text-align:center;padding:40px;color:#94a3b8}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.scard{background:#1a2332;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center}
+.scard .v{font-size:1.4rem;font-weight:800}.scard .l{font-size:.72rem;color:#94a3b8;margin-top:2px}
+.admin-card{background:#1a2332;border:1px solid #1e293b;border-radius:10px;padding:14px;display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.admin-card .name{font-weight:600;font-size:.88rem;flex:1}.admin-card .cc{color:#64748b;font-size:.75rem}
+.admin-card .status{min-width:80px;text-align:center}.admin-card .btns{display:flex;gap:6px}
+.toast{position:fixed;bottom:20px;right:20px;background:#10b981;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;font-size:.85rem;z-index:9999;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<h1>📊 Panel Docente — <span>Parcial CMMS</span></h1>
+<p class="sub">Calificación automática + Administración de accesos</p>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('grading')">📊 Calificación</div>
+  <div class="tab" onclick="switchTab('admin')">🔑 Admin Accesos</div>
+</div>
+
+<div class="panel active" id="panelGrading">
+<div class="actions">
+  <button class="btn btn-p" onclick="runGrading()">🔍 Ejecutar Calificación</button>
+  <button class="btn btn-s" onclick="exportCSV()">📥 Exportar CSV</button>
+</div>
+<div class="summary" id="summaryCards"></div>
+<div id="results"><div class="loading">Presione "Ejecutar Calificación" para comenzar</div></div>
+</div>
+
+<div class="panel" id="panelAdmin">
+<p style="color:#94a3b8;font-size:.85rem;margin-bottom:16px">
+  <b>Desbloquear:</b> permite que el estudiante vuelva a ingresar/enviar.<br>
+  <b>Reset:</b> borra TODOS sus datos CMMS y lo deja en cero + desbloquea.
+</p>
+<div class="actions">
+  <button class="btn btn-d" onclick="loadLockStatus()">🔄 Cargar Estado de Locks</button>
+</div>
+<h2>📝 Parte Teórica</h2>
+<div id="adminTeoria"><div class="loading">Cargue el estado primero</div></div>
+<h2>🔧 Parte CMMS</h2>
+<div id="adminCMMS"><div class="loading">Cargue el estado primero</div></div>
+</div>
+
+<div id="toastArea"></div>
+
+<script>
+const FB={apiKey:"AIzaSyA1opQnr1pUyNM2vlB1dy08CvBhlw1t5FU",authDomain:"maintpro-cmms-d5e71.firebaseapp.com",projectId:"maintpro-cmms-d5e71",storageBucket:"maintpro-cmms-d5e71.firebasestorage.app",messagingSenderId:"955471872147",appId:"1:955471872147:web:36b9ed3309d788a3c08d66"};
+firebase.initializeApp(FB);
+const db=firebase.firestore();
+
+const STUDENTS=[
+  {cedula:'1097183856',nombre:'ACUÑA MENESES, DANIEL EDUARDO'},
+  {cedula:'1096801641',nombre:'AGAMEZ SANTOS, JORGE ANDRES'},
+  {cedula:'1097183668',nombre:'AMAYA DURAN, ARNULFO ELIAS'},
+  {cedula:'1096200627',nombre:'DIAZ MENDOZA, JOSE LUIS'},
+  {cedula:'1096246370',nombre:'ESCOBAR MOSCOTE, LEONARDO'},
+  {cedula:'1051634628',nombre:'GAMARRA CAMPO, OSCAR DAMIAN'},
+  {cedula:'1096802843',nombre:'GRIMALDO JARAMILLO, JUAN SEBASTIAN'},
+  {cedula:'1102373572',nombre:'HERNÁNDEZ PARRA, LUIS EDUARDO'},
+  {cedula:'1005186689',nombre:'HOYOS TOLOZA, JHORJAN DANIEL'},
+  {cedula:'1051634775',nombre:'MEJIA MIELES, KEINER ANDRES'},
+  {cedula:'1005185382',nombre:'OSPINO MONTOYA, HILLARY DANIELA'},
+  {cedula:'1005221431',nombre:'SALAS GALVAN, JHOEL FABIAN'},
+  {cedula:'1097184508',nombre:'SEPULVEDA RUEDA, XAVI DAMEK'},
+  {cedula:'1096225235',nombre:'SUAREZ ROVIRA, YEISON DONATO'},
+  {cedula:'1052954359',nombre:'TORRES VANEGAS, LUIS ALEXANDER'},
+  {cedula:'1097783299',nombre:'VARGAS RIVERA, SAMUEL'},
+  {cedula:'1039681626',nombre:'VELEÑO JIMENEZ, SEBASTIAN'},
+  {cedula:'1005462180',nombre:'VILLAMIZAR MEJIA, MAICOL DANIEL'},
+  {cedula:'1095800511',nombre:'YURANI GOMEZ, ANGELICA YURANI'}
+];
+
+let gradingResults=[];
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',i===(t==='grading'?0:1)));
+  document.getElementById('panelGrading').classList.toggle('active',t==='grading');
+  document.getElementById('panelAdmin').classList.toggle('active',t==='admin');
+}
+function showToast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.getElementById('toastArea').appendChild(t);setTimeout(()=>t.remove(),3000);}
+function round(n){return Math.round(n*10)/10;}
+
+// ════════════════════════════════════
+//  CALIFICACIÓN AUTOMÁTICA
+// ════════════════════════════════════
+async function runGrading(){
+  document.getElementById('results').innerHTML='<div class="loading">⏳ Consultando Firestore...</div>';
+  gradingResults=[];
+  for(const s of STUDENTS){
+    try{
+      const snap=await db.collection('students').doc(s.cedula).get();
+      if(!snap.exists){gradingResults.push({...s,error:'Sin datos',total:0,nota60:0});continue;}
+      gradingResults.push(gradeStudent(s,snap.data()));
+    }catch(e){gradingResults.push({...s,error:e.message,total:0,nota60:0});}
+  }
+  renderResults();
+}
+
+function gradeStudent(student,data){
+  const r={...student,details:[],total:0};
+  const assets=data.assets||[];
+  const plans=data.preventivePlans||[];
+  const wos=data.workOrders||[];
+  const personnel=data.personnel||[];
+
+  // ═══ T1: 5 ACTIVOS (15 pts) ═══
+  // 2 pts por cada activo creado (hasta 10) + 5 pts por calidad de campos
+  let t1=0;
+  t1 += Math.min(assets.length, 5) * 2; // 2 pts c/u, máx 10
+
+  // Calidad: promedio de campos completos
+  let fieldTotal=0;
+  assets.slice(0,5).forEach(a=>{
+    let f=0;
+    if(a.name&&a.name.length>2)f++;
+    if(a.code&&a.code.length>1)f++;
+    if(a.category)f++;
+    if(a.brand)f++;
+    if(a.model)f++;
+    if(a.location)f++;
+    if(a.criticality)f++;
+    fieldTotal+=f;
+  });
+  const avgF=assets.length>0?fieldTotal/Math.min(assets.length,5):0;
+  t1 += round(avgF/7*5); // hasta 5 pts por calidad
+  t1=Math.min(t1,15);
+  r.details.push({task:'T1: Activos',pts:round(t1),max:15,status:t1>=12?'ok':t1>=7?'warn':'err',
+    note:`${assets.length}/5 activos. Campos prom: ${avgF.toFixed(1)}/7`});
+
+  // ═══ T2: 5 TÉCNICOS (5 pts) ═══
+  // 1 pt por técnico creado (hasta 5)
+  let t2=0;
+  t2 += Math.min(personnel.length, 5); // 1 pt c/u
+  personnel.slice(0,5).forEach(p=>{
+    // Bonus por datos completos (no sumable más allá del máximo)
+  });
+  t2=Math.min(t2,5);
+  r.details.push({task:'T2: Técnicos',pts:round(t2),max:5,status:t2>=5?'ok':t2>=3?'warn':'err',
+    note:`${personnel.length}/5 técnicos`});
+
+  // ═══ T3: 5 PLANES PM (20 pts) ═══
+  // Se requiere 1 plan por equipo, cada uno con ≥3 tareas
+  // 4 pts por cada plan completo (hasta 20)
+  let t3=0;
+  const plansScored=Math.min(plans.length, 5);
+  plans.slice(0,5).forEach(p=>{
+    let planPts=0;
+    // Plan exists and has name
+    planPts+=1;
+    // Has frequency
+    if(p.frequency&&parseInt(p.frequency)>0)planPts+=0.5;
+    // Has assigned technician
+    if(p.assignedTo)planPts+=0.5;
+    // Tasks: count them
+    const tasks=(p.tasks||'').split('|').filter(t=>t.trim().length>2);
+    if(tasks.length>=3)planPts+=2; // Full marks for ≥3 tasks
+    else if(tasks.length>=2)planPts+=1.5;
+    else if(tasks.length>=1)planPts+=0.5;
+    t3+=Math.min(planPts,4);
+  });
+  t3=Math.min(t3,20);
+  // Count total tasks across all plans
+  const totalTasks=plans.reduce((s,p)=>{
+    return s+(p.tasks||'').split('|').filter(t=>t.trim().length>2).length;
+  },0);
+  r.details.push({task:'T3: Planes PM',pts:round(t3),max:20,status:t3>=16?'ok':t3>=10?'warn':'err',
+    note:`${plans.length}/5 planes. Tareas total: ${totalTasks}`});
+
+  // ═══ T4: 5 OTs CORRECTIVAS (20 pts) ═══
+  // Se requiere 1 OT por equipo, tipo correctivo, por detección de avería
+  // 4 pts por cada OT correctiva completa (hasta 20)
+  let t4=0;
+  const correctiveWOs=wos.filter(w=>w.type==='correctivo');
+  const scored=Math.min(correctiveWOs.length, 5);
+  correctiveWOs.slice(0,5).forEach(w=>{
+    let woPts=0;
+    woPts+=1; // OT exists
+    if(w.description&&w.description.length>10)woPts+=1; // Good description
+    if(w.assetId)woPts+=0.5; // Linked to asset
+    if(w.assignedTo)woPts+=0.5; // Assigned technician
+    if(w.priority)woPts+=0.5; // Has priority
+    if(w.status==='completada'||w.status==='en_progreso')woPts+=0.5; // Being worked on
+    t4+=Math.min(woPts,4);
+  });
+  t4=Math.min(t4,20);
+  r.details.push({task:'T4: OTs',pts:round(t4),max:20,status:t4>=16?'ok':t4>=10?'warn':'err',
+    note:`${correctiveWOs.length}/5 OTs correctivas. Total OTs: ${wos.length}`});
+
+  r.total=round(t1+t2+t3+t4);
+  r.nota60=r.total; // Ya sobre 60 (15+5+20+20=60)
+  return r;
+}
+
+function renderResults(){
+  if(!gradingResults.length)return;
+  const passed=gradingResults.filter(r=>r.nota60>=36).length;
+  const avg=gradingResults.reduce((s,r)=>s+(r.nota60||0),0)/gradingResults.length;
+  const submitted=gradingResults.filter(r=>!r.error).length;
+
+  document.getElementById('summaryCards').innerHTML=`
+    <div class="scard"><div class="v">${STUDENTS.length}</div><div class="l">Estudiantes</div></div>
+    <div class="scard"><div class="v">${submitted}</div><div class="l">Con Datos</div></div>
+    <div class="scard"><div class="v" style="color:#10b981">${passed}</div><div class="l">Aprobados (≥60%)</div></div>
+    <div class="scard"><div class="v">${avg.toFixed(1)}/60</div><div class="l">Promedio</div></div>`;
+
+  let html=`<table><thead><tr>
+    <th>#</th><th>Estudiante</th><th>CC</th>
+    <th>Activos (15)</th><th>Técnicos (5)</th><th>PM (20)</th><th>OTs (20)</th>
+    <th>TOTAL /60</th><th>Obs</th>
+  </tr></thead><tbody>`;
+
+  gradingResults.sort((a,b)=>(b.nota60||0)-(a.nota60||0));
+  gradingResults.forEach((r,i)=>{
+    if(r.error){
+      html+=`<tr><td>${i+1}</td><td>${r.nombre}</td><td style="color:#64748b">${r.cedula}</td>
+        <td colspan="5" style="color:#ef4444">${r.error}</td><td></td></tr>`;
+      return;
+    }
+    html+=`<tr><td>${i+1}</td>
+      <td style="font-weight:600">${r.nombre.split(',').reverse().join(' ').trim()}</td>
+      <td style="color:#64748b;font-size:.72rem">${r.cedula}</td>`;
+    r.details.forEach(t=>html+=`<td><span class="badge b-${t.status}">${t.pts}/${t.max}</span><div class="detail">${t.note}</div></td>`);
+    html+=`<td><span class="score ${r.nota60>=36?'pass':'fail'}">${r.nota60}</span></td>
+      <td style="font-size:.72rem;color:#94a3b8">${r.nota60>=54?'Excelente':r.nota60>=42?'Bueno':r.nota60>=36?'Aceptable':'Insuficiente'}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('results').innerHTML=html;
+}
+
+function exportCSV(){
+  if(!gradingResults.length){alert('Ejecute primero.');return;}
+  let csv='Nombre,Cedula,T1_Activos_15,T2_Tecnicos_5,T3_PlanesPM_20,T4_OTs_20,Nota_60,Obs\n';
+  gradingResults.forEach(r=>{
+    const d=r.details||[];
+    csv+=`"${r.nombre}",${r.cedula},${d[0]?.pts||0},${d[1]?.pts||0},${d[2]?.pts||0},${d[3]?.pts||0},${r.nota60||0},"${r.error||''}"\n`;
+  });
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='calificacion_parcial_cmms.csv';a.click();
+}
+
+// ════════════════════════════════════
+//  ADMIN LOCKS
+// ════════════════════════════════════
+async function loadLockStatus(){
+  document.getElementById('adminTeoria').innerHTML='<div class="loading">Cargando...</div>';
+  document.getElementById('adminCMMS').innerHTML='<div class="loading">Cargando...</div>';
+
+  let teoriaHtml='';
+  for(const s of STUDENTS){
+    const snap=await db.collection('parcial_teorico_locks').doc(s.cedula).get();
+    const locked=snap.exists; const d=locked?snap.data():{};
+    teoriaHtml+=`<div class="admin-card">
+      <div class="name">${s.nombre.split(',').reverse().join(' ').trim()}<br><span class="cc">CC ${s.cedula}</span></div>
+      <div class="status"><span class="badge ${locked?'b-locked':'b-open'}">${locked?'🔒 Bloqueado':'🟢 Disponible'}</span>
+        ${locked?`<div class="detail">${d.loginTime||''}</div>`:''}</div>
+      <div class="btns">${locked?`<button class="btn btn-warn btn-sm" onclick="unlockTeoria('${s.cedula}')">🔓 Desbloquear</button>`:''}</div>
+    </div>`;
+  }
+  document.getElementById('adminTeoria').innerHTML=teoriaHtml;
+
+  let cmmsHtml='';
+  for(const s of STUDENTS){
+    const snap=await db.collection('parcial_cmms_locks').doc(s.cedula).get();
+    const locked=snap.exists; const d=locked?snap.data():{};
+    cmmsHtml+=`<div class="admin-card">
+      <div class="name">${s.nombre.split(',').reverse().join(' ').trim()}<br><span class="cc">CC ${s.cedula}</span></div>
+      <div class="status"><span class="badge ${locked?'b-locked':'b-open'}">${locked?'🔒 Enviado':'🟢 Disponible'}</span>
+        ${locked?`<div class="detail">${d.submitTime||''}</div>`:''}</div>
+      <div class="btns">
+        ${locked?`<button class="btn btn-warn btn-sm" onclick="unlockCMMS('${s.cedula}')">🔓 Desbloquear</button>`:''}
+        <button class="btn btn-danger btn-sm" onclick="resetData('${s.cedula}')">🗑️ Reset</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('adminCMMS').innerHTML=cmmsHtml;
+}
+
+async function unlockTeoria(c){
+  if(!confirm(`¿Desbloquear TEÓRICA de ${c}?`))return;
+  await db.collection('parcial_teorico_locks').doc(c).delete();
+  showToast(`✅ Teórica desbloqueada: ${c}`);loadLockStatus();
+}
+async function unlockCMMS(c){
+  if(!confirm(`¿Desbloquear CMMS de ${c}?`))return;
+  await db.collection('parcial_cmms_locks').doc(c).delete();
+  showToast(`✅ CMMS desbloqueado: ${c}`);loadLockStatus();
+}
+async function resetData(c){
+  if(!confirm(`⚠️ ¿RESETEAR datos CMMS de ${c}? Borra TODO.`))return;
+  if(!confirm(`SEGUNDA CONFIRMACIÓN: ¿Borrar TODO de ${c}?`))return;
+  await db.collection('students').doc(c).set({
+    companies:[{id:`company_${c}`,name:'Empresa Reset',sector:'',location:'',created:new Date().toISOString().split('T')[0]}],
+    assets:[],workOrders:[],preventivePlans:[],inventory:[],personnel:[],
+    purchases:[],inventoryMovements:[],faultReports:[],injectedAlerts:[],notifications:[],
+    activityLog:[{id:'log_reset',companyId:`company_${c}`,timestamp:new Date().toISOString(),action:'system',message:'Reseteado por docente.'}]
+  });
+  await db.collection('parcial_cmms_locks').doc(c).delete().catch(()=>{});
+  showToast(`✅ Reseteado y desbloqueado: ${c}`);loadLockStatus();
+}
+</script>
+</body>
+</html>
