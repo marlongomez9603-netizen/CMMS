@@ -9,7 +9,7 @@
 // 5. Copia la URL y reemplázala en parcial_segundo_corte.html
 // ================================================================
 
-const SHEET_ID = "1RjDnWyB16_eqnrZGMgH_MWoLoYCG-cITCPJj53hr-6w";
+const SHEET_ID = "11O-0d0MQnG5qOs_CnW6xLQmMgQK8BP5gxT20oWCiMRk";
 
 // ID de la carpeta "parcial" en Google Drive
 // INSTRUCCIÓN: Crea una carpeta llamada "parcial" en tu Drive y pega su ID aquí
