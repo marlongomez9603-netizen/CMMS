@@ -102,6 +102,31 @@ class App {
             if (store && store.stopListening) store.stopListening();
             auth.logout(); store = null; this.technicianMode = false; this.showLogin();
         };
+
+        // Setup mobile sidebar toggling
+        const toggleBtn = document.getElementById('btnMenuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const closeBtn = document.getElementById('btnSidebarClose');
+
+        if (toggleBtn) {
+            toggleBtn.onclick = () => {
+                sidebar.classList.toggle('open');
+                if (overlay) overlay.classList.toggle('active');
+            };
+        }
+        if (overlay) {
+            overlay.onclick = () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            };
+        }
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('active');
+            };
+        }
     }
 
     toggleTechnicianMode() {
@@ -121,6 +146,8 @@ class App {
             nav.querySelectorAll('.nav-section-title').forEach(n => n.style.display = 'none');
             // Close sidebar on mobile after switching
             document.getElementById('sidebar').classList.remove('open');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (overlay) overlay.classList.remove('active');
             this.navigate('technician');
         } else {
             btn.innerHTML = '<i class="fas fa-hard-hat"></i> Vista Técnico';
@@ -144,6 +171,8 @@ class App {
 
     navigate(view) {
         document.getElementById('sidebar').classList.remove('open');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (overlay) overlay.classList.remove('active');
         if (!store && view !== 'adminRanking') {
             if (auth.isAdmin()) { this.navigate('adminRanking'); return; }
             return;

@@ -50,6 +50,9 @@
   <!-- ===== APP CONTAINER ===== -->
   <div id="appContainer" style="display:none">
 
+    <!-- Sidebar Overlay for mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
     <!-- Sidebar -->
     <aside id="sidebar">
       <div class="sidebar-header">
@@ -58,6 +61,9 @@
           <div class="sidebar-title">MaintPro</div>
           <div class="sidebar-subtitle">CMMS v4.0</div>
         </div>
+        <button class="btn-sidebar-close" id="btnSidebarClose" title="Cerrar menú">
+          <i class="fas fa-xmark"></i>
+        </button>
       </div>
 
       <!-- User Info -->
@@ -136,7 +142,7 @@
     <div id="main-content">
       <header id="topbar">
         <div class="topbar-left">
-          <button class="btn btn-icon btn-menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+          <button class="btn btn-icon btn-menu-toggle" id="btnMenuToggle">
             <i class="fas fa-bars"></i>
           </button>
           <div>
