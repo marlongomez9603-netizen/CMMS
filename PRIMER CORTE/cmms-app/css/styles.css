@@ -3086,3 +3086,61 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
+/* ============================================
+   TABLET & MOBILE CUSTOM OPTIMIZATIONS
+   ============================================ */
+@media (max-width: 1024px) {
+  /* Hides current date on tablet/mobile topbar to avoid crowding */
+  #currentDate {
+    display: none !important;
+  }
+
+  /* Swipeable technician tabs on tablet and mobile */
+  .tech-view-tabs {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 16px !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  
+  .tech-tab {
+    flex-shrink: 0 !important;
+    padding: 8px 16px !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Vertical stack for technician weekly calendar on tablet and mobile */
+  .twc-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .twc-day {
+    min-height: auto !important;
+    padding-bottom: 8px !important;
+  }
+
+  .twc-events {
+    min-height: 40px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Tighten spacing on small phones */
+  #topbar {
+    padding: 0 8px !important;
+  }
+  .tech-tab {
+    padding: 6px 12px !important;
+    font-size: 0.78rem !important;
+  }
+  .tech-selector-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+

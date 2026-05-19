@@ -533,7 +533,7 @@ class App {
         }
     }
 
-    renderTechRequestsList() {
+     renderTechRequestsList() {
         const tbody = document.getElementById('techReqTableBody');
         if (!tbody) return;
         const requests = store.getWorkRequests();
@@ -548,12 +548,16 @@ class App {
             return `
             <tr>
                 <td>${this.fmtDate(r.requestDate)}</td>
-                <td><strong>${asset ? asset.name : 'Desconocido'}</strong><br><span style="font-size:0.75rem;color:var(--text-muted)">${asset ? asset.code : '—'}</span></td>
+                <td><strong style="cursor:pointer;color:var(--primary)" data-tech-view="${r.assetId}">${asset ? asset.name : 'Desconocido'}</strong><br><span style="font-size:0.75rem;color:var(--text-muted)">${asset ? asset.code : '—'}</span></td>
                 <td>${r.description || '—'}</td>
                 <td>${this.priorityBadge(r.priority)}</td>
                 <td><span class="badge badge-${statusCls[r.status]} badge-dot">${statusLabels[r.status]}</span></td>
             </tr>`;
         }).join('');
+
+        tbody.querySelectorAll('[data-tech-view]').forEach(el => el.addEventListener('click', () => {
+            this.showAssetDetailModal(el.dataset.techView);
+        }));
     }
 
     renderTechInventoryList() {
@@ -679,10 +683,10 @@ class App {
                 ${this.priorityBadge(w.priority)} ${injectedBadge}
                 <span class="tech-task-id">#${w.id.substring(0, 6).toUpperCase()}</span>
             </div>
-            <div class="tech-task-asset">
+            <div class="tech-task-asset" data-tech-view="${w.assetId}" style="cursor:pointer; transition: opacity var(--transition-fast);" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
                 <i class="fas fa-cog"></i>
-                <strong>${asset ? asset.name : 'Equipo desconocido'}</strong>
-                ${asset ? `<span style="font-size:0.75rem;color:var(--text-muted)">${asset.location}</span>` : ''}
+                <strong style="color:var(--primary)">${asset ? asset.name : 'Equipo desconocido'}</strong>
+                ${asset ? `<span style="font-size:0.75rem;color:var(--text-muted)">(${asset.location})</span>` : ''}
             </div>
             <div class="tech-task-desc">${w.description || '—'}</div>
             <div class="tech-task-meta">
@@ -693,7 +697,7 @@ class App {
             <div class="tech-task-actions">
                 ${w.status === 'pendiente' ? `<button class="btn btn-warning" data-tech-start="${w.id}"><i class="fas fa-play"></i> Iniciar</button>` : ''}
                 ${w.status === 'en_progreso' ? `<button class="btn btn-success" data-tech-complete="${w.id}"><i class="fas fa-check"></i> Completar</button>` : ''}
-                ${asset ? `<button class="btn btn-secondary" data-tech-view="${w.assetId}"><i class="fas fa-file-alt"></i> Manual</button>` : ''}
+                ${asset ? `<button class="btn btn-secondary" data-tech-view="${w.assetId}"><i class="fas fa-file-invoice"></i> Ficha / Historial</button>` : ''}
             </div>` : `<div class="tech-task-actions"><span style="color:var(--success)"><i class="fas fa-check-circle"></i> Completada el ${this.fmtDate(w.completedDate)}</span></div>`}
         </div>`;
     }
@@ -1979,13 +1983,13 @@ class App {
                 </div>
                 <div class="twc-events">
                     ${dayWOs.map(w => `
-                    <div class="twc-event twc-event--${typeColor[w.type] || 'info'}">
+                    <div class="twc-event twc-event--${typeColor[w.type] || 'info'}" data-tech-view="${w.assetId}" style="cursor:pointer">
                         <div class="twc-event-type">${typeLabel[w.type] || w.type}</div>
                         <div class="twc-event-name"><i class="fas fa-cog"></i> ${this.getAssetName(w.assetId)}</div>
                         <div>${this.statusBadge(w.status)}</div>
                     </div>`).join('')}
                     ${dayPMs.map(p => `
-                    <div class="twc-event twc-event--pm">
+                    <div class="twc-event twc-event--pm" data-tech-view="${p.assetId}" style="cursor:pointer">
                         <div class="twc-event-type"><i class="fas fa-wrench"></i> PM</div>
                         <div class="twc-event-name">${p.name}</div>
                         <div style="font-size:0.68rem;color:var(--text-muted)">${this.getAssetName(p.assetId)}</div>
@@ -2007,6 +2011,9 @@ class App {
         document.getElementById('twPrev')?.addEventListener('click', () => { this.techWeekOffset--; this.renderTechWeeklyCalendar(techId); });
         document.getElementById('twNext')?.addEventListener('click', () => { this.techWeekOffset++; this.renderTechWeeklyCalendar(techId); });
         document.getElementById('twNow')?.addEventListener('click',  () => { this.techWeekOffset = 0; this.renderTechWeeklyCalendar(techId); });
+        area.querySelectorAll('[data-tech-view]').forEach(b => b.addEventListener('click', () => {
+            this.showAssetDetailModal(b.dataset.techView);
+        }));
     }
 
     // ========================================================
