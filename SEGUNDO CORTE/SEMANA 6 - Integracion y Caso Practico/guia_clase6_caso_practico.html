@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Guía de Clase — Semana 6 · Caso Práctico CMMS</title>
+<style>
+@page{size:letter;margin:2cm 2.5cm}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:11pt;color:#1a1a2e;line-height:1.6;background:#fff}
+.page{max-width:720px;margin:0 auto;padding:20px}
+
+/* HEADER */
+.header{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1a3a6b;padding-bottom:12px;margin-bottom:16px}
+.header-logo{font-size:2rem}
+.header-text{flex:1}
+.header-text h1{font-size:13pt;font-weight:800;color:#1a3a6b;margin-bottom:2px}
+.header-text h2{font-size:10pt;font-weight:600;color:#444}
+.header-text p{font-size:8.5pt;color:#666}
+.header-right{text-align:right;font-size:8pt;color:#666;line-height:1.5}
+.header-right b{color:#1a3a6b}
+
+/* INFO BAR */
+.info-bar{background:#f0f4f8;border:1px solid #d0d7e0;border-radius:6px;padding:10px 14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:9pt}
+.info-bar .item{display:flex;gap:6px;align-items:center}
+.info-bar .label{color:#666;font-weight:600}
+.info-bar .value{color:#1a3a6b;font-weight:700}
+
+/* SECTIONS */
+h3{font-size:12pt;font-weight:800;color:#1a3a6b;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:8px}
+h4{font-size:10.5pt;font-weight:700;color:#2d4a7a;margin:12px 0 6px}
+p{margin-bottom:8px;text-align:justify}
+ul,ol{margin:4px 0 10px 20px}
+li{margin-bottom:4px}
+
+/* TIMELINE */
+.timeline{border-left:3px solid #1a3a6b;margin:8px 0 16px 8px;padding-left:16px}
+.tblock{position:relative;margin-bottom:14px;padding-bottom:10px;border-bottom:1px dashed #e2e8f0}
+.tblock:last-child{border-bottom:none}
+.tblock::before{content:'';position:absolute;left:-22px;top:4px;width:10px;height:10px;border-radius:50%;background:#1a3a6b}
+.tblock .time{font-size:9pt;font-weight:800;color:#fff;background:#1a3a6b;display:inline-block;padding:1px 8px;border-radius:4px;margin-bottom:4px}
+.tblock .title{font-size:10.5pt;font-weight:700;color:#2d4a7a;margin-bottom:3px}
+.tblock .desc{font-size:9.5pt;color:#444}
+
+/* TASKS TABLE */
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:9.5pt}
+th{background:#1a3a6b;color:#fff;padding:7px 10px;text-align:left;font-weight:700;font-size:8.5pt;text-transform:uppercase}
+td{padding:6px 10px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even){background:#f8fafc}
+.pts{font-weight:800;color:#1a3a6b;text-align:center}
+
+/* CHECKLIST */
+.checklist{list-style:none;margin-left:0;padding:0}
+.checklist li{padding:5px 0 5px 24px;position:relative;border-bottom:1px dotted #e2e8f0;font-size:9.5pt}
+.checklist li::before{content:'☐';position:absolute;left:0;font-size:12pt;color:#1a3a6b}
+
+/* RUBRIC */
+.rubric td{font-size:8.5pt;vertical-align:top}
+.rubric .level{font-weight:700;text-align:center}
+.rubric .ex{color:#059669}.rubric .bu{color:#2563eb}.rubric .ac{color:#d97706}.rubric .in{color:#dc2626}
+
+/* ALERT BOX */
+.alert{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:9pt}
+.alert b{color:#c2410c}
+.tip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:9pt}
+.tip b{color:#15803d}
+
+/* FOOTER */
+.footer{margin-top:20px;padding-top:10px;border-top:2px solid #1a3a6b;font-size:8pt;color:#666;display:flex;justify-content:space-between}
+
+@media print{.page{padding:0}.no-print{display:none}}
+</style></head><body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">⚙️</div>
+  <div class="header-text">
+    <h1>GUÍA DE ACTIVIDAD FORMATIVA</h1>
+    <h2>Caso Práctico Integrador — Sistemas CMMS</h2>
+    <p>Programa de Ingeniería Electromecánica · Instituto Universitario de la Paz — UNIPAZ</p>
+  </div>
+  <div class="header-right">
+    <b>Código:</b> 730502<br>
+    <b>Semana:</b> 6 de 8<br>
+    <b>Corte:</b> Segundo<br>
+    <b>Docente:</b> Ing. Marlon Gómez
+  </div>
+</div>
+
+<!-- INFO BAR -->
+<div class="info-bar">
+  <div class="item"><span class="label">Asignatura:</span><span class="value">Programación y Control del Mantenimiento</span></div>
+  <div class="item"><span class="label">Fecha:</span><span class="value">29 de abril de 2026</span></div>
+  <div class="item"><span class="label">Horario:</span><span class="value">8:15 a.m. — 9:45 a.m.</span></div>
+  <div class="item"><span class="label">Duración:</span><span class="value">90 minutos</span></div>
+  <div class="item"><span class="label">Modalidad:</span><span class="value">Presencial — Sala de cómputo</span></div>
+  <div class="item"><span class="label">Herramienta:</span><span class="value">MaintPro CMMS v4.1</span></div>
+</div>
+
+<!-- OBJETIVO -->
+<h3>🎯 Objetivo de Aprendizaje</h3>
+<p>Al finalizar la sesión, el estudiante será capaz de <b>gestionar el ciclo completo de mantenimiento</b> en un sistema CMMS: desde el registro de activos, la creación de planes preventivos, la gestión de órdenes de trabajo correctivas, hasta el análisis de indicadores clave (KPIs) para la toma de decisiones.</p>
+
+<!-- COMPETENCIAS -->
+<h3>📋 Competencias Evaluadas</h3>
+<ul>
+  <li><b>Saber:</b> Identificar módulos, flujos y KPIs de un sistema CMMS.</li>
+  <li><b>Saber Hacer:</b> Operar el CMMS para registrar activos, crear OTs, gestionar inventario y analizar dashboards.</li>
+  <li><b>Saber Ser:</b> Trabajar de forma autónoma, organizada y bajo presión de tiempo.</li>
+</ul>
+
+<!-- CRONOGRAMA -->
+<h3>⏱️ Cronograma de la Sesión (90 min)</h3>
+<div class="timeline">
+  <div class="tblock">
+    <span class="time">8:15 — 8:20</span>
+    <div class="title">Apertura y Contextualización (5 min)</div>
+    <div class="desc">El docente presenta el caso práctico: "Usted ha sido contratado como Jefe de Mantenimiento de una planta industrial. Al llegar, encuentra que todo se gestionaba en Excel. Su misión: implementar el CMMS." Se explican las 6 tareas y la mecánica del ranking.</div>
+  </div>
+  <div class="tblock">
+    <span class="time">8:20 — 8:40</span>
+    <div class="title">Fase 1 — Quiz Evaluativo (20 min)</div>
+    <div class="desc">Los estudiantes ingresan al quiz en línea con su número de cédula. 13 preguntas de selección múltiple sobre planificación, preventivo, correctivo, CMMS y KPIs. Las respuestas se registran automáticamente en Google Sheets.</div>
+  </div>
+  <div class="tblock">
+    <span class="time">8:40 — 9:30</span>
+    <div class="title">Fase 2 — Caso Práctico en MaintPro CMMS (50 min)</div>
+    <div class="desc">Actividad individual. Cada estudiante ejecuta las 6 tareas del caso integrador en el CMMS. El docente verifica en tiempo real y actualiza el ranking proyectado. <b>Los 5 primeros en completar todas las tareas obtienen puntos bonus en el quiz.</b></div>
+  </div>
+  <div class="tblock">
+    <span class="time">9:30 — 9:45</span>
+    <div class="title">Cierre y Retroalimentación (15 min)</div>
+    <div class="desc">Se revela el ranking final, se entregan los bonus. El docente analiza los errores comunes en el quiz y refuerza los conceptos clave de cara al parcial del segundo corte.</div>
+  </div>
+</div>
+
+<!-- CASO PRACTICO -->
+<h3>🏭 Caso Práctico — Instrucciones para el Estudiante</h3>
+
+<div class="alert"><b>📌 Escenario:</b> Usted es el nuevo Jefe de Mantenimiento de una planta de producción. La gestión de mantenimiento se hacía manualmente. Su primera tarea es implementar el CMMS MaintPro para los 5 activos críticos de su planta.</div>
+
+<h4>Tareas a Completar</h4>
+<table>
+  <thead><tr><th>#</th><th>Tarea</th><th>Descripción</th><th>Pts</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><b>Fichas de Activos</b></td><td>Verificar que los 5 activos tengan: nombre, ubicación, sistema, marca/modelo, fecha de instalación y estado actualizado.</td><td class="pts">10</td></tr>
+    <tr><td>2</td><td><b>Planes Preventivos</b></td><td>Crear al menos <b>3 planes</b> de mantenimiento preventivo. Cada plan debe tener: frecuencia (semanal/mensual/trimestral), tipo (TBM o CBM) y un checklist con mínimo <b>4 tareas</b> (ej: inspección visual, lubricación, medición, limpieza).</td><td class="pts">20</td></tr>
+    <tr><td>3</td><td><b>OTs Correctivas</b></td><td>Crear y gestionar <b>2 órdenes de trabajo correctivas</b>: una de prioridad <b>Alta</b> y una de <b>Emergencia</b>. Asignar técnico, registrar tiempo de reparación y cerrar como "Completada".</td><td class="pts">25</td></tr>
+    <tr><td>4</td><td><b>Exportar PDF</b></td><td>Seleccionar una OT completada y exportarla como <b>PDF</b>. Verificar que incluya: datos del activo, descripción del trabajo, costos y campos de firma.</td><td class="pts">10</td></tr>
+    <tr><td>5</td><td><b>Inventario</b></td><td>Registrar al menos <b>1 movimiento de salida</b> de repuestos. Si el stock queda por debajo del mínimo, generar una <b>solicitud de compra</b>.</td><td class="pts">15</td></tr>
+    <tr><td>6</td><td><b>KPIs en Dashboard</b></td><td>Ir al Dashboard y verificar los indicadores: <b>MTTR, MTBF, Disponibilidad y CPM</b>. Si la disponibilidad es ≥85% y CPM ≥70%, está en meta. Si no, justificar por qué.</td><td class="pts">20</td></tr>
+  </tbody>
+</table>
+
+<div class="tip"><b>⭐ Bonus (+10 pts):</b> Si el docente inyecta una falla sorpresa desde el panel admin y usted la detecta y crea la OT en menos de 5 minutos, gana puntos extra.</div>
+
+<!-- CHECKLIST DEL ESTUDIANTE -->
+<h3>✅ Checklist de Verificación</h3>
+<p><i>Marque cada ítem cuando lo haya completado:</i></p>
+<ul class="checklist">
+  <li>Ingresé al CMMS con mis credenciales</li>
+  <li>Revisé y completé las fichas de mis 5 activos</li>
+  <li>Creé 3 planes preventivos con checklist de ≥4 tareas cada uno</li>
+  <li>Creé una OT correctiva de prioridad Alta y la cerré</li>
+  <li>Creé una OT de Emergencia, la asigné y la cerré</li>
+  <li>Exporté al menos 1 OT como PDF</li>
+  <li>Registré un movimiento de salida en inventario</li>
+  <li>Verifiqué los KPIs en el Dashboard</li>
+  <li>Confirmé que mi Disponibilidad está ≥85% o justifiqué</li>
+</ul>
+
+<!-- RUBRICA -->
+<h3>📊 Rúbrica de Evaluación (100 pts)</h3>
+<table class="rubric">
+  <thead><tr><th>Criterio</th><th>Excelente (100%)</th><th>Bueno (75%)</th><th>Aceptable (50%)</th><th>Insuficiente (0%)</th></tr></thead>
+  <tbody>
+    <tr><td><b>Fichas Activos</b> (10)</td><td class="ex">5/5 completos con todos los campos</td><td class="bu">3-4 completos</td><td class="ac">1-2 completos</td><td class="in">Ninguno revisado</td></tr>
+    <tr><td><b>Planes PM</b> (20)</td><td class="ex">3+ planes, checklist ≥4 tareas</td><td class="bu">2 planes completos</td><td class="ac">1 plan básico</td><td class="in">No creó planes</td></tr>
+    <tr><td><b>OTs Correctivas</b> (25)</td><td class="ex">2 OTs cerradas con datos completos</td><td class="bu">2 creadas pero parciales</td><td class="ac">Solo 1 OT</td><td class="in">No creó OTs</td></tr>
+    <tr><td><b>PDF Export</b> (10)</td><td class="ex">PDF con todos los datos</td><td class="bu">PDF con datos parciales</td><td class="ac">Intentó sin éxito</td><td class="in">No exportó</td></tr>
+    <tr><td><b>Inventario</b> (15)</td><td class="ex">Movimiento + solicitud de compra</td><td class="bu">Solo movimiento registrado</td><td class="ac">Ingresó al módulo</td><td class="in">No lo usó</td></tr>
+    <tr><td><b>KPIs</b> (20)</td><td class="ex">En meta + análisis escrito</td><td class="bu">Fuera de meta con justificación</td><td class="ac">Verificó sin análisis</td><td class="in">No revisó Dashboard</td></tr>
+  </tbody>
+</table>
+
+<!-- RECURSOS -->
+<h3>🔗 Recursos</h3>
+<table>
+  <tr><td><b>MaintPro CMMS</b></td><td>https://marlongomez9603-netizen.github.io/Programacion-de-Mantenimiento/</td></tr>
+  <tr><td><b>Quiz Segundo Corte</b></td><td>https://marlongomez9603-netizen.github.io/Programacion-de-Mantenimiento/quiz_segundo_corte.html</td></tr>
+  <tr><td><b>Ranking en Vivo</b></td><td>ranking_cmms.html (proyectado por el docente)</td></tr>
+</table>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>UNIPAZ — Ingeniería Electromecánica · Programación y Control del Mantenimiento</span>
+  <span>Semana 6 — Segundo Corte · 2026-I</span>
+</div>
+
+</div>
+</body></html>

@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clase 5 — Sistemas CMMS: Gestión Computarizada del Mantenimiento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --bg-card-hover: #1f2b3d;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
+            --gradient-blue: linear-gradient(135deg, #3b82f6, #06b6d4);
+            --gradient-green: linear-gradient(135deg, #10b981, #06b6d4);
+            --gradient-orange: linear-gradient(135deg, #f59e0b, #ef4444);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6, #ec4899);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ── Navigation ── */
+        .nav-bar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 56px;
+            background: rgba(10, 14, 23, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 12px;
+            font-weight: 700; font-size: 0.95rem;
+        }
+        .nav-brand span { 
+            background: var(--gradient-blue); -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+        .nav-controls { display: flex; align-items: center; gap: 16px; }
+        .nav-counter {
+            background: var(--bg-card); padding: 6px 14px; border-radius: 20px;
+            font-size: 0.8rem; color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .nav-btn {
+            width: 36px; height: 36px; border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card); color: var(--text-primary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ── Progress Bar ── */
+        .progress-bar {
+            position: fixed; top: 56px; left: 0; right: 0;
+            height: 3px; background: var(--border-color); z-index: 999;
+        }
+        .progress-fill {
+            height: 100%; background: var(--gradient-blue);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Slide Container ── */
+        .slides-container {
+            position: absolute; top: 59px; bottom: 0; left: 0; right: 0;
+            overflow: hidden;
+        }
+        .slide {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 48px 80px;
+            opacity: 0;
+            transform: translateX(60px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            overflow-y: auto;
+        }
+        .slide.active {
+            opacity: 1; transform: translateX(0); pointer-events: all;
+        }
+        .slide.prev {
+            opacity: 0; transform: translateX(-60px);
+        }
+
+        /* ── Slide Styles ── */
+        .slide-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 20px; width: fit-content;
+        }
+        .tag-teoria { background: rgba(59,130,246,0.15); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.3); }
+        .tag-practica { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+        .tag-actividad { background: rgba(245,158,11,0.15); color: var(--accent-orange); border: 1px solid rgba(245,158,11,0.3); }
+        .tag-titulo { background: rgba(139,92,246,0.15); color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.3); }
+
+        h1 {
+            font-size: 2.8rem; font-weight: 800; line-height: 1.15;
+            margin-bottom: 16px;
+        }
+        h1 .gradient { 
+            background: var(--gradient-blue); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h2 {
+            font-size: 2rem; font-weight: 700; margin-bottom: 14px; line-height: 1.2;
+        }
+        h3 {
+            font-size: 1.3rem; font-weight: 600; margin-bottom: 10px;
+            color: var(--accent-cyan);
+        }
+        .subtitle {
+            font-size: 1.15rem; color: var(--text-secondary); line-height: 1.7;
+            max-width: 800px; margin-bottom: 28px;
+        }
+
+        /* ── Cards Grid ── */
+        .cards-grid {
+            display: grid; gap: 16px; margin-top: 16px;
+        }
+        .cards-2 { grid-template-columns: 1fr 1fr; }
+        .cards-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .cards-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 20px;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(59,130,246,0.1);
+        }
+        .card-icon {
+            font-size: 2rem; margin-bottom: 12px; display: block;
+        }
+        .card h4 {
+            font-size: 1rem; font-weight: 600; margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .card p, .card li {
+            font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;
+        }
+        .card ul { list-style: none; padding: 0; }
+        .card ul li::before { content: "→ "; color: var(--accent-cyan); font-weight: 600; }
+
+        /* ── Feature Cards (compact) ── */
+        .module-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 16px 20px;
+            display: flex; align-items: flex-start; gap: 14px;
+            transition: all 0.3s;
+        }
+        .module-card:hover { border-color: var(--accent-blue); }
+        .module-icon {
+            font-size: 1.6rem; min-width: 36px; text-align: center;
+            padding-top: 2px;
+        }
+        .module-info h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+        .module-info p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* ── Comparison Table ── */
+        .comparison-table {
+            width: 100%; border-collapse: collapse; margin-top: 16px;
+            font-size: 0.9rem;
+        }
+        .comparison-table th {
+            background: var(--bg-card);
+            padding: 12px 16px; text-align: left;
+            font-weight: 600; border-bottom: 2px solid var(--accent-blue);
+        }
+        .comparison-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .comparison-table tr:hover td { background: rgba(59,130,246,0.05); }
+        .green { color: var(--accent-green); font-weight: 600; }
+        .red { color: var(--accent-red); font-weight: 600; }
+
+        /* ── Timeline ── */
+        .timeline { margin-top: 16px; }
+        .timeline-item {
+            display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start;
+        }
+        .timeline-dot {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+            color: white;
+        }
+        .timeline-content {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 14px 18px; flex: 1;
+        }
+        .timeline-content h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .timeline-content p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* ── Roles Matrix ── */
+        .role-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 20px;
+            text-align: center;
+        }
+        .role-avatar {
+            font-size: 2.8rem; margin-bottom: 10px; display: block;
+        }
+        .role-title {
+            font-weight: 700; font-size: 1rem; margin-bottom: 6px;
+        }
+        .role-desc {
+            font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px;
+        }
+        .role-tasks {
+            list-style: none; padding: 0; text-align: left;
+        }
+        .role-tasks li {
+            font-size: 0.8rem; padding: 4px 0; color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .role-tasks li:last-child { border: none; }
+        .role-tasks li::before { content: "✓ "; color: var(--accent-green); }
+
+        /* ── Activity Checklist ── */
+        .checklist { list-style: none; padding: 0; margin-top: 12px; }
+        .checklist li {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px;
+            font-size: 0.9rem; transition: all 0.2s; cursor: pointer;
+        }
+        .checklist li:hover { border-color: var(--accent-green); }
+        .checklist li .check-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+        }
+        .checklist li .check-text { flex: 1; }
+        .checklist li .check-points {
+            font-size: 0.75rem; color: var(--accent-orange); font-weight: 600;
+            background: rgba(245,158,11,0.1); padding: 4px 10px; border-radius: 12px;
+        }
+
+        /* ── Big Number ── */
+        .big-stat {
+            text-align: center; padding: 16px;
+        }
+        .big-stat .number {
+            font-size: 3.2rem; font-weight: 900;
+            background: var(--gradient-blue); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .big-stat .label {
+            font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;
+        }
+
+        /* ── KPI Card ── */
+        .kpi-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 18px; text-align: center;
+        }
+        .kpi-value {
+            font-size: 2rem; font-weight: 800; line-height: 1;
+        }
+        .kpi-label {
+            font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;
+        }
+
+        /* ── Activity Scenario ── */
+        .scenario-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(6,182,212,0.05));
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 14px; padding: 24px; margin-top: 16px;
+        }
+        .scenario-box h3 { color: var(--accent-blue); margin-bottom: 10px; }
+        .scenario-box p { font-size: 0.92rem; line-height: 1.7; color: var(--text-secondary); }
+
+        /* ── Two Column Layout ── */
+        .two-col {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+            align-items: start;
+        }
+
+        /* ── Alert Box ── */
+        .alert {
+            padding: 14px 18px; border-radius: 10px;
+            font-size: 0.85rem; margin-top: 12px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .alert-blue { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: var(--accent-blue); }
+        .alert-green { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--accent-green); }
+        .alert-orange { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--accent-orange); }
+
+        /* ── Keyboard Shortcut Hint ── */
+        .kb-hint {
+            position: fixed; bottom: 16px; right: 24px;
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+        kbd {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 2px 8px; border-radius: 4px; font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+        }
+
+        /* ── Section Divider ── */
+        .section-divider {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 48px;
+            text-align: center;
+        }
+        .section-divider .section-icon { font-size: 4rem; margin-bottom: 16px; }
+        .section-divider h1 { font-size: 2.4rem; }
+        .section-divider p.subtitle { margin: 10px auto 0; max-width: 600px; }
+
+        /* ── Rubric Table ── */
+        .rubric-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.82rem; }
+        .rubric-table th {
+            background: var(--bg-card); padding: 10px 14px; text-align: left;
+            font-weight: 600; border-bottom: 2px solid var(--accent-orange);
+        }
+        .rubric-table td {
+            padding: 8px 14px; border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 900px) {
+            .slide { padding: 32px 24px; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            .cards-2, .cards-3, .cards-4 { grid-template-columns: 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav-bar">
+    <div class="nav-brand">
+        ⚙️ <span>TOSEM — Semana 5</span>
+        <span style="color: var(--text-muted); font-weight: 400; font-size: 0.8rem;">Programación y Control del Mantenimiento</span>
+    </div>
+    <div class="nav-controls">
+        <div class="nav-counter"><span id="slideNum">1</span> / <span id="totalSlides">0</span></div>
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">←</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+    </div>
+</nav>
+
+<div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+
+<!-- Slides Container -->
+<div class="slides-container">
+
+<!-- ==================== SLIDE 1: PORTADA ==================== -->
+<div class="slide" data-section="título">
+    <div class="slide-tag tag-titulo">📍 UNIPAZ · Ingeniería Electromecánica · 2026-I</div>
+    <h1 style="font-size: 3rem;">
+        Sistemas <span class="gradient">CMMS</span><br>
+        Gestión Computarizada del<br>Mantenimiento
+    </h1>
+    <p class="subtitle">
+        Semana 5 — ¿Qué es un CMMS? ¿Qué módulos lo componen? ¿Quiénes interactúan con él?<br>
+        Teoría, demostración en vivo y práctica con <strong>MaintPro CMMS</strong>.
+    </p>
+    <div style="display: flex; gap: 16px; margin-top: 8px;">
+        <div class="alert alert-blue" style="margin: 0;">🕐 1 hora de teoría</div>
+        <div class="alert alert-green" style="margin: 0;">💻 2 horas de práctica</div>
+        <div class="alert alert-orange" style="margin: 0;">📋 Actividad evaluable</div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 2: AGENDA ==================== -->
+<div class="slide" data-section="título">
+    <div class="slide-tag tag-titulo">📑 Agenda de la Sesión</div>
+    <h2>Plan de Clase — 3 Horas</h2>
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--gradient-blue);">1</div>
+            <div class="timeline-content">
+                <h4>📖 Bloque Teórico (60 min)</h4>
+                <p>¿Qué es un CMMS? → Problema que resuelve → Módulos funcionales → Roles y responsabilidades → KPIs de mantenimiento → CMMS en la industria colombiana</p>
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--gradient-green);">2</div>
+            <div class="timeline-content">
+                <h4>💻 Bloque Práctico — Familiarización (60 min)</h4>
+                <p>Acceso al CMMS → Exploración guiada módulo por módulo → Dashboard e indicadores → Modo Técnico Operativo → Creación de primera OT → Exportación de PDF</p>
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--gradient-orange);">3</div>
+            <div class="timeline-content">
+                <h4>📋 Actividad Evaluable — Gestión de Activos (60 min)</h4>
+                <p>Escenario industrial simulado → Gestionar 5 activos → Crear OTs correctivas → Programar mantenimientos preventivos → Generar PDFs → Evaluar KPIs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 3: EL PROBLEMA ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Teoría — Bloque 1</div>
+    <h2>El Problema: Mantenimiento sin Sistema</h2>
+    <p class="subtitle">Antes de los CMMS, las empresas gestionaban el mantenimiento con papel, lápiz, y la memoria de los técnicos.</p>
+    <div class="cards-grid cards-2">
+        <div class="card" style="border-left: 3px solid var(--accent-red);">
+            <span class="card-icon">📋</span>
+            <h4>Sin CMMS — Gestión "a mano"</h4>
+            <ul>
+                <li>Órdenes de trabajo en papel → se pierden</li>
+                <li>No hay historial de reparaciones</li>
+                <li>No se sabe qué equipo falla más</li>
+                <li>Mantenimiento solo cuando algo se rompe</li>
+                <li>Inventario de repuestos descontrolado</li>
+                <li>No hay métricas ni KPIs</li>
+                <li>El conocimiento se pierde cuando el técnico se va</li>
+            </ul>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--accent-green);">
+            <span class="card-icon">💻</span>
+            <h4>Con CMMS — Gestión digital</h4>
+            <ul>
+                <li>Toda la información centralizada y accesible</li>
+                <li>Historial completo de cada equipo</li>
+                <li>Análisis de fallas por equipo, tipo y costo</li>
+                <li>Mantenimiento preventivo programado automáticamente</li>
+                <li>Stock mínimo con alertas de reorden</li>
+                <li>Dashboard con KPIs en tiempo real</li>
+                <li>El conocimiento queda en el sistema</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 4: QUÉ ES UN CMMS ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Definición</div>
+    <h2>¿Qué es un <span class="gradient">CMMS</span>?</h2>
+    <p class="subtitle" style="max-width: 900px;">
+        <strong>CMMS</strong> = <em>Computerized Maintenance Management System</em><br>
+        <strong>Sistema Computarizado de Gestión del Mantenimiento</strong> — es un software que ayuda a las organizaciones a planificar, ejecutar, rastrear y optimizar todas las actividades de mantenimiento de sus activos físicos.
+    </p>
+    <div class="cards-grid cards-4">
+        <div class="big-stat">
+            <div class="number">95%</div>
+            <div class="label">de plantas industriales grandes usan algún tipo de CMMS</div>
+        </div>
+        <div class="big-stat">
+            <div class="number">25%</div>
+            <div class="label">reducción promedio en costos de mantenimiento</div>
+        </div>
+        <div class="big-stat">
+            <div class="number">20%</div>
+            <div class="label">aumento promedio en disponibilidad de equipos</div>
+        </div>
+        <div class="big-stat">
+            <div class="number">70%</div>
+            <div class="label">menos "incumplimiento" de planes preventivos</div>
+        </div>
+    </div>
+    <div class="alert alert-blue">
+        💡 Ejemplos de CMMS profesionales: <strong>SAP PM</strong>, <strong>IBM Maximo</strong>, <strong>Infor EAM</strong>, <strong>Fiix</strong>, <strong>UpKeep</strong>, <strong>Fracttal</strong> (colombiano)
+    </div>
+</div>
+
+<!-- ==================== SLIDE 5: NORMAS ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Marco Normativo</div>
+    <h2>Fundamento Normativo del CMMS</h2>
+    <p class="subtitle">Un CMMS no es "un software cualquiera" — se basa en estándares internacionales de gestión de activos.</p>
+    <div class="cards-grid cards-3">
+        <div class="card">
+            <span class="card-icon">📘</span>
+            <h4>ISO 55000</h4>
+            <p>Gestión de Activos — Define qué significa gestionar activos de forma estratégica. El CMMS es la herramienta operativa que la soporta.</p>
+        </div>
+        <div class="card">
+            <span class="card-icon">📙</span>
+            <h4>ISO 14224</h4>
+            <p>Recolección de datos de confiabilidad — Define cómo clasificar equipos, modos de falla y registrar eventos. La taxonomía del CMMS sigue este estándar.</p>
+        </div>
+        <div class="card">
+            <span class="card-icon">📗</span>
+            <h4>ISO 13306</h4>
+            <p>Terminología de mantenimiento — Define los conceptos universales: mantenimiento correctivo, preventivo, predictivo, OT, falla funcional, etc.</p>
+        </div>
+    </div>
+    <div class="alert alert-green" style="margin-top: 16px;">
+        🎯 Nuestro CMMS MaintPro implementa la taxonomía ISO 14224 (Clase → Sistema → Subsistema) y la terminología ISO 13306
+    </div>
+</div>
+
+<!-- ==================== SLIDE 6: MÓDULOS DE UN CMMS ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Arquitectura Funcional</div>
+    <h2>Los 8 Módulos de un CMMS</h2>
+    <p class="subtitle">Un CMMS profesional se compone de módulos interconnectados. Cada uno gestiona un aspecto del mantenimiento.</p>
+    <div class="cards-grid cards-4" style="gap: 10px;">
+        <div class="module-card">
+            <div class="module-icon">🏭</div>
+            <div class="module-info">
+                <h4>1. Activos</h4>
+                <p>Registro maestro de equipos: ubicación, jerarquía, especificaciones, garantías</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">🔧</div>
+            <div class="module-info">
+                <h4>2. Órdenes de Trabajo</h4>
+                <p>Crear, asignar, ejecutar y cerrar trabajos correctivos y preventivos</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">📅</div>
+            <div class="module-info">
+                <h4>3. Mant. Preventivo</h4>
+                <p>Planes cíclicos (tiempo/uso), generación automática de OTs</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">📦</div>
+            <div class="module-info">
+                <h4>4. Inventario</h4>
+                <p>Repuestos, consumibles, stock mínimo, alertas de reabastecimiento</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">👷</div>
+            <div class="module-info">
+                <h4>5. Personal</h4>
+                <p>Técnicos, especialidades, disponibilidad, costo/hora, certificaciones</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">🛒</div>
+            <div class="module-info">
+                <h4>6. Compras</h4>
+                <p>Solicitudes, aprobaciones, proveedores, control presupuestal</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">📊</div>
+            <div class="module-info">
+                <h4>7. Dashboard & KPIs</h4>
+                <p>MTTR, MTBF, Disponibilidad, costo de mantenimiento por equipo</p>
+            </div>
+        </div>
+        <div class="module-card">
+            <div class="module-icon">📄</div>
+            <div class="module-info">
+                <h4>8. Reportes</h4>
+                <p>Informes gerenciales, exportación PDF, análisis de tendencias</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 7: FLUJO DE OT ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Flujo de Trabajo</div>
+    <h2>Ciclo de Vida de una Orden de Trabajo</h2>
+    <p class="subtitle">La OT es el corazón del CMMS. Todo gira alrededor de ella.</p>
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--accent-purple);">1</div>
+            <div class="timeline-content">
+                <h4>🔴 Detección de la falla</h4>
+                <p>Un operario detecta una anomalía en el equipo → Reporta la novedad al departamento de mantenimiento (Aviso de avería)</p>
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--accent-blue);">2</div>
+            <div class="timeline-content">
+                <h4>📝 Creación de la OT</h4>
+                <p>El planificador crea la Orden de Trabajo en el CMMS → Asigna prioridad (Emergencia / Alta / Media / Baja) → Selecciona el equipo afectado</p>
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--accent-cyan);">3</div>
+            <div class="timeline-content">
+                <h4>👷 Asignación</h4>
+                <p>Se asigna un técnico competente → Se planifican los repuestos necesarios → Se notifica al técnico (🔔 notificación automática en MaintPro)</p>
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--accent-orange);">4</div>
+            <div class="timeline-content">
+                <h4>🔧 Ejecución</h4>
+                <p>El técnico ejecuta el trabajo → Registra horas, materiales, observaciones → Puede consultar el historial del equipo → Cambia estado de la OT a "En Progreso"</p>
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot" style="background: var(--accent-green);">5</div>
+            <div class="timeline-content">
+                <h4>✅ Cierre</h4>
+                <p>Se completa la OT → Se actualizan los KPIs automáticamente (MTTR, Disponibilidad) → Se genera reporte PDF → Queda en el historial del equipo</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 8: ROLES ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Roles y Responsabilidades</div>
+    <h2>¿Quién opera un CMMS?</h2>
+    <p class="subtitle">Cada rol tiene permisos y responsabilidades diferentes dentro del sistema.</p>
+    <div class="cards-grid cards-4" style="gap: 12px;">
+        <div class="role-card">
+            <span class="role-avatar">👨‍💼</span>
+            <div class="role-title">Gerente / Jefe de Planta</div>
+            <div class="role-desc">Visión estratégica</div>
+            <ul class="role-tasks">
+                <li>Consultar Dashboard KPIs</li>
+                <li>Aprobar compras grandes</li>
+                <li>Revisar costos por equipo</li>
+                <li>Tomar decisiones de reemplazo</li>
+            </ul>
+        </div>
+        <div class="role-card">
+            <span class="role-avatar">📋</span>
+            <div class="role-title">Planificador</div>
+            <div class="role-desc">Cerebro operativo</div>
+            <ul class="role-tasks">
+                <li>Crear y programar OTs</li>
+                <li>Diseñar planes preventivos</li>
+                <li>Gestionar inventario</li>
+                <li>Asignar técnicos</li>
+            </ul>
+        </div>
+        <div class="role-card">
+            <span class="role-avatar">👷</span>
+            <div class="role-title">Técnico</div>
+            <div class="role-desc">Manos en el campo</div>
+            <ul class="role-tasks">
+                <li>Ver tareas asignadas</li>
+                <li>Registrar avances y horas</li>
+                <li>Reportar repuestos usados</li>
+                <li>Cerrar OTs completadas</li>
+            </ul>
+        </div>
+        <div class="role-card">
+            <span class="role-avatar">🏫</span>
+            <div class="role-title">Docente (Admin)</div>
+            <div class="role-desc">Solo en nuestro CMMS educativo</div>
+            <ul class="role-tasks">
+                <li>Ver ranking de todos los estudiantes</li>
+                <li>Inyectar fallas a los equipos</li>
+                <li>Monitorear KPIs en tiempo real</li>
+                <li>Evaluar desempeño</li>
+            </ul>
+        </div>
+    </div>
+    <div class="alert alert-blue" style="margin-top: 12px;">
+        🎓 <strong>En MaintPro:</strong> Cada estudiante actúa como <strong>Planificador/Jefe</strong> y también puede entrar al <strong>Modo Técnico</strong> para simular las dos perspectivas.
+    </div>
+</div>
+
+<!-- ==================== SLIDE 9: KPIs (resumen) ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Indicadores Clave</div>
+    <h2>KPIs de Mantenimiento en un CMMS</h2>
+    <p class="subtitle">Los CMMS calculan indicadores automáticamente a partir de los datos de las OTs.</p>
+    <div class="cards-grid cards-4" style="gap: 14px;">
+        <div class="kpi-card">
+            <div class="kpi-value" style="color: var(--accent-blue);">MTTR</div>
+            <div class="kpi-label"><strong>Mean Time To Repair</strong><br>Tiempo medio de reparación. <em>Menor = mejor</em></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color: var(--accent-green);">MTBF</div>
+            <div class="kpi-label"><strong>Mean Time Between Failures</strong><br>Tiempo medio entre fallas. <em>Mayor = mejor</em></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color: var(--accent-cyan);">Disp.</div>
+            <div class="kpi-label"><strong>Disponibilidad</strong><br>% del tiempo operativo. <em>Meta: ≥ 90%</em></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color: var(--accent-orange);">CPM</div>
+            <div class="kpi-label"><strong>Cumplimiento PM</strong><br>% preventivos ejecutados. <em>Meta: ≥ 85%</em></div>
+        </div>
+    </div>
+    <div class="two-col" style="margin-top: 20px;">
+        <div class="alert alert-green" style="margin: 0;">
+            📐 Las fórmulas de cada KPI se presentan en la <strong>siguiente diapositiva →</strong>
+        </div>
+        <div class="alert alert-orange" style="margin: 0;">
+            💡 <strong>Regla 80/20:</strong> Generalmente el 20% de los equipos causan el 80% de las fallas
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 9b: FÓRMULAS KPIs ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Fórmulas de KPIs</div>
+    <h2>Fórmulas de los Indicadores de Mantenimiento</h2>
+    <div class="cards-grid cards-2" style="gap: 14px;">
+        <!-- MTTR -->
+        <div class="card" style="border-top: 3px solid var(--accent-blue);">
+            <h4 style="color: var(--accent-blue); font-size: 1.1rem;">📐 MTTR — Mean Time To Repair</h4>
+            <div style="background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 14px; margin: 10px 0; text-align: center; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px;">
+                MTTR = Σ Tiempo de Reparación / N° de Fallas
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px;">
+                <strong>Variables:</strong><br>
+                → <strong>Σ Tiempo de Reparación:</strong> Suma total de horas dedicadas a reparar el equipo (desde que falla hasta que vuelve a operar)<br>
+                → <strong>N° de Fallas:</strong> Cantidad de fallas ocurridas en el período analizado
+            </p>
+            <div style="background: var(--bg-primary); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: var(--text-muted);">
+                <strong>Ejemplo:</strong> Un compresor falló 3 veces en un mes. Las reparaciones duraron 4h, 6h y 2h.<br>
+                MTTR = (4 + 6 + 2) / 3 = <strong style="color: var(--accent-blue);">4 horas</strong> ← Interpretación: en promedio tarda 4h en ser reparado.
+            </div>
+        </div>
+        <!-- MTBF -->
+        <div class="card" style="border-top: 3px solid var(--accent-green);">
+            <h4 style="color: var(--accent-green); font-size: 1.1rem;">📐 MTBF — Mean Time Between Failures</h4>
+            <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 14px; margin: 10px 0; text-align: center; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px;">
+                MTBF = Tiempo Total de Operación / N° de Fallas
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px;">
+                <strong>Variables:</strong><br>
+                → <strong>Tiempo Total de Operación:</strong> Horas que el equipo estuvo funcionando (excluyendo tiempos de reparación)<br>
+                → <strong>N° de Fallas:</strong> Cantidad de fallas en el período
+            </p>
+            <div style="background: var(--bg-primary); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: var(--text-muted);">
+                <strong>Ejemplo:</strong> En 720h de un mes, el compresor operó 708h y falló 3 veces.<br>
+                MTBF = 708 / 3 = <strong style="color: var(--accent-green);">236 horas</strong> ← En promedio falla cada 236h de operación.
+            </div>
+        </div>
+        <!-- Disponibilidad -->
+        <div class="card" style="border-top: 3px solid var(--accent-cyan);">
+            <h4 style="color: var(--accent-cyan); font-size: 1.1rem;">📐 Disponibilidad (Availability)</h4>
+            <div style="background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.25); border-radius: 10px; padding: 14px; margin: 10px 0; text-align: center; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px;">
+                A = MTBF / (MTBF + MTTR) × 100%
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px;">
+                <strong>Variables:</strong><br>
+                → <strong>MTBF:</strong> Tiempo medio entre fallas (calculado arriba)<br>
+                → <strong>MTTR:</strong> Tiempo medio de reparación (calculado arriba)<br>
+                → <strong>Fórmula alternativa:</strong> A = (Tiempo operativo / Tiempo total programado) × 100%
+            </p>
+            <div style="background: var(--bg-primary); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: var(--text-muted);">
+                <strong>Ejemplo:</strong> MTBF = 236h, MTTR = 4h<br>
+                A = 236 / (236 + 4) × 100 = <strong style="color: var(--accent-cyan);">98.3%</strong> ← Excelente. Meta industrial: ≥ 90%
+            </div>
+        </div>
+        <!-- CPM -->
+        <div class="card" style="border-top: 3px solid var(--accent-orange);">
+            <h4 style="color: var(--accent-orange); font-size: 1.1rem;">📐 CPM — Cumplimiento de Preventivo</h4>
+            <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 14px; margin: 10px 0; text-align: center; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px;">
+                CPM = (PM Ejecutados / PM Programados) × 100%
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px;">
+                <strong>Variables:</strong><br>
+                → <strong>PM Ejecutados:</strong> Cantidad de mantenimientos preventivos completados a tiempo<br>
+                → <strong>PM Programados:</strong> Total de preventivos planeados para el período
+            </p>
+            <div style="background: var(--bg-primary); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: var(--text-muted);">
+                <strong>Ejemplo:</strong> Se programaron 20 PM en el mes. Se completaron 17.<br>
+                CPM = (17 / 20) × 100 = <strong style="color: var(--accent-orange);">85%</strong> ← Aceptable. Meta: ≥ 85%. Clase mundial: ≥ 95%
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 10: CMMS EN COLOMBIA ==================== -->
+<div class="slide" data-section="teoría">
+    <div class="slide-tag tag-teoria">📖 Contexto Nacional</div>
+    <h2>CMMS en la Industria Colombiana</h2>
+    <p class="subtitle">La adopción de CMMS en Colombia varía significativamente entre sectores.</p>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>Sector</th>
+                <th>CMMS más usado</th>
+                <th>Nivel de adopción</th>
+                <th>Ejemplo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>🛢️ Petróleo & Gas</td>
+                <td>SAP PM / Maximo</td>
+                <td><span class="green">Alto (>90%)</span></td>
+                <td>Ecopetrol, Pacific, Frontera</td>
+            </tr>
+            <tr>
+                <td>⚡ Energía Eléctrica</td>
+                <td>SAP PM / Infor EAM</td>
+                <td><span class="green">Alto (>85%)</span></td>
+                <td>ISA, Celsia, EPM</td>
+            </tr>
+            <tr>
+                <td>🏗️ Manufactura grande</td>
+                <td>SAP PM / Fracttal</td>
+                <td><span class="green">Alto (>70%)</span></td>
+                <td>Grupo Argos, Cementos</td>
+            </tr>
+            <tr>
+                <td>🥤 Alimentos & Bebidas</td>
+                <td>Fracttal / UpKeep</td>
+                <td><span style="color: var(--accent-orange); font-weight: 600;">Medio (~50%)</span></td>
+                <td>Nutresa, Bavaria/ABInBev</td>
+            </tr>
+            <tr>
+                <td>🏥 Hospitalario</td>
+                <td>CMMS hospitalarios</td>
+                <td><span style="color: var(--accent-orange); font-weight: 600;">Medio (~40%)</span></td>
+                <td>Clínicas grandes con biomédica</td>
+            </tr>
+            <tr>
+                <td>🏭 PYMES / Talleres</td>
+                <td>Excel / Papel</td>
+                <td><span class="red">Bajo (<20%)</span></td>
+                <td>La mayoría aún opera manualmente</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="alert alert-blue" style="margin-top: 14px;">
+        🇨🇴 <strong>Fracttal</strong> es un CMMS creado en Colombia (Bogotá) que hoy se usa en +40 países. ¡Demuestra la oportunidad para ingenieros colombianos en este campo!
+    </div>
+</div>
+
+<!-- ==================== SLIDE 11: SEPARADOR PRÁCTICA ==================== -->
+<div class="slide" data-section="práctica">
+    <div class="section-divider">
+        <div class="section-icon">💻</div>
+        <h1>Bloque Práctico</h1>
+        <p class="subtitle">Familiarización con MaintPro CMMS</p>
+        <div style="display: flex; gap: 16px; justify-content: center; margin-top: 24px;">
+            <div class="alert alert-green" style="margin: 0;">⏱️ 60 minutos</div>
+            <div class="alert alert-blue" style="margin: 0;">🌐 marlongomez9603-netizen.github.io/Cmms-1/</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 12: ACCESO ==================== -->
+<div class="slide" data-section="práctica">
+    <div class="slide-tag tag-practica">💻 Práctica — Paso 1</div>
+    <h2>Acceso al Sistema</h2>
+    <div class="two-col">
+        <div>
+            <h3>📱 Desde el celular o computador</h3>
+            <div class="timeline" style="margin-top: 12px;">
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-blue); width: 30px; height: 30px; font-size: 0.75rem;">1</div>
+                    <div class="timeline-content">
+                        <h4>Abrir el navegador</h4>
+                        <p>Chrome, Edge o Firefox — cualquier dispositivo</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-cyan); width: 30px; height: 30px; font-size: 0.75rem;">2</div>
+                    <div class="timeline-content">
+                        <h4>Ir a la URL del CMMS</h4>
+                        <p style="word-break: break-all;"><strong>marlongomez9603-netizen.github.io/Cmms-1/</strong></p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-green); width: 30px; height: 30px; font-size: 0.75rem;">3</div>
+                    <div class="timeline-content">
+                        <h4>Ingresar su número de cédula</h4>
+                        <p>Cada cédula tiene datos únicos (empresa y activos propios)</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-orange); width: 30px; height: 30px; font-size: 0.75rem;">4</div>
+                    <div class="timeline-content">
+                        <h4>Completar la configuración inicial</h4>
+                        <p>Nombre de la empresa y datos del estudiante → ¡Listo!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h3>🔑 Datos importantes</h3>
+            <div class="card" style="margin-top: 12px;">
+                <h4>Sus datos están en la nube</h4>
+                <p>Pueden trabajar desde <strong>cualquier dispositivo</strong>. Si borran el caché del navegador, sus datos se recuperan automáticamente al volver a ingresar con la misma cédula.</p>
+            </div>
+            <div class="card" style="margin-top: 12px;">
+                <h4>5 activos pre-asignados</h4>
+                <p>Cada estudiante tiene <strong>5 equipos industriales</strong> ya registrados según su sector asignado (petroquímica, manufactura, energía, etc.)</p>
+            </div>
+            <div class="card" style="margin-top: 12px;">
+                <h4>El docente ve todo en tiempo real</h4>
+                <p>Todas las acciones se sincronizan a una base de datos central. El profesor puede ver el ranking y los KPIs de todos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 13: EXPLORACIÓN GUIADA ==================== -->
+<div class="slide" data-section="práctica">
+    <div class="slide-tag tag-practica">💻 Práctica — Paso 2</div>
+    <h2>Exploración Guiada: Módulo por Módulo</h2>
+    <p class="subtitle">Recorran cada módulo del menú lateral. Dediquen 5 minutos a cada uno.</p>
+    <div class="cards-grid cards-2" style="gap: 12px;">
+        <div class="card">
+            <h4>📊 Dashboard (5 min)</h4>
+            <p>Observen los 4 KPIs principales. ¿Cuál es su disponibilidad actual? ¿Cuántas OTs abiertas tienen?</p>
+        </div>
+        <div class="card">
+            <h4>🏭 Activos (5 min)</h4>
+            <p>Revisen sus 5 activos. ¿Qué marca y modelo tiene cada uno? ¿A qué sistema/localización pertenecen?</p>
+        </div>
+        <div class="card">
+            <h4>🔧 Órdenes de Trabajo (5 min)</h4>
+            <p>Creen una OT de prueba: seleccionen un equipo, asignen prioridad "Media", técnico disponible, y guárdenla.</p>
+        </div>
+        <div class="card">
+            <h4>📅 Mantenimiento Preventivo (5 min)</h4>
+            <p>Revisen los planes PM pre-configurados. ¿Qué frecuencia tienen? ¿Qué tareas incluyen en el checklist?</p>
+        </div>
+        <div class="card">
+            <h4>📦 Inventario + 👷 Personal (5 min)</h4>
+            <p>Revisen los repuestos disponibles y los técnicos registrados con sus especialidades y costos por hora.</p>
+        </div>
+        <div class="card">
+            <h4>👷 Modo Técnico Operativo (10 min)</h4>
+            <p>Hagan clic en el botón "Vista Operativo" para ver el sistema <strong>desde la perspectiva del técnico</strong>. Exploren las dos tabs: "Mis Tareas" y "Calendario Semanal".</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 14: PDF Y NOTIFICACIONES ==================== -->
+<div class="slide" data-section="práctica">
+    <div class="slide-tag tag-practica">💻 Práctica — Paso 3</div>
+    <h2>Funciones Avanzadas: PDF + Notificaciones</h2>
+    <div class="two-col">
+        <div>
+            <h3>📄 Exportar OT a PDF</h3>
+            <p class="subtitle" style="font-size: 0.9rem;">Cada OT puede exportarse como documento PDF profesional con membrete, datos del activo, costos de mano de obra y campos de firma.</p>
+            <div class="timeline" style="margin-top: 8px;">
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-blue); width: 28px; height: 28px; font-size: 0.7rem;">1</div>
+                    <div class="timeline-content">
+                        <p>Ir a <strong>Órdenes de Trabajo</strong></p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-cyan); width: 28px; height: 28px; font-size: 0.7rem;">2</div>
+                    <div class="timeline-content">
+                        <p>En la tabla, clic en el botón <strong>📄 PDF</strong> de cualquier OT</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-green); width: 28px; height: 28px; font-size: 0.7rem;">3</div>
+                    <div class="timeline-content">
+                        <p>Se descarga automáticamente el PDF con formato profesional</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h3>🔔 Sistema de Notificaciones</h3>
+            <p class="subtitle" style="font-size: 0.9rem;">Cuando se le asigna una OT a un técnico, aparece una notificación automática en la campana 🔔 de la barra superior.</p>
+            <div class="card" style="margin-top: 12px;">
+                <h4>Prueben lo siguiente:</h4>
+                <ul>
+                    <li>Creen una nueva OT y asígnenla a un técnico</li>
+                    <li>Observen que el badge numérico de la campana 🔔 se incrementa</li>
+                    <li>Hagan clic en la campana para ver la notificación con detalle</li>
+                    <li>Marquen la notificación como leída</li>
+                </ul>
+            </div>
+            <div class="alert alert-blue" style="margin-top: 12px;">
+                En un CMMS real, estas notificaciones llegan al celular del técnico vía app móvil o email
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 15: SEPARADOR ACTIVIDAD ==================== -->
+<div class="slide" data-section="actividad">
+    <div class="section-divider" style="background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.05));">
+        <div class="section-icon">📋</div>
+        <h1>Actividad Evaluable</h1>
+        <p class="subtitle">Gestión integral de 5 activos industriales</p>
+        <div style="display: flex; gap: 16px; justify-content: center; margin-top: 24px;">
+            <div class="alert alert-orange" style="margin: 0;">⏱️ 60 minutos</div>
+            <div class="alert alert-orange" style="margin: 0;">🎯 Valor: 15% de la nota del corte</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 16: ESCENARIO ==================== -->
+<div class="slide" data-section="actividad">
+    <div class="slide-tag tag-actividad">📋 Actividad — Escenario</div>
+    <h2>Escenario: Usted es el Jefe de Mantenimiento</h2>
+    <div class="scenario-box">
+        <h3>🏭 Contexto</h3>
+        <p>
+            Usted acaba de ser contratado como <strong>Jefe de Mantenimiento</strong> de una planta industrial. 
+            Al llegar, encuentra que la gestión de mantenimiento se hacía en hojas de Excel y cuadernos. 
+            Su primera tarea es <strong>implementar el CMMS</strong> para los 5 activos críticos de su planta.
+        </p>
+        <p style="margin-top: 10px;">
+            La gerencia le ha dado <strong>una semana</strong> (simulada en la clase de hoy) para dejar operativo el sistema 
+            con toda la información estructurada, planes preventivos creados, y al menos 
+            <strong>2 eventos correctivos documentados</strong>.
+        </p>
+    </div>
+    <div class="alert alert-orange" style="margin-top: 16px;">
+        ⚠️ <strong>Importante:</strong> El docente podrá inyectar fallas sorpresa en sus equipos durante la actividad. Deben responder creando la OT correctiva correspondiente en máximo 5 minutos.
+    </div>
+</div>
+
+<!-- ==================== SLIDE 17: TAREAS ==================== -->
+<div class="slide" data-section="actividad">
+    <div class="slide-tag tag-actividad">📋 Actividad — Tareas</div>
+    <h2>Checklist de Entregables</h2>
+    <p class="subtitle">Complete cada tarea en el CMMS. El docente verificará en tiempo real desde Firebase.</p>
+    <ol class="checklist">
+        <li>
+            <div class="check-num" style="background: var(--gradient-blue); color: white;">1</div>
+            <div class="check-text">
+                <strong>Revisar y completar fichas de activos</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.82rem;">Verificar que los 5 activos tengan: ubicación, sistema, marca, modelo, fecha de instalación y estado operativo correcto.</span>
+            </div>
+            <div class="check-points">10 pts</div>
+        </li>
+        <li>
+            <div class="check-num" style="background: var(--gradient-green); color: white;">2</div>
+            <div class="check-text">
+                <strong>Crear plan de mantenimiento preventivo</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.82rem;">Crear o modificar al menos 3 planes PM (uno por cada activo crítico). Cada plan debe tener frecuencia, tipo de trigger (tiempo o uso), y un checklist con mínimo 4 tareas.</span>
+            </div>
+            <div class="check-points">20 pts</div>
+        </li>
+        <li>
+            <div class="check-num" style="background: var(--gradient-orange); color: white;">3</div>
+            <div class="check-text">
+                <strong>Gestionar 2 Órdenes de Trabajo correctivas</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.82rem;">Crear 2 OTs correctivas (una de prioridad Alta y una Emergencia). Asignar técnico, registrar tiempo de reparación, y cerrarlas como "Completada".</span>
+            </div>
+            <div class="check-points">25 pts</div>
+        </li>
+        <li>
+            <div class="check-num" style="background: var(--gradient-purple); color: white;">4</div>
+            <div class="check-text">
+                <strong>Exportar 1 OT en PDF</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.82rem;">Seleccionar la OT más completa y exportarla como PDF profesional. Verificar que incluya datos del activo, costos de mano de obra y campos de firma.</span>
+            </div>
+            <div class="check-points">10 pts</div>
+        </li>
+        <li>
+            <div class="check-num" style="background: linear-gradient(135deg, #ec4899, #ef4444); color: white;">5</div>
+            <div class="check-text">
+                <strong>Gestionar inventario de repuestos</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.82rem;">Verificar stock de repuestos. Registrar al menos 1 movimiento de salida (consumo) asociado a una OT. Si algún repuesto queda bajo stock mínimo, generar solicitud de compra.</span>
+            </div>
+            <div class="check-points">15 pts</div>
+        </li>
+        <li>
+            <div class="check-num" style="background: linear-gradient(135deg, #06b6d4, #10b981); color: white;">6</div>
+            <div class="check-text">
+                <strong>Verificar KPIs en el Dashboard</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.82rem;">Después de completar las OTs, navegar al Dashboard y verificar que la Disponibilidad esté ≥ 85% y el Cumplimiento PM ≥ 70%. Si no lo está, justificar por qué.</span>
+            </div>
+            <div class="check-points">20 pts</div>
+        </li>
+    </ol>
+</div>
+
+<!-- ==================== SLIDE 18: RÚBRICA ==================== -->
+<div class="slide" data-section="actividad">
+    <div class="slide-tag tag-actividad">📋 Rúbrica de Evaluación</div>
+    <h2>Criterios de Evaluación</h2>
+    <table class="rubric-table">
+        <thead>
+            <tr>
+                <th>Criterio</th>
+                <th>Excelente (100%)</th>
+                <th>Bueno (75%)</th>
+                <th>Aceptable (50%)</th>
+                <th>Pts</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Fichas de Activos</strong></td>
+                <td>5/5 activos completos con todos los campos</td>
+                <td>3-4 activos completos</td>
+                <td>1-2 activos completos</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td><strong>Planes PM</strong></td>
+                <td>3+ planes con checklist ≥4 tareas y frecuencia correcta</td>
+                <td>2 planes completos</td>
+                <td>1 plan básico</td>
+                <td>20</td>
+            </tr>
+            <tr>
+                <td><strong>OTs Correctivas</strong></td>
+                <td>2 OTs cerradas con técnico, horas, materiales y observaciones</td>
+                <td>2 OTs creadas pero incompletas</td>
+                <td>1 OT solamente</td>
+                <td>25</td>
+            </tr>
+            <tr>
+                <td><strong>Exportación PDF</strong></td>
+                <td>PDF generado con datos completos</td>
+                <td>PDF generado con datos parciales</td>
+                <td>No generó PDF</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td><strong>Inventario & Compras</strong></td>
+                <td>Movimiento registrado + solicitud de compra si aplica</td>
+                <td>Solo movimiento registrado</td>
+                <td>No registró movimientos</td>
+                <td>15</td>
+            </tr>
+            <tr>
+                <td><strong>KPIs y Análisis</strong></td>
+                <td>KPIs dentro de meta + análisis escrito</td>
+                <td>KPIs fuera de meta con justificación</td>
+                <td>No verificó KPIs</td>
+                <td>20</td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="margin-top: 16px; display: flex; gap: 16px;">
+        <div class="alert alert-green" style="margin: 0; flex: 1;">
+            🏆 <strong>Bonificación (+10 pts):</strong> Responder correctamente a la falla inyectada por el docente en menos de 5 minutos
+        </div>
+        <div class="alert alert-orange" style="margin: 0; flex: 1;">
+            📊 <strong>Total:</strong> 100 puntos (+10 bonus) → equivale al 15% del corte
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SLIDE 19: CIERRE ==================== -->
+<div class="slide" data-section="título">
+    <div class="slide-tag tag-titulo">🎯 Cierre</div>
+    <h2>Conceptos Clave de Hoy</h2>
+    <div class="cards-grid cards-3">
+        <div class="card">
+            <span class="card-icon">💡</span>
+            <h4>CMMS = Orden y Datos</h4>
+            <p>Sin un sistema, el mantenimiento es reactivo y caótico. Con CMMS, es planificado, medible y optimizable.</p>
+        </div>
+        <div class="card">
+            <span class="card-icon">🔧</span>
+            <h4>La OT es el centro de todo</h4>
+            <p>Toda acción de mantenimiento debe quedar registrada en una Orden de Trabajo. Sin OT = no existió.</p>
+        </div>
+        <div class="card">
+            <span class="card-icon">📊</span>
+            <h4>Lo que no se mide, no se mejora</h4>
+            <p>Los KPIs (MTTR, MTBF, Disponibilidad) permiten tomar decisiones basadas en datos, no en intuición.</p>
+        </div>
+    </div>
+    <div class="scenario-box" style="margin-top: 24px;">
+        <h3>📌 Para la próxima semana</h3>
+        <p>
+            <strong>1.</strong> Completar la actividad si no la terminaron en clase.<br>
+            <strong>2.</strong> Practicar la gestión de los 5 activos — el docente puede inyectar fallas en cualquier momento.<br>
+            <strong>3.</strong> Prepararse para el tema de la <strong>Semana 6:</strong> <em>Análisis de Costos de Mantenimiento y Decisión de Reemplazo de Activos.</em>
+        </p>
+    </div>
+    <div class="alert alert-blue" style="margin-top: 16px;">
+        🌐 <strong>Acceso permanente:</strong> marlongomez9603-netizen.github.io/Cmms-1/ — pueden practicar desde casa, celular o tablet.
+    </div>
+</div>
+
+</div><!-- end slides-container -->
+
+<!-- Keyboard Hint -->
+<div class="kb-hint">
+    Navega con <kbd>←</kbd> <kbd>→</kbd> o <kbd>Space</kbd>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let current = 0;
+
+    document.getElementById('totalSlides').textContent = totalSlides;
+
+    function showSlide(n) {
+        slides.forEach((s, i) => {
+            s.classList.remove('active', 'prev');
+            if (i === n) s.classList.add('active');
+            else if (i < n) s.classList.add('prev');
+        });
+        current = n;
+        document.getElementById('slideNum').textContent = n + 1;
+        document.getElementById('prevBtn').disabled = n === 0;
+        document.getElementById('nextBtn').disabled = n === totalSlides - 1;
+        document.getElementById('progressBar').style.width = ((n + 1) / totalSlides * 100) + '%';
+    }
+
+    function changeSlide(dir) {
+        const next = current + dir;
+        if (next >= 0 && next < totalSlides) showSlide(next);
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+        if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+        if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
+    });
+
+    // Touch support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].screenX;
+        if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+    });
+
+    showSlide(0);
+</script>
+
+</body>
+</html>

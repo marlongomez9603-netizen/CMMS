@@ -337,6 +337,9 @@ class DataStore {
 
     addWorkOrder(wo) {
         const result = this._add('workOrders', wo);
+        if (result && result.status === 'completada') {
+            this._deductInventoryForWO(result);
+        }
         if (wo.assignedTo && !wo.skipNotify) {
             const asset = this.getAsset(wo.assetId);
             this.addNotification({
@@ -352,7 +355,11 @@ class DataStore {
 
     updateWorkOrder(id, u) {
         const old = this.getWorkOrder(id);
+        const oldStatus = old ? old.status : null;
         const result = this._update('workOrders', id, u);
+        if (result && result.status === 'completada' && oldStatus !== 'completada') {
+            this._deductInventoryForWO(result);
+        }
         if (u.assignedTo && u.assignedTo !== old?.assignedTo) {
             const asset = this.getAsset(old?.assetId);
             this.addNotification({
@@ -367,6 +374,13 @@ class DataStore {
     }
 
     deleteWorkOrder(id) { this._delete('workOrders', id); }
+
+    _deductInventoryForWO(wo) {
+        if (!wo.partsUsed || !Array.isArray(wo.partsUsed)) return;
+        wo.partsUsed.forEach(part => {
+            this.deductInventory(part.itemId, part.quantity, wo.id, `Consumo OT ${wo.id.substring(0, 8).toUpperCase()}`);
+        });
+    }
 
     // ---------- Notifications ----------
     addNotification(notif) {
@@ -409,6 +423,13 @@ class DataStore {
             .forEach(n => n.read = true);
         this.save();
     }
+
+    // ---------- Work Requests (Solicitudes) ----------
+    getWorkRequests() { return this._getCollection('workRequests'); }
+    getWorkRequest(id) { return this._getById('workRequests', id); }
+    addWorkRequest(req) { return this._add('workRequests', req); }
+    updateWorkRequest(id, u) { return this._update('workRequests', id, u); }
+    deleteWorkRequest(id) { this._delete('workRequests', id); }
 
     // ---------- Preventive Plans ----------
     getPreventivePlans() { return this._getCollection('preventivePlans'); }
@@ -593,19 +614,47 @@ class DataStore {
         const planCompliance = totalPlannedPMs > 0 ? Math.round((pmWOs.length / totalPlannedPMs) * 100) : 0;
 
         // Cost Analysis
-        const laborCost = completed.reduce((sum, w) => {
-            const hours = parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 0;
-            const tech = this.getPersonnelById(w.assignedTo);
-            const rate = tech ? (parseFloat(tech.hourlyRate) || 25000) : 25000;
-            return sum + (hours * rate);
-        }, 0);
+        let laborCost = 0;
+        let partsCost = 0;
+        let costByType = { correctivo: 0, preventivo: 0, predictivo: 0, mejora: 0 };
+        let costByAsset = {};
 
-        const partsCost = this.getAllMovements()
-            .filter(m => m.type === 'salida')
-            .reduce((sum, m) => {
-                const item = this.getInventoryItem(m.itemId);
-                return sum + ((parseFloat(m.quantity) || 0) * (parseFloat(item?.unitCost) || 0));
-            }, 0);
+        completed.forEach(w => {
+            const hours = parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 0;
+            const tech = w.assignedTo ? this.getPersonnelById(w.assignedTo) : null;
+            const rate = tech ? (parseFloat(tech.hourlyRate) || 25000) : 25000;
+            const labor = hours * rate;
+            laborCost += labor;
+
+            let parts = 0;
+            if (w.partsUsed && Array.isArray(w.partsUsed)) {
+                parts = w.partsUsed.reduce((sum, p) => sum + ((parseFloat(p.quantity) || 0) * (parseFloat(p.unitCost) || 0)), 0);
+            }
+            partsCost += parts;
+
+            const woCost = labor + parts;
+            if (costByType[w.type] !== undefined) {
+                costByType[w.type] += woCost;
+            }
+            if (!costByAsset[w.assetId]) costByAsset[w.assetId] = 0;
+            costByAsset[w.assetId] += woCost;
+        });
+
+        // Conteo de Modos de Falla (para diagrama de Pareto)
+        let failureModesCount = {
+            'mecánico': 0, 'eléctrico': 0, 'hidráulico': 0, 'neumático': 0,
+            'lubricación': 0, 'desgaste': 0, 'operación': 0, 'otro': 0
+        };
+        completed.filter(w => w.type === 'correctivo').forEach(w => {
+            const mode = w.failureMode || 'otro';
+            if (failureModesCount[mode] !== undefined) {
+                failureModesCount[mode]++;
+            } else {
+                failureModesCount['otro']++;
+            }
+        });
+
+        const pendingRequests = this.getWorkRequests().filter(r => r.status === 'pendiente').length;
 
         // Pending purchases
         const pendingPurchases = this.getPurchases().filter(p => p.status === 'pendiente').length;
@@ -633,6 +682,10 @@ class DataStore {
             totalCost: laborCost + partsCost,
             pendingPurchases,
             pendingManagerPurchases,
+            pendingRequests,
+            costByType,
+            costByAsset,
+            failureModesCount,
             woByType: {
                 correctivo: wos.filter(w => w.type === 'correctivo').length,
                 preventivo: wos.filter(w => w.type === 'preventivo').length,
@@ -657,12 +710,18 @@ class DataStore {
         const lastWO = completed.sort((a, b) => (b.completedDate || '').localeCompare(a.completedDate || ''))[0];
 
         // Cost for this asset
-        const laborCost = completed.reduce((sum, w) => {
+        let laborCost = 0;
+        let partsCost = 0;
+        completed.forEach(w => {
             const hours = parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 0;
             const tech = this.getPersonnelById(w.assignedTo);
             const rate = tech ? (parseFloat(tech.hourlyRate) || 25000) : 25000;
-            return sum + (hours * rate);
-        }, 0);
+            laborCost += hours * rate;
+
+            if (w.partsUsed && Array.isArray(w.partsUsed)) {
+                partsCost += w.partsUsed.reduce((sum, p) => sum + ((parseFloat(p.quantity) || 0) * (parseFloat(p.unitCost) || 0)), 0);
+            }
+        });
 
         return {
             totalWOs: wos.length,
@@ -675,6 +734,8 @@ class DataStore {
             correctiveCount: wos.filter(w => w.type === 'correctivo').length,
             preventiveCount: wos.filter(w => w.type === 'preventivo').length,
             laborCost,
+            partsCost,
+            totalCost: laborCost + partsCost
         };
     }
 

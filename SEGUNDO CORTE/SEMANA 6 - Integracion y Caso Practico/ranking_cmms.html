@@ -1,0 +1,243 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🏆 Ranking CMMS — TOSEM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--border:#1e293b;--gold:#f59e0b;--silver:#94a3b8;--bronze:#cd7f32;--blue:#3b82f6;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--purple:#8b5cf6;--text:#f1f5f9;--muted:#64748b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.topbar{background:rgba(10,14,23,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-weight:900;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+.logo span{background:linear-gradient(135deg,var(--gold),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.top-btns{display:flex;gap:8px}
+.tbtn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s}
+.tbtn:hover{border-color:var(--blue);color:var(--blue)}
+.tbtn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+.container{max-width:1100px;margin:0 auto;padding:20px}
+
+/* HEADER */
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:2.2rem;font-weight:900;margin-bottom:4px}
+.header h1 .gr{background:linear-gradient(135deg,var(--gold),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{color:var(--muted);font-size:.88rem}
+.timer-bar{display:flex;gap:16px;justify-content:center;margin-top:12px}
+.timer-chip{background:var(--card);border:1px solid var(--border);padding:8px 18px;border-radius:10px;text-align:center}
+.timer-chip .v{font-size:1.4rem;font-weight:900;color:var(--gold)}
+.timer-chip .l{font-size:.68rem;color:var(--muted)}
+
+/* TASKS */
+.tasks-bar{display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding:4px 0}
+.task-chip{background:var(--card);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:.72rem;font-weight:700;white-space:nowrap;color:var(--muted);flex-shrink:0}
+.task-chip .pts{color:var(--gold);margin-left:4px}
+
+/* PODIUM */
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin-bottom:28px;min-height:200px}
+.pod{text-align:center;border-radius:14px 14px 0 0;padding:16px 20px;min-width:140px;position:relative;transition:all .5s ease}
+.pod .rank-icon{font-size:2rem;margin-bottom:6px}
+.pod .pod-name{font-size:.82rem;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.pod .pod-score{font-size:1.5rem;font-weight:900}
+.pod .pod-pts{font-size:.68rem;color:var(--muted)}
+.pod-1{background:linear-gradient(180deg,rgba(245,158,11,.2),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.4);height:180px;order:2}
+.pod-1 .pod-score{color:var(--gold)}
+.pod-2{background:linear-gradient(180deg,rgba(148,163,184,.15),rgba(148,163,184,.03));border:1px solid rgba(148,163,184,.3);height:150px;order:1}
+.pod-2 .pod-score{color:var(--silver)}
+.pod-3{background:linear-gradient(180deg,rgba(205,127,50,.15),rgba(205,127,50,.03));border:1px solid rgba(205,127,50,.3);height:130px;order:3}
+.pod-3 .pod-score{color:var(--bronze)}
+
+/* TABLE */
+.rank-table{width:100%;border-collapse:collapse}
+.rank-table th{background:var(--card);padding:10px 14px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--blue)}
+.rank-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:.85rem;transition:all .3s}
+.rank-table tr{transition:all .4s ease}
+.rank-table tr:hover td{background:rgba(59,130,246,.04)}
+.rank-table tr.top5 td{background:rgba(245,158,11,.04)}
+.rank-table tr.top5 td:first-child{font-weight:900;color:var(--gold)}
+.rk{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem}
+.rk-1{background:linear-gradient(135deg,#f59e0b,#eab308);color:#000}
+.rk-2{background:linear-gradient(135deg,#94a3b8,#cbd5e1);color:#000}
+.rk-3{background:linear-gradient(135deg,#cd7f32,#b8860b);color:#fff}
+.rk-n{background:var(--card);border:1px solid var(--border);color:var(--muted)}
+.rk-top5{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--gold)}
+.name-cell{font-weight:700}
+.score-cell{font-weight:900;font-size:1rem}
+.score-cell.high{color:var(--green)}
+.bonus-badge{display:inline-block;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--gold);font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px}
+.task-dots{display:flex;gap:3px}
+.dot{width:14px;height:14px;border-radius:4px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:.2s;font-size:7px;display:flex;align-items:center;justify-content:center}
+.dot.done{background:var(--green);border-color:var(--green);color:#fff}
+.dot:hover{transform:scale(1.3);border-color:var(--blue)}
+
+/* ADMIN PANEL */
+.admin-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:24px;display:none}
+.admin-panel.show{display:block}
+.admin-panel h3{font-size:.95rem;font-weight:800;margin-bottom:12px;color:var(--blue)}
+.admin-row{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.admin-row .aname{font-size:.82rem;font-weight:700;min-width:200px}
+.admin-row .abtn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-size:.7rem;font-weight:800;transition:.2s;font-family:'Inter'}
+.admin-row .abtn:hover{border-color:var(--green);color:var(--green)}
+.admin-row .abtn.done{background:var(--green);border-color:var(--green);color:#fff}
+
+.confetti{position:fixed;pointer-events:none;z-index:999}
+
+/* PULSE ANIMATION */
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.pulse{animation:pulse .6s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.slide-up{animation:slideUp .4s ease}
+
+@media(max-width:768px){.podium{flex-direction:column;align-items:center}.pod{min-height:auto!important;height:auto!important;order:unset!important;width:100%}.container{padding:12px}}
+</style></head><body>
+<div class="topbar">
+  <div class="logo">🏆 <span>Ranking CMMS</span></div>
+  <div class="top-btns">
+    <button class="tbtn" onclick="toggleAdmin()">⚙️ Admin</button>
+    <button class="tbtn" onclick="resetAll()">🔄 Reset</button>
+  </div>
+</div>
+<div class="container">
+  <div class="header">
+    <h1>🏆 Competencia <span class="gr">CMMS en Vivo</span></h1>
+    <p>Caso Integrador — Los 5 primeros ganan puntos bonus en el quiz</p>
+    <div class="timer-bar">
+      <div class="timer-chip"><div class="v" id="clock">00:00</div><div class="l">Tiempo</div></div>
+      <div class="timer-chip"><div class="v" id="completed">0</div><div class="l">Completados</div></div>
+      <div class="timer-chip"><div class="v">5</div><div class="l">Bonus Top</div></div>
+    </div>
+  </div>
+
+  <div class="tasks-bar">
+    <div class="task-chip">1️⃣ Fichas Activos <span class="pts">10pts</span></div>
+    <div class="task-chip">2️⃣ Planes PM <span class="pts">20pts</span></div>
+    <div class="task-chip">3️⃣ OTs Correctivas <span class="pts">25pts</span></div>
+    <div class="task-chip">4️⃣ PDF Export <span class="pts">10pts</span></div>
+    <div class="task-chip">5️⃣ Inventario <span class="pts">15pts</span></div>
+    <div class="task-chip">6️⃣ KPIs Dashboard <span class="pts">20pts</span></div>
+  </div>
+
+  <div class="podium" id="podium"></div>
+
+  <table class="rank-table">
+    <thead><tr><th>#</th><th>Estudiante</th><th>Tareas</th><th>Puntos</th><th>Estado</th></tr></thead>
+    <tbody id="rankBody"></tbody>
+  </table>
+
+  <div class="admin-panel" id="adminPanel">
+    <h3>⚙️ Panel Docente — Marcar Tareas Completadas</h3>
+    <div id="adminList"></div>
+  </div>
+</div>
+
+<script>
+const TASKS=[
+  {id:'fichas',name:'Fichas',pts:10},
+  {id:'planes',name:'Planes PM',pts:20},
+  {id:'ots',name:'OTs Correct.',pts:25},
+  {id:'pdf',name:'PDF',pts:10},
+  {id:'inv',name:'Inventario',pts:15},
+  {id:'kpis',name:'KPIs',pts:20}
+];
+const STUDENTS=[
+  "ACUNA MENESES, DANIEL EDUARDO","AGAMEZ SANTOS, JORGE ANDRES","AMAYA DURAN, ARNULFO ELIAS",
+  "DIAZ MENDOZA, JOSE LUIS","ESCOBAR MOSCOTE, LEONARDO","GAMARRA CAMPO, OSCAR DAMIAN",
+  "GRIMALDO JARAMILLO, JUAN SEBASTIAN","HERNÁNDEZ PARRA, LUIS EDUARDO","HOYOS TOLOZA, JHORJAN DANIEL",
+  "MEJIA MIELES, KEINER ANDRES","OSPINO MONTOYA, HILLARY DANIELA","SALAS GALVAN, JHOEL FABIAN",
+  "SEPULVEDA RUEDA, XAVI DAMEK","SUAREZ ROVIRA, YEISON DONATO","TORRES VANEGAS, LUIS ALEXANDER",
+  "VARGAS RIVERA, SAMUEL","VELEÑO JIMENEZ, SEBASTIAN","VILLAMIZAR MEJIA, MAICOL DANIEL",
+  "YURANI GOMEZ, ANGELICA YURANI"
+];
+
+// State
+let state={};
+let timerStart=null,timerInterval=null;
+
+function initState(){
+  const saved=localStorage.getItem('cmms_ranking');
+  if(saved){state=JSON.parse(saved);return;}
+  STUDENTS.forEach(s=>{state[s]={};TASKS.forEach(t=>state[s][t.id]=false);});
+}
+function save(){localStorage.setItem('cmms_ranking',JSON.stringify(state));}
+
+function getScore(name){
+  let s=0;TASKS.forEach(t=>{if(state[name]?.[t.id])s+=t.pts;});return s;
+}
+function getRanked(){
+  return STUDENTS.map(n=>({name:n,score:getScore(n),tasks:TASKS.map(t=>state[n]?.[t.id]||false)}))
+    .sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
+}
+function shortName(n){
+  const parts=n.split(',');
+  if(parts.length<2)return n;
+  const last=parts[0].trim().split(' ')[0];
+  const first=parts[1].trim().split(' ')[0];
+  return first+' '+last.charAt(0)+last.slice(1).toLowerCase();
+}
+
+function toggleTask(name,taskId){
+  if(!state[name])state[name]={};
+  state[name][taskId]=!state[name][taskId];
+  save();
+  if(!timerStart){timerStart=Date.now();startTimer();}
+  render();
+}
+
+function render(){
+  const ranked=getRanked();
+  // Podium
+  const pod=document.getElementById('podium');
+  if(ranked.length>=3&&ranked[0].score>0){
+    const medals=['🥇','🥈','🥉'];
+    pod.innerHTML=[0,1,2].map(i=>`<div class="pod pod-${i+1} slide-up">
+      <div class="rank-icon">${medals[i]}</div>
+      <div class="pod-name">${shortName(ranked[i].name)}</div>
+      <div class="pod-score">${ranked[i].score}</div>
+      <div class="pod-pts">puntos</div></div>`).join('');
+  } else {pod.innerHTML='<p style="color:var(--muted);font-size:.88rem">El podio aparecerá cuando alguien sume puntos 🚀</p>';}
+
+  // Table
+  const body=document.getElementById('rankBody');
+  body.innerHTML=ranked.map((s,i)=>{
+    const isTop5=i<5&&s.score>0;
+    const rkCls=i===0?'rk-1':i===1?'rk-2':i===2?'rk-3':isTop5?'rk-top5':'rk-n';
+    const dots=s.tasks.map((done,ti)=>`<div class="dot${done?' done':''}" title="${TASKS[ti].name} (${TASKS[ti].pts}pts)" onclick="toggleTask('${s.name.replace(/'/g,"\\'")}','${TASKS[ti].id}')">${done?'✓':''}</div>`).join('');
+    const bonus=isTop5?'<span class="bonus-badge">⭐ BONUS</span>':'';
+    return`<tr class="${isTop5?'top5':''}">
+      <td><div class="rk ${rkCls}">${i+1}</div></td>
+      <td class="name-cell">${shortName(s.name)}${bonus}</td>
+      <td><div class="task-dots">${dots}</div></td>
+      <td class="score-cell${s.score>=80?' high':''}">${s.score}</td>
+      <td>${s.score>=100?'✅ Completo':s.score>0?'⏳ En progreso':'⬜ Sin iniciar'}</td></tr>`;
+  }).join('');
+
+  // Completed count
+  document.getElementById('completed').textContent=ranked.filter(s=>s.score>=100).length;
+
+  // Admin panel
+  const al=document.getElementById('adminList');
+  al.innerHTML=ranked.map(s=>{
+    const btns=TASKS.map(t=>`<button class="abtn${state[s.name]?.[t.id]?' done':''}" title="${t.name}" onclick="toggleTask('${s.name.replace(/'/g,"\\'")}','${t.id}')">${state[s.name]?.[t.id]?'✓':(TASKS.indexOf(t)+1)}</button>`).join('');
+    return`<div class="admin-row"><span class="aname">${shortName(s.name)}</span><span style="font-size:.78rem;font-weight:800;color:var(--blue);min-width:40px">${s.score}p</span>${btns}</div>`;
+  }).join('');
+}
+
+function toggleAdmin(){
+  const p=document.getElementById('adminPanel');
+  p.classList.toggle('show');
+}
+function resetAll(){
+  if(!confirm('¿Borrar TODOS los datos del ranking?'))return;
+  state={};STUDENTS.forEach(s=>{state[s]={};TASKS.forEach(t=>state[s][t.id]=false);});
+  save();timerStart=null;clearInterval(timerInterval);document.getElementById('clock').textContent='00:00';
+  render();
+}
+function startTimer(){
+  timerInterval=setInterval(()=>{
+    const s=Math.floor((Date.now()-timerStart)/1000);
+    document.getElementById('clock').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  },1000);
+}
+
+// Init
+initState();
+if(Object.values(state).some(s=>Object.values(s).some(v=>v))){timerStart=Date.now();startTimer();}
+render();
+</script></body></html>

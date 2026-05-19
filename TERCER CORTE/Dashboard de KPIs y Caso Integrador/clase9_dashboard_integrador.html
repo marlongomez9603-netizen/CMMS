@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard de KPIs y Caso Integrador CMMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070e16;--surface:#0d1825;--card:#111f30;--border:#1e3a52;
+  --accent:#00e5a0;--accent2:#0ea5e9;--accent3:#f59e0b;
+  --red:#ef4444;--text:#e2e8f0;--muted:#7a9db8;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:900px;padding:0 2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--accent3);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.8rem;font-weight:700}
+.hero-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 20%,var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem}
+.hero-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin:0 auto 2.5rem}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:1rem}
+.meta-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;color:var(--muted)}
+.meta-chip span{color:var(--text);font-weight:700}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.72rem}
+.arrow{width:22px;height:22px;border-right:2px solid var(--accent3);border-bottom:2px solid var(--accent3);transform:rotate(45deg);animation:bounce 1.4s ease infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(7px)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,14,22,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.4rem;padding:.65rem 1rem;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:.8rem;padding:.35rem .9rem;border-radius:8px;transition:.2s;font-weight:600}
+nav a:hover,nav a.active{background:rgba(245,158,11,.12);color:var(--accent3)}
+
+/* LAYOUT */
+main{max-width:1160px;margin:0 auto;padding:0 1.5rem}
+section{padding:5rem 0}
+.section-label{display:inline-flex;align-items:center;gap:.5rem;color:var(--accent3);font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;margin-bottom:.8rem}
+.section-label::before{content:'';display:block;width:28px;height:2px;background:var(--accent3);border-radius:2px}
+h2{font-size:clamp(1.7rem,3vw,2.6rem);font-weight:800;margin-bottom:1.2rem}
+.section-intro{color:var(--muted);font-size:1rem;max-width:700px;margin-bottom:3rem;line-height:1.8}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* MOCK DASHBOARD WRAPPER */
+.dash-board-mock{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;margin:2rem 0}
+.dash-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.dash-company-select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.5rem 1rem;border-radius:8px;font-family:'Inter',sans-serif;outline:none;font-size:.85rem}
+.dash-company-select:focus{border-color:var(--accent3)}
+
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+.dash-kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center}
+.dash-kpi-val{font-size:1.6rem;font-weight:900;color:var(--accent3)}
+.dash-kpi-lbl{font-size:.7rem;color:var(--muted);margin-top:.2rem;text-transform:uppercase;letter-spacing:.05em}
+
+.dash-charts{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:768px){.dash-charts{grid-template-columns:1fr}}
+.dash-chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem;min-height:260px;display:flex;flex-direction:column}
+.dash-chart-title{font-size:.85rem;font-weight:700;margin-bottom:1rem;color:var(--text);border-left:3px solid var(--accent3);padding-left:.6rem}
+.dash-chart-wrap{position:relative;flex:1;width:100%;height:100%}
+
+/* CASE GUIDE */
+.guide-steps{display:flex;flex-direction:column;gap:1.2rem;margin:2rem 0}
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;gap:1.2rem}
+@media(max-width:600px){.step-card{flex-direction:column}}
+.step-num{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--accent3);width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;flex-shrink:0}
+.step-content h3{font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text)}
+.step-content p{font-size:.85rem;color:var(--muted);line-height:1.6}
+.step-content ul{list-style:disc;padding-left:1.2rem;margin-top:.6rem;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:.3rem}
+.step-content strong{color:var(--text)}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin-bottom:1.2rem}
+.quiz-question{font-weight:700;font-size:.95rem;margin-bottom:1rem;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;font-size:.87rem;color:var(--text);transition:.2s}
+.quiz-option:hover{border-color:var(--accent3);background:rgba(245,158,11,.05)}
+.quiz-option.correct{border-color:var(--accent);background:rgba(0,229,160,.1);color:var(--accent)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.08);color:var(--red)}
+.quiz-feedback{margin-top:.8rem;font-size:.85rem;padding:.6rem 1rem;border-radius:8px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.quiz-feedback.err{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.score-display{background:var(--card);border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-top:2rem;display:none}
+.score-display.show{display:block}
+.score-num{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--accent3),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-quiz{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.84rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-quiz:hover{border-color:var(--accent3);color:var(--accent3)}
+.btn-quiz.primary{background:linear-gradient(135deg,var(--accent3),var(--accent2));color:#000;border:none;font-weight:800}
+
+/* CHECKLIST */
+.checklist-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.checklist-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.checklist-item{display:flex;align-items:center;gap:.9rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;transition:background .2s;user-select:none}
+.checklist-item:hover{background:rgba(245,158,11,.05)}
+.checklist-item.checked{opacity:.6}
+.chk-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-size:.8rem}
+.checklist-item.checked .chk-box{background:var(--accent3);border-color:var(--accent3);color:#000}
+.chk-label{font-size:.88rem;color:var(--muted);transition:color .2s}
+.checklist-item.checked .chk-label{text-decoration:line-through;color:rgba(122,157,184,.5)}
+.chk-progress{height:6px;background:var(--surface);border-radius:3px;margin-top:1.2rem;overflow:hidden}
+.chk-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent2));border-radius:3px;transition:width .5s ease;width:0%}
+.chk-count{font-size:.78rem;color:var(--muted);margin-top:.5rem;text-align:right}
+
+/* CARDS INFO */
+.info-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.82rem}
+.info-table th{text-align:left;padding:.6rem;color:var(--muted);border-bottom:1px solid var(--border);font-weight:700}
+.info-table td{padding:.6rem;border-bottom:1px solid rgba(255,255,255,.03)}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.83rem}
+footer strong{color:var(--accent3)}
+
+/* UTILS */
+.fade-in{opacity:0;transform:translateY(24px)}
+@media(max-width:768px){nav{gap:.2rem}nav a{font-size:.74rem;padding:.3rem .6rem}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">📊 Reportabilidad e Integración CMMS</div>
+    <h1 class="hero-title">Dashboard de KPIs y Caso Integrador</h1>
+    <p class="hero-sub">Aprende a consolidar datos del software CMMS MaintPro, generar gráficos gerenciales de confiabilidad e iniciar la fase de preparación del examen final.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Esp. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>3er Corte</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="arrow"></div><span>Desplázate</span></div>
+</section>
+
+<nav id="main-nav">
+  <a href="#s-intro" class="active">Introducción</a>
+  <a href="#s-dash">Simulador KPIs</a>
+  <a href="#s-guide">Caso Integrador</a>
+  <a href="#s-checklist">Entregables</a>
+  <a href="#s-quiz">Simulador Cuestionario</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════ SECCIÓN 1 · INTRODUCCIÓN ═══════════════ -->
+<section id="s-intro">
+  <div class="section-label">01 · Visualización de Datos</div>
+  <h2>De Datos de Orden a Inteligencia de Planta</h2>
+  <p class="section-intro">La gestión moderna del mantenimiento no reside en almacenar miles de registros en un software, sino en transformar esos registros aislados (órdenes de trabajo correctivas, preventivas, repuestos y horas técnicas) en decisiones estratégicas de inversión y mejora de confiabilidad.</p>
+
+  <div class="grid-3">
+    <div class="card fade-in">
+      <div class="card-icon">📊</div>
+      <h3>Consolidación</h3>
+      <p>Aprende a agrupar la información operativa de tu sector industrial en MaintPro para presentarlo de forma clara ante la dirección.</p>
+    </div>
+    <div class="card fade-in hl">
+      <div class="card-icon">⚡</div>
+      <h3>Toma de Decisiones</h3>
+      <p>A través de gráficos de Pareto y tendencias históricas, prioriza qué activos requieren planes predictivos o rediseños de ingeniería.</p>
+    </div>
+    <div class="card fade-in">
+      <div class="card-icon">🔍</div>
+      <h3>Preparación Final</h3>
+      <p>Esta sesión consolida todo el aprendizaje del semestre, integrando planeación, programación y control mecánico.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 2 · SIMULADOR DE DASHBOARD ═══════════════ -->
+<section id="s-dash">
+  <div class="section-label">02 · Simulador de Reportes</div>
+  <h2>Tablero de Control de KPIs de Planta</h2>
+  <p class="section-intro">El CMMS MaintPro consolida las métricas clave. Cambia de empresa a continuación para observar cómo se comportan los gráficos y qué diagnóstico técnico reportaría el software:</p>
+
+  <div class="dash-board-mock fade-in">
+    <div class="dash-toolbar">
+      <div style="font-weight:700;font-size:1.02rem;color:var(--text);"><i class="fas fa-chart-line"></i> Reporte del Mes actual</div>
+      <select class="dash-company-select" id="dash-select" onchange="updateDashData()">
+        <option value="petro">PetroAndina S.A. (Petróleo & Gas)</option>
+        <option value="agro">AgroVerde Ltda. (Sector Agrícola)</option>
+        <option value="metal">MetalPrecision S.A.S. (Manufactura Metálica)</option>
+      </select>
+    </div>
+
+    <div class="dash-kpis">
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-val" id="dash-val-assets">0</div>
+        <div class="dash-kpi-lbl">Total Activos</div>
+      </div>
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-val" id="dash-val-mtbf">0h</div>
+        <div class="dash-kpi-lbl">MTBF</div>
+      </div>
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-val" id="dash-val-mttr">0h</div>
+        <div class="dash-kpi-lbl">MTTR</div>
+      </div>
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-val" id="dash-val-avail">0%</div>
+        <div class="dash-kpi-lbl">Disponibilidad</div>
+      </div>
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-val" id="dash-val-oee">0%</div>
+        <div class="dash-kpi-lbl">OEE Promedio</div>
+      </div>
+    </div>
+
+    <div class="dash-charts">
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">Distribución de Órdenes de Trabajo</div>
+        <div class="dash-chart-wrap">
+          <canvas id="chartWOTypes"></canvas>
+        </div>
+      </div>
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">Evolución de Disponibilidad Histórica (6 meses)</div>
+        <div class="dash-chart-wrap">
+          <canvas id="chartTrendAvail"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hl" style="padding:1rem 1.4rem;">
+      <h4 style="font-size:.85rem;color:var(--text);margin-bottom:.4rem;"><i class="fas fa-circle-info"></i> Diagnóstico del Sistema MaintPro</h4>
+      <p id="dash-diagnostic" style="font-size:.8rem;color:var(--muted);"></p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 3 · GUÍA DEL CASO PRACTICO ═══════════════ -->
+<section id="s-guide">
+  <div class="section-label">03 · Taller Integrador</div>
+  <h2>Caso Integrador de Mantenimiento CMMS (20%)</h2>
+  <p class="section-intro">El **Caso Integrador del CMMS** es el proyecto de fin de corte donde aplicarás toda la gestión de activos. A continuación se detallan los pasos y requerimientos de la entrega:</p>
+
+  <div class="guide-steps">
+    <div class="step-card fade-in">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Estructura del Inventario y Activos</h3>
+        <p>Asegúrate de que tu perfil de estudiante en MaintPro cuente con la taxonomía estructurada completa de tu sector asignado. Debes tener registrados al menos <strong>5 activos principales</strong> detallados con código, marca, modelo y criticidad.</p>
+      </div>
+    </div>
+
+    <div class="step-card fade-in">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Planes Preventivos y Calendario</h3>
+        <p>Tu CMMS debe contar con al menos <strong>5 planes de mantenimiento preventivo activos</strong>. Cada plan debe tener:</p>
+        <ul>
+          <li>Frecuencia establecida (ej. 30 días, 90 días).</li>
+          <li>Listado de tareas separadas por barra vertical (ej. "Limpiar filtro | Revisar tensión correa").</li>
+          <li>Técnico responsable asignado del personal de planta.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step-card fade-in">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Historial de Órdenes y Fallas</h3>
+        <p>Deberás registrar en el historial de órdenes de trabajo (OT) tanto mantenimientos preventivos ejecutados como <strong>mantenimientos correctivos por fallas imprevistas</strong>. Registra al menos **4 fallas independientes** ingresando tiempos de reparación reales para que el CMMS compute MTTR y MTBF en tiempo real en tu dashboard.</p>
+      </div>
+    </div>
+
+    <div class="step-card fade-in">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>Reporte Gerencial Consolidado</h3>
+        <p>Extrae los KPIs de tu dashboard y elabora un informe técnico Word/PDF que contenga:</p>
+        <ul>
+          <li><strong>Portada y taxonomía</strong> de los activos.</li>
+          <li><strong>Cálculo analítico</strong> manual de MTTR, MTBF y Disponibilidad de tu equipo crítico, comparándolo con los resultados mostrados por MaintPro.</li>
+          <li><strong>Diagnóstico OEE</strong> simulado de tu planta crítica y 2 propuestas específicas de mejora utilizando herramientas TPM (ejemplo: análisis de 5 Porqués o Ishikawa para la falla más repetitiva).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <table class="info-table fade-in">
+    <thead>
+      <tr>
+        <th>Entregable</th>
+        <th>Porcentaje</th>
+        <th>Plataforma de Entrega</th>
+        <th>Fecha de Cierre</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Taxonomía y Planes en CMMS</strong></td>
+        <td>10% (de la nota de integrador)</td>
+        <td>Evaluado directo en base de datos MaintPro</td>
+        <td>Cierre de Clase</td>
+      </tr>
+      <tr>
+        <td><strong>Informe Técnico y Diagnóstico OEE</strong></td>
+        <td>10% (de la nota de integrador)</td>
+        <td>Cargar en PDF al aula virtual (Teams)</td>
+        <td>Antes del Examen</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 4 · ENTREGABLES Y TI ═══════════════ -->
+<section id="s-checklist">
+  <div class="section-label">04 · Compromisos del Estudiante</div>
+  <h2>Compromisos y Trabajo Independiente</h2>
+  <p class="section-intro">Para garantizar un desempeño satisfactorio en el cierre del semestre, asegúrate de marcar estas actividades:</p>
+
+  <div class="checklist-wrap fade-in">
+    <h3>📋 Checklist de Avance</h3>
+    <div id="checklist-items"></div>
+    <div class="chk-progress"><div class="chk-progress-bar" id="chk-bar"></div></div>
+    <div class="chk-count" id="chk-count">0 / 3 completados</div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 5 · CUESTIONARIO DE REPASO ═══════════════ -->
+<section id="s-quiz">
+  <div class="section-label">05 · Cuestionario de Repaso</div>
+  <h2>Simulador del Examen Final (Cuestionario)</h2>
+  <p class="section-intro">Pon a prueba todos tus conocimientos. Responde las 10 preguntas de selección múltiple tipo parcial que engloban los tres cortes de la materia:</p>
+
+  <div id="quiz-container"></div>
+  <div class="score-display" id="score-display">
+    <div style="font-size:2rem;margin-bottom:.5rem">🎉</div>
+    <div class="score-num" id="score-num"></div>
+    <div style="color:var(--muted);margin-top:.5rem;font-size:.9rem" id="score-msg"></div>
+    <button class="btn-quiz primary" onclick="restartQuiz()" style="margin-top:1.5rem">↩ Reintentar Cuestionario</button>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Docente: Esp. Marlon Gómez · Tecnología electromecanica Unipaz</p>
+</footer>
+
+<script>
+// ==========================================
+// BACKGROUND CANVAS (Floating Gears/Dots)
+// ==========================================
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const ACCENT = '#f59e0b';
+  class Particle {
+    constructor(){
+      this.x = Math.random()*W; this.y = Math.random()*H;
+      this.r = 2 + Math.random()*3;
+      this.vx = (Math.random()-.5)*.4; this.vy = (Math.random()-.5)*.4;
+      this.alpha = .15 + Math.random()*.35;
+      this.gear = Math.random() > .7;
+      this.gearR = 12 + Math.random()*22;
+      this.gearAngle = Math.random()*Math.PI*2;
+      this.gearSpeed = (Math.random()-.5)*.008;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; this.gearAngle+=this.gearSpeed;
+      if(this.x<-50)this.x=W+50; if(this.x>W+50)this.x=-50;
+      if(this.y<-50)this.y=H+50; if(this.y>H+50)this.y=-50; }
+    draw(){
+      ctx.save(); ctx.globalAlpha=this.alpha;
+      if(this.gear){
+        drawGear(ctx, this.x, this.y, this.gearR, this.gearR*.6, 8, this.gearAngle, ACCENT);
+      } else {
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=ACCENT; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  function drawGear(ctx,cx,cy,ro,ri,teeth,ang,color){
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath();
+    for(let i=0;i<teeth;i++){
+      const a1=(i/teeth)*Math.PI*2, a2=((i+.5)/teeth)*Math.PI*2, a3=((i+1)/teeth)*Math.PI*2;
+      if(i===0) ctx.moveTo(Math.cos(a1)*ro,Math.sin(a1)*ro);
+      ctx.lineTo(Math.cos(a2)*ro,Math.sin(a2)*ro);
+      ctx.lineTo(Math.cos(a2)*(ro+4),Math.sin(a2)*(ro+4));
+      const h=(a2+a3)/2;
+      ctx.lineTo(Math.cos(h)*(ro+4),Math.sin(h)*(ro+4));
+      ctx.lineTo(Math.cos(a3)*ro,Math.sin(a3)*ro);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,ri,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  for(let i=0;i<40;i++) particles.push(new Particle());
+  function drawLines(){
+    for(let i=0;i<particles.length;i++)
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<140){
+          ctx.save(); ctx.globalAlpha=.08*(1-d/140);
+          ctx.strokeStyle=ACCENT; ctx.lineWidth=.8;
+          ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); ctx.restore();
+        }
+      }
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W/2,H/2,H*.1,W/2,H/2,H*.7);
+    g.addColorStop(0,'rgba(7,14,22,0)'); g.addColorStop(1,'rgba(7,14,22,.7)');
+    drawLines();
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ==========================================
+// GSAP SCROLL TRIGGER ANIMATIONS
+// ==========================================
+gsap.registerPlugin(ScrollTrigger);
+document.querySelectorAll('.fade-in').forEach(el=>{
+  gsap.to(el,{ opacity:1, y:0, duration:.6, ease:'power2.out',
+    scrollTrigger:{ trigger:el, start:'top 90%', toggleActions:'play none none none' }});
+});
+
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-120) cur=s.id; });
+  navLinks.forEach(a=>{ a.classList.toggle('active',a.getAttribute('href')==='#'+cur); });
+});
+
+// ==========================================
+// MOCK DASHBOARD LOGIC (Chart.js)
+// ==========================================
+const companiesKPIs = {
+  petro: {
+    assets: 12, mtbf: 345, mttr: 4.8, avail: 98.6, oee: 84.5,
+    woTypes: [18, 32, 10, 4], // corr, prev, pred, mejora
+    trendAvail: [97.5, 98.0, 97.9, 98.2, 98.4, 98.6],
+    diagnostic: "PetroAndina muestra alta disponibilidad mecánica (98.6%). Sin embargo, la mayor oportunidad de mejora reside en la automatización de la calidad y reducción de mermas por purgado de válvulas (Rendimiento OEE)."
+  },
+  agro: {
+    assets: 8, mtbf: 210, mttr: 8.5, avail: 96.1, oee: 75.8,
+    woTypes: [25, 14, 2, 2],
+    trendAvail: [94.5, 95.0, 95.8, 95.2, 96.0, 96.1],
+    diagnostic: "AgroVerde presenta un MTTR elevado de 8.5 horas debido a retrasos en importación de rodamientos de repuesto. Se sugiere implementar un stock mínimo optimizado y capacitación autónoma al operario."
+  },
+  metal: {
+    assets: 15, mtbf: 165, mttr: 3.2, avail: 98.1, oee: 62.4,
+    woTypes: [40, 20, 5, 12],
+    trendAvail: [96.0, 97.1, 97.4, 97.0, 97.8, 98.1],
+    diagnostic: "MetalPrecision cuenta con excelente mantenibilidad (MTTR de 3.2h) pero un OEE crítico de 62.4%. La baja velocidad operativa (pilar de Rendimiento) y desgastes en troqueles son el cuello de botella."
+  }
+};
+
+let chartWO = null;
+let chartTrend = null;
+
+function initCharts() {
+  const ctxWO = document.getElementById('chartWOTypes').getContext('2d');
+  chartWO = new Chart(ctxWO, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correctivo', 'Preventivo', 'Predictivo', 'Mejora'],
+      datasets: [{
+        data: [0, 0, 0, 0],
+        backgroundColor: ['#ef4444', '#00e5a0', '#0ea5e9', '#f59e0b'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#9ea7c0', font: { family: 'Inter', size: 10 } } } }
+    }
+  });
+
+  const ctxTrend = document.getElementById('chartTrendAvail').getContext('2d');
+  chartTrend = new Chart(ctxTrend, {
+    type: 'line',
+    data: {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      datasets: [{
+        label: 'Disponibilidad %',
+        data: [0, 0, 0, 0, 0, 0],
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.06)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b7490' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { min: 90, max: 100, ticks: { color: '#6b7490' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function updateDashData() {
+  const selected = document.getElementById('dash-select').value;
+  const kpis = companiesKPIs[selected];
+
+  // Update KPI counters
+  document.getElementById('dash-val-assets').textContent = kpis.assets;
+  document.getElementById('dash-val-mtbf').textContent = kpis.mtbf + 'h';
+  document.getElementById('dash-val-mttr').textContent = kpis.mttr + 'h';
+  document.getElementById('dash-val-avail').textContent = kpis.avail.toFixed(1) + '%';
+  document.getElementById('dash-val-oee').textContent = kpis.oee.toFixed(1) + '%';
+
+  // Diagnostic
+  document.getElementById('dash-diagnostic').textContent = kpis.diagnostic;
+
+  // Update Charts
+  if (chartWO && chartTrend) {
+    chartWO.data.datasets[0].data = kpis.woTypes;
+    chartWO.update();
+
+    chartTrend.data.datasets[0].data = kpis.trendAvail;
+    chartTrend.update();
+  }
+}
+
+// Init Dashboard UI
+initCharts();
+updateDashData();
+
+// ==========================================
+// CHECKLIST SYSTEM
+// ==========================================
+const chkData = [
+  { text: "Estructurar la taxonomía de activos completa en MaintPro CMMS", cat: "CMMS" },
+  { text: "Cargar 5 planes preventivos activos y ejecutar al menos 4 órdenes de trabajo en el historial", cat: "CMMS" },
+  { text: "Elaborar el Informe Técnico final del Caso Integrador y subirlo en Teams", cat: "Informe" }
+];
+
+const chkListEl = document.getElementById('checklist-items');
+chkListEl.innerHTML = chkData.map((item, idx) => `
+  <div class="checklist-item" id="chk-item-${idx}" onclick="toggleCheck(${idx})">
+    <div class="chk-box" id="chk-box-${idx}"></div>
+    <div class="chk-label" id="chk-lbl-${idx}">
+      ${item.text} <span class="chk-tag m">${item.cat}</span>
+    </div>
+  </div>
+`).join('');
+
+let checkedState = new Array(chkData.length).fill(false);
+
+function toggleCheck(idx) {
+  checkedState[idx] = !checkedState[idx];
+  const item = document.getElementById(`chk-item-${idx}`);
+  const box = document.getElementById(`chk-box-${idx}`);
+  
+  if (checkedState[idx]) {
+    item.classList.add('checked');
+    box.innerHTML = '✔';
+  } else {
+    item.classList.remove('checked');
+    box.innerHTML = '';
+  }
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const completed = checkedState.filter(Boolean).length;
+  const progress = (completed / chkData.length) * 100;
+  document.getElementById('chk-bar').style.width = progress + '%';
+  document.getElementById('chk-count').textContent = `${completed} / ${chkData.length} completados`;
+}
+
+// ==========================================
+// QUIZ SYSTEM (10 QUESTIONS - GENERAL REVIEW)
+// ==========================================
+const quizQuestions = [
+  {
+    q: "1. ¿Cuál es el objetivo principal del Mantenimiento Preventivo (PM)?",
+    opts: [
+      "Reparar el activo lo más rápido posible tras un fallo",
+      "Reducir la probabilidad de fallo o degradación mediante intervenciones planificadas antes de que ocurra la avería",
+      "Rediseñar el activo para eliminar fallos sistemáticos",
+      "Monitorear vibraciones en tiempo real para predecir desgastes"
+    ],
+    ans: 1,
+    fb: "El Mantenimiento Preventivo busca adelantarse a la avería actuando sobre intervalos fijos de tiempo o uso."
+  },
+  {
+    q: "2. Si la tasa de fallas (λ) de una bomba de PetroAndina es constante, ¿en qué fase de la Curva de la Bañera se encuentra?",
+    opts: [
+      "Mortalidad Infantil (asentamiento)",
+      "Vida Útil Operativa (fallos aleatorios)",
+      "Desgaste y Envejecimiento Crítico",
+      "Fase de Puesta en Marcha"
+    ],
+    ans: 1,
+    fb: "Una tasa de fallas constante denota la fase central de la curva de la bañera, caracterizada por fallos fortuitos o aleatorios."
+  },
+  {
+    q: "3. La disponibilidad operativa se ve perjudicada negativamente si incrementamos:",
+    opts: [
+      "El MTBF",
+      "El MTTR",
+      "El Uptime",
+      "El ciclo de lubricación preventiva"
+    ],
+    ans: 1,
+    fb: "A = MTBF / (MTBF + MTTR). Si el MTTR (tiempo medio de reparación) aumenta, el denominador crece y la Disponibilidad disminuye."
+  },
+  {
+    q: "4. ¿Cuál de las siguientes actividades corresponde al Mantenimiento Autónomo (TPM)?",
+    opts: [
+      "Rebobinar un motor trifásico quemado en el taller de electricidad",
+      "Inspección táctil, limpieza básica y ajuste menor de tornillos por el propio operario de la máquina",
+      "Calibración de lazos de control por instrumentistas calificados",
+      "Análisis de termografía infrarroja del tablero eléctrico principal"
+    ],
+    ans: 1,
+    fb: "El Mantenimiento Autónomo capacita a los operadores para que se hagan cargo del cuidado primario (limpieza, inspección, lubricación) de su propio equipo."
+  },
+  {
+    q: "5. ¿Cómo se calcula el indicador OEE global de una línea de manufactura?",
+    opts: [
+      "OEE = MTBF / (MTBF + MTTR)",
+      "OEE = Disponibilidad × Rendimiento × Calidad",
+      "OEE = (Piezas Producidas − Piezas Buenas) / Turno",
+      "OEE = Tiempo de Operación / Tiempo Calendario"
+    ],
+    ans: 1,
+    fb: "El OEE es el producto de las tres tasas porcentuales de Disponibilidad, Rendimiento y Calidad."
+  },
+  {
+    q: "6. Un compresor de aire opera con un MTBF de 480 horas y un MTTR de 20 horas. ¿Cuál es su disponibilidad?",
+    opts: [
+      "96.0%",
+      "95.8%",
+      "97.2%",
+      "94.5%"
+    ],
+    ans: 0, // 480 / 500 = 96%
+    fb: "A = 480 / (480 + 20) = 480 / 500 = 0.96 (96%)."
+  },
+  {
+    q: "7. En un sistema basado en confiabilidad (RCM), la criticidad de un activo se define matemáticamente como:",
+    opts: [
+      "Criticidad = Frecuencia de Falla × Consecuencia del Impacto",
+      "Criticidad = MTBF / MTTR",
+      "Criticidad = Costo de Repuesto + Tiempo de Parada",
+      "Criticidad = N° de Sensores × Horas Operativas"
+    ],
+    ans: 0,
+    fb: "La criticidad jerarquiza activos multiplicando qué tan seguido fallan por el impacto financiero, operacional y de seguridad de ese fallo."
+  },
+  {
+    q: "8. ¿Cuál es la principal ventaja de estructurar una taxonomía bajo el estándar ISO 14224?",
+    opts: [
+      "Permite calificar automáticamente los exámenes de los estudiantes",
+      "Estandariza los niveles jerárquicos de localización, sistema y equipo facilitando la recolección uniforme de datos de falla",
+      "Evita que el CMMS requiera conexión a internet",
+      "Elimina por completo el mantenimiento correctivo"
+    ],
+    ans: 1,
+    fb: "La norma ISO 14224 provee la base taxonómica internacional para recopilar datos de confiabilidad de forma estructurada en industrias de procesos."
+  },
+  {
+    q: "9. ¿Qué representa el indicador de 'Backlog' en la programación de mantenimiento?",
+    opts: [
+      "La cantidad de repuestos obsoletos en el inventario",
+      "El tiempo acumulado de trabajo de mantenimiento acumulado y pendiente por ejecutar",
+      "La tasa de fallos de la bomba de refrigeración",
+      "El tiempo medio transcurrido entre dos preventivos"
+    ],
+    ans: 1,
+    fb: "El Backlog mide la carga de trabajo pendiente expresada en semanas o días hombre."
+  },
+  {
+    q: "10. La meta de 'Cero Averías' propuesta por el TPM se asienta principalmente sobre la base de:",
+    opts: [
+      "Eliminar el Mantenimiento Preventivo y operar solo de forma correctiva",
+      "La restauración del deterioro físico acumulado y la disciplina del operador en tareas autónomas",
+      "Automatizar al 100% la planta prescindiendo de operarios humanos",
+      "Incrementar el stock de repuestos de calidad baja"
+    ],
+    ans: 1,
+    fb: "El TPM sostiene que las averías ocurren por tolerar el deterioro latente. La restauración y la limpieza constante previenen la degradación del equipo."
+  }
+];
+
+const quizContainer = document.getElementById('quiz-container');
+let answersState = new Array(quizQuestions.length).fill(null);
+
+function renderQuiz() {
+  quizContainer.innerHTML = quizQuestions.map((q, qIdx) => `
+    <div class="quiz-card" id="q-card-${qIdx}">
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((opt, oIdx) => `
+          <label class="quiz-option" id="q-opt-${qIdx}-${oIdx}">
+            <input type="radio" name="q-${qIdx}" onclick="answerQuestion(${qIdx}, ${oIdx})" ${answersState[qIdx] === oIdx ? 'checked' : ''}>
+            ${opt}
+          </label>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="q-fb-${qIdx}"></div>
+    </div>
+  `).join('');
+}
+
+function answerQuestion(qIdx, oIdx) {
+  answersState[qIdx] = oIdx;
+  const q = quizQuestions[qIdx];
+  const fb = document.getElementById(`q-fb-${qIdx}`);
+  fb.className = 'quiz-feedback show';
+  
+  // Highlight options
+  for(let i=0; i<q.opts.length; i++) {
+    const el = document.getElementById(`q-opt-${qIdx}-${i}`);
+    el.classList.remove('correct', 'wrong');
+  }
+
+  if (oIdx === q.ans) {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = q.fb;
+  } else {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('wrong');
+    document.getElementById(`q-opt-${qIdx}-${q.ans}`).classList.add('correct');
+    fb.className = 'quiz-feedback show err';
+    fb.innerHTML = `❌ Incorrecto. La respuesta correcta es la opción ${q.ans + 1}. ` + q.fb;
+  }
+  checkQuizComplete();
+}
+
+function checkQuizComplete() {
+  if (answersState.filter(v => v !== null).length === quizQuestions.length) {
+    const score = answersState.reduce((sum, val, idx) => sum + (val === quizQuestions[idx].ans ? 1 : 0), 0);
+    const scorePct = (score / quizQuestions.length) * 100;
+    
+    document.getElementById('score-num').textContent = `${scorePct}%`;
+    let msg = '';
+    if (scorePct >= 80) msg = '🎉 ¡Felicitaciones! Estás totalmente preparado para el examen parcial. ¡Sigue así!';
+    else if (scorePct >= 60) msg = '👍 Buen resultado. Repasa las preguntas incorrectas para afianzar conceptos teóricos.';
+    else msg = '✏️ Te recomendamos fuertemente repasar las diapositivas previas y las lecturas recomendadas antes de rendir el examen parcial.';
+    
+    document.getElementById('score-msg').textContent = msg;
+    document.getElementById('score-display').classList.add('show');
+    document.getElementById('score-display').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function restartQuiz() {
+  answersState.fill(null);
+  document.getElementById('score-display').classList.remove('show');
+  renderQuiz();
+}
+
+renderQuiz();
+
+</script>
+</body>
+</html>

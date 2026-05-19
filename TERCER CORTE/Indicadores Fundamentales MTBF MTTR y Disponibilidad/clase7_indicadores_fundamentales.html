@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Indicadores Fundamentales – MTBF, MTTR y Disponibilidad</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070e16;--surface:#0d1825;--card:#111f30;--border:#1e3a52;
+  --accent:#00e5a0;--accent2:#0ea5e9;--accent3:#f59e0b;
+  --red:#ef4444;--text:#e2e8f0;--muted:#7a9db8;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:900px;padding:0 2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:var(--accent);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.8rem;font-weight:700}
+.hero-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 20%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem}
+.hero-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin:0 auto 2.5rem}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:1rem}
+.meta-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;color:var(--muted)}
+.meta-chip span{color:var(--text);font-weight:700}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.72rem}
+.arrow{width:22px;height:22px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);animation:bounce 1.4s ease infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(7px)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,14,22,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.4rem;padding:.65rem 1rem;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:.8rem;padding:.35rem .9rem;border-radius:8px;transition:.2s;font-weight:600}
+nav a:hover,nav a.active{background:rgba(0,229,160,.12);color:var(--accent)}
+
+/* LAYOUT */
+main{max-width:1160px;margin:0 auto;padding:0 1.5rem}
+section{padding:5rem 0}
+.section-label{display:inline-flex;align-items:center;gap:.5rem;color:var(--accent);font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;margin-bottom:.8rem}
+.section-label::before{content:'';display:block;width:28px;height:2px;background:var(--accent);border-radius:2px}
+h2{font-size:clamp(1.7rem,3vw,2.6rem);font-weight:800;margin-bottom:1.2rem}
+.section-intro{color:var(--muted);font-size:1rem;max-width:700px;margin-bottom:3rem;line-height:1.8}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* CARDS */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 10px 36px rgba(0,229,160,.1)}
+.card-icon{font-size:2.2rem;margin-bottom:.9rem}
+.card h3{font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
+.card p{font-size:.87rem;color:var(--muted);line-height:1.65}
+.card.hl{border-color:rgba(0,229,160,.4);background:linear-gradient(135deg,rgba(0,229,160,.07),var(--card))}
+
+/* CONCEPT BOX */
+.concept-box{background:linear-gradient(135deg,rgba(0,229,160,.07),rgba(14,165,233,.05));border:1px solid rgba(0,229,160,.22);border-radius:var(--radius);padding:1.8rem 2rem;margin-bottom:1.6rem}
+.concept-box .quote{font-size:1.02rem;font-style:italic;color:var(--text);border-left:3px solid var(--accent);padding-left:1.2rem;margin-bottom:.7rem}
+.concept-box .source{font-size:.78rem;color:var(--muted)}
+
+/* ACCORDION */
+.accordion{display:flex;flex-direction:column;gap:.6rem}
+.acc-item{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.acc-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.3rem;cursor:pointer;font-weight:700;font-size:.9rem;transition:background .2s;user-select:none}
+.acc-header:hover{background:rgba(0,229,160,.06)}
+.acc-icon{font-size:1.1rem;transition:transform .3s;color:var(--accent)}
+.acc-item.open .acc-icon{transform:rotate(45deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.acc-body-inner{padding:0 1.3rem 1.2rem;font-size:.87rem;color:var(--muted);line-height:1.7}
+.acc-body-inner ul{list-style:disc;padding-left:1.2rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem}
+.acc-body-inner strong{color:var(--text)}
+
+/* KPI CARDS */
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;text-align:center}
+.kpi-value{font-size:1.9rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.kpi-label{font-size:.78rem;color:var(--muted);margin-top:.3rem}
+.kpi-formula{font-family:'JetBrains Mono',monospace;font-size:.76rem;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--accent);padding:.3rem .8rem;border-radius:6px;margin-top:.6rem;display:inline-block}
+
+/* CALCULATOR */
+.calc-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2rem 0}
+.calc-box h3{font-size:1.1rem;font-weight:700;margin-bottom:1.4rem;color:var(--accent);display:flex;align-items:center;gap:.5rem}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin-bottom:1.5rem}
+.calc-field label{display:block;font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.calc-field input,.calc-field select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.6rem .8rem;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.calc-field input:focus{border-color:var(--accent)}
+.calc-results{background:var(--surface);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:1.4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.calc-res-item{text-align:center;padding:.8rem}
+.calc-res-val{font-size:1.6rem;font-weight:800;color:var(--accent)}
+.calc-res-lbl{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.calc-res-formula{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--accent2);margin-top:.3rem}
+
+/* SIMULATOR (CMMS CASES) */
+.sim-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2rem 0}
+.sim-box h3{font-size:1.1rem;font-weight:700;margin-bottom:1rem;color:var(--accent2)}
+.company-select-wrap{margin-bottom:1.5rem}
+.asset-selector{display:flex;gap:.5rem;margin-bottom:1.2rem;overflow-x:auto;padding-bottom:.4rem}
+.asset-tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:.2s;font-weight:600}
+.asset-tab.active,.asset-tab:hover{background:rgba(14,165,233,.12);border-color:var(--accent2);color:var(--text)}
+.sim-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:1.6rem}
+@media(max-width:800px){.sim-grid{grid-template-columns:1fr}}
+.log-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;overflow-x:auto}
+.log-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.log-table th{text-align:left;padding:.5rem;color:var(--muted);border-bottom:1px solid var(--border)}
+.log-table td{padding:.6rem .5rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.badge-status{font-size:.7rem;padding:.15rem .4rem;border-radius:4px;font-weight:700}
+.badge-status.fail{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-status.repair{background:rgba(245,158,11,.15);color:var(--accent3)}
+.sim-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+.sim-form-title{font-size:.9rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.sim-input-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem}
+.sim-feedback{margin-top:1rem;padding:.6rem 1rem;border-radius:8px;font-size:.8rem;display:none}
+.sim-feedback.success{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.2)}
+.sim-feedback.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+/* CHECKLIST */
+.checklist-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.checklist-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.checklist-item{display:flex;align-items:center;gap:.9rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;transition:background .2s;user-select:none}
+.checklist-item:hover{background:rgba(0,229,160,.05)}
+.checklist-item.checked{opacity:.6}
+.chk-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-size:.8rem}
+.checklist-item.checked .chk-box{background:var(--accent);border-color:var(--accent);color:#000}
+.chk-label{font-size:.88rem;color:var(--muted);transition:color .2s}
+.checklist-item.checked .chk-label{text-decoration:line-through;color:rgba(122,157,184,.5)}
+.chk-progress{height:6px;background:var(--surface);border-radius:3px;margin-top:1.2rem;overflow:hidden}
+.chk-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease;width:0%}
+.chk-count{font-size:.78rem;color:var(--muted);margin-top:.5rem;text-align:right}
+
+/* CHART */
+.chart-wrapper{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.chart-wrapper h3{font-size:.95rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin-bottom:1.2rem}
+.quiz-question{font-weight:700;font-size:.95rem;margin-bottom:1rem;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;font-size:.87rem;color:var(--text);transition:.2s}
+.quiz-option:hover{border-color:var(--accent);background:rgba(0,229,160,.05)}
+.quiz-option.correct{border-color:var(--accent);background:rgba(0,229,160,.1);color:var(--accent)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.08);color:var(--red)}
+.quiz-option input[type=radio]{accent-color:var(--accent)}
+.quiz-feedback{margin-top:.8rem;font-size:.85rem;padding:.6rem 1rem;border-radius:8px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.quiz-feedback.err{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.score-display{background:var(--card);border:1px solid rgba(0,229,160,.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-top:2rem;display:none}
+.score-display.show{display:block}
+.score-num{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-quiz{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.84rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-quiz:hover{border-color:var(--accent);color:var(--accent)}
+.btn-quiz.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;font-weight:800}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.83rem}
+footer strong{color:var(--accent)}
+
+/* UTILS */
+.fade-in{opacity:0;transform:translateY(24px)}
+@media(max-width:768px){nav{gap:.2rem}nav a{font-size:.74rem;padding:.3rem .6rem}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">📊 Control y Medición del Mantenimiento</div>
+    <h1 class="hero-title">Indicadores Fundamentales<br/>MTBF, MTTR y Disponibilidad</h1>
+    <p class="hero-sub">Aprende a medir la confiabilidad, mantenibilidad y disponibilidad operacional de tus activos industriales a partir de datos reales e históricos de planta.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Esp. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>3er Corte</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="arrow"></div><span>Desplázate</span></div>
+</section>
+
+<nav id="main-nav">
+  <a href="#s-intro" class="active">Introducción</a>
+  <a href="#s-kpis">Fórmulas e Indicadores</a>
+  <a href="#s-calc">Calculadora</a>
+  <a href="#s-cases">Casos CMMS</a>
+  <a href="#s-checklist">Entregables</a>
+  <a href="#s-quiz">Evaluación</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════ SECCIÓN 1 · INTRODUCCIÓN ═══════════════ -->
+<section id="s-intro">
+  <div class="section-label">01 · El Rol del Control</div>
+  <h2>¿Por qué medir el Mantenimiento?</h2>
+  <p class="section-intro">"Lo que no se mide, no se puede controlar. Lo que no se controla, no se puede mejorar. Y lo que no se mejora, se degrada siempre." Este principio define la necesidad de transitar de un mantenimiento reactivo a una gestión predictiva basada en datos.</p>
+
+  <div class="concept-box fade-in">
+    <div class="quote">"Los indicadores de gestión son parámetros cuantitativos que permiten evaluar el comportamiento y la efectividad de las actividades de mantenimiento, alineando los objetivos de planta con el desempeño operativo de los activos."</div>
+    <div class="source">— Dounce, E. · <em>Un enfoque analítico del mantenimiento industrial</em></div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card fade-in">
+      <div class="card-icon">🎯</div>
+      <h3>Toma de Decisiones</h3>
+      <p>Determina cuándo es más rentable reemplazar un activo que seguir reparándolo, utilizando datos duros de tiempo de operación y fallas.</p>
+    </div>
+    <div class="card fade-in hl">
+      <div class="card-icon">💰</div>
+      <h3>Costos Ocultos</h3>
+      <p>El MTTR y la Disponibilidad permiten calcular las pérdidas financieras de producción detenida, revelando el costo real de las averías.</p>
+    </div>
+    <div class="card fade-in">
+      <div class="card-icon">⚡</div>
+      <h3>Confiabilidad</h3>
+      <p>Monitorear el MTBF nos dice si las actividades preventivas del segundo corte están previniendo eficazmente el desgaste o no.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 2 · FÓRMULAS E INDICADORES ═══════════════ -->
+<section id="s-kpis">
+  <div class="section-label">02 · Definiciones Técnicas</div>
+  <h2>MTBF, MTTR y Disponibilidad</h2>
+  <p class="section-intro">El comportamiento operativo de un equipo se define bajo tres grandes indicadores fundamentales:</p>
+
+  <div class="grid-3 fade-in" style="margin-bottom: 2.5rem;">
+    <div class="kpi-card">
+      <div style="font-size:2rem;margin-bottom:.5rem">📐</div>
+      <div class="kpi-value">MTBF</div>
+      <div class="kpi-label"><strong>Mean Time Between Failures</strong><br>Tiempo promedio que el equipo opera sin fallar. Mide la <strong>Confiabilidad</strong>.</div>
+      <div class="kpi-formula">MTBF = T. Operativo / N° Fallas</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:2rem;margin-bottom:.5rem">🔧</div>
+      <div class="kpi-value">MTTR</div>
+      <div class="kpi-label"><strong>Mean Time To Repair</strong><br>Tiempo promedio requerido para reparar el equipo. Mide la <strong>Mantenibilidad</strong>.</div>
+      <div class="kpi-formula">MTTR = T. Reparación / N° Fallas</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:2rem;margin-bottom:.5rem">🟢</div>
+      <div class="kpi-value">Disponibilidad (A)</div>
+      <div class="kpi-label">Probabilidad de que un activo esté listo para operar bajo condiciones dadas.</div>
+      <div class="kpi-formula">A = MTBF / (MTBF + MTTR)</div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-item">
+      <div class="acc-header">📈 Tasa de Fallas (λ) — La Relación Inversa<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        La tasa de fallas ($\lambda$) representa el número de fallas esperadas por unidad de tiempo. Es la inversa matemática del MTBF:
+        <br><br>
+        <code style="background:var(--surface); padding:.2rem .5rem; border-radius:4px; color:var(--accent);">λ = 1 / MTBF</code>
+        <br><br>
+        Si un equipo tiene un MTBF de 500 horas, su tasa de fallas es de 0.002 fallas por hora de operación. Una tasa de fallas decreciente indica una etapa de asentamiento; constante representa su vida útil útil; y creciente denota envejecimiento o desgaste crítico.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-header">⚙️ ¿Cómo calcular el Tiempo Total Operativo (Uptime)?<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        Para calcular el MTBF de forma correcta, debemos considerar únicamente las horas reales en las que el equipo debió estar operando. El cálculo es:
+        <br><br>
+        <strong style="color:var(--text)">Tiempo Operativo = Tiempo Total Disponible − Tiempo de Parada por Falla (Downtime)</strong>
+        <br><br>
+        *Nota:* No se deben contar las horas en las que la planta estuvo cerrada por vacaciones o días festivos no programados.
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 3 · CALCULADORA INTERACTIVA ═══════════════ -->
+<section id="s-calc">
+  <div class="section-label">03 · Laboratorio de Datos</div>
+  <h2>Calculadora de Indicadores de Planta</h2>
+  <p class="section-intro">Ingresa los datos de operación de un activo para evaluar su desempeño en tiempo real y visualizar sus fórmulas.</p>
+
+  <div class="calc-box fade-in">
+    <h3><i class="fas fa-calculator"></i> Calculadora de Confiabilidad y Disponibilidad</h3>
+    <div class="calc-grid">
+      <div class="calc-field">
+        <label>Tiempo Calendario Total (horas)</label>
+        <input type="number" id="c-calendario" value="720" min="1">
+      </div>
+      <div class="calc-field">
+        <label>Paradas Planificadas (horas)</label>
+        <input type="number" id="c-planificado" value="40" min="0">
+      </div>
+      <div class="calc-field">
+        <label>Tiempo de Reparación Total (Downtime - h)</label>
+        <input type="number" id="c-downtime" value="24" min="0">
+      </div>
+      <div class="calc-field">
+        <label>Número de Fallas Registradas</label>
+        <input type="number" id="c-fallas" value="4" min="1">
+      </div>
+    </div>
+
+    <div class="calc-results">
+      <div class="calc-res-item">
+        <div class="calc-res-val" id="res-mtbf">164.0 h</div>
+        <div class="calc-res-lbl">MTBF (Confiabilidad)</div>
+        <div class="calc-res-formula">Uptime / N° Fallas</div>
+      </div>
+      <div class="calc-res-item">
+        <div class="calc-res-val" id="res-mttr">6.0 h</div>
+        <div class="calc-res-lbl">MTTR (Mantenibilidad)</div>
+        <div class="calc-res-formula">Downtime / N° Fallas</div>
+      </div>
+      <div class="calc-res-item">
+        <div class="calc-res-val" id="res-avail">96.5%</div>
+        <div class="calc-res-lbl">Disponibilidad (A)</div>
+        <div class="calc-res-formula">MTBF / (MTBF + MTTR)</div>
+      </div>
+      <div class="calc-res-item">
+        <div class="calc-res-val" id="res-lambda">0.0061</div>
+        <div class="calc-res-lbl">Tasa de Fallas (λ - fallas/h)</div>
+        <div class="calc-res-formula">1 / MTBF</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 4 · CASOS DEL CMMS ═══════════════ -->
+<section id="s-cases">
+  <div class="section-label">04 · Caso Práctico Integrador</div>
+  <h2>Taller Práctico: Registros del CMMS</h2>
+  <p class="section-intro">El CMMS MaintPro genera registros históricos de fallas para las empresas de demostración. Selecciona una empresa y un equipo para calcular sus KPIs y comprobar si tu análisis es correcto.</p>
+
+  <div class="sim-box fade-in">
+    <div class="company-select-wrap">
+      <div class="calc-field" style="max-width: 300px;">
+        <label>Selecciona una Empresa Demo</label>
+        <select id="sim-company" onchange="changeCompany()">
+          <option value="petro">PetroAndina S.A. (Petróleo y Gas)</option>
+          <option value="agro">AgroVerde Ltda. (Agroindustria)</option>
+          <option value="metal">MetalPrecision S.A.S. (Manufactura)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="asset-selector" id="asset-tabs">
+      <!-- Tabs will be rendered here dynamically -->
+    </div>
+
+    <div class="sim-grid">
+      <div>
+        <h4 style="margin-bottom: .6rem; font-size: .9rem;"><i class="fas fa-history"></i> Historial de Eventos del Equipo (Últimos 30 días)</h4>
+        <div class="log-table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Cierre</th>
+                <th>Duración / Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="log-table-body">
+              <!-- Logs will be loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sim-form">
+        <div class="sim-form-title">Calcular Indicadores de este Activo</div>
+        <div style="font-size: .78rem; color: var(--muted); margin-bottom: 1rem;">
+          Teniendo en cuenta que el período total analizado es de **720 horas** y no hubo paradas planificadas (paradas de producción), calcula los siguientes valores:
+        </div>
+
+        <div class="sim-input-row">
+          <div class="calc-field">
+            <label>MTBF (horas)</label>
+            <input type="number" id="ans-mtbf" placeholder="0.0" step="0.1">
+          </div>
+          <div class="calc-field">
+            <label>MTTR (horas)</label>
+            <input type="number" id="ans-mttr" placeholder="0.0" step="0.1">
+          </div>
+        </div>
+        <div class="calc-field" style="margin-bottom: 1.2rem;">
+          <label>Disponibilidad Operativa (%)</label>
+          <input type="number" id="ans-avail" placeholder="0.0" step="0.01">
+        </div>
+
+        <button class="btn-quiz primary" style="width: 100%; margin-top: 0;" onclick="checkSimAnswers()">Comprobar Resultados</button>
+        <div class="sim-feedback" id="sim-feedback"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 5 · ENTREGABLES Y TI ═══════════════ -->
+<section id="s-checklist">
+  <div class="section-label">05 · Tarea Independiente</div>
+  <h2>Actividades y Entregables de la Semana</h2>
+  <p class="section-intro">Realiza las actividades independientes programadas para esta sesión presencial. Puedes marcar tu avance a continuación:</p>
+
+  <div class="checklist-wrap fade-in">
+    <h3>📋 Checklist de Trabajo Independiente (4 horas)</h3>
+    <div id="checklist-items"></div>
+    <div class="chk-progress"><div class="chk-progress-bar" id="chk-bar"></div></div>
+    <div class="chk-count" id="chk-count">0 / 4 verificados</div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 6 · AUTOEVALUACIÓN ═══════════════ -->
+<section id="s-quiz">
+  <div class="section-label">06 · Verificación de Aprendizaje</div>
+  <h2>Autoevaluación de la Clase</h2>
+  <p class="section-intro">Responde las preguntas para comprobar tu asimilación de los conceptos de confiabilidad y mantenibilidad.</p>
+
+  <div id="quiz-container"></div>
+  <div class="score-display" id="score-display">
+    <div style="font-size:2rem;margin-bottom:.5rem">🎉</div>
+    <div class="score-num" id="score-num"></div>
+    <div style="color:var(--muted);margin-top:.5rem;font-size:.9rem" id="score-msg"></div>
+    <button class="btn-quiz primary" onclick="restartQuiz()" style="margin-top:1.5rem">↩ Reintentar</button>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Docente: Esp. Marlon Gómez · Tecnología electromecanica Unipaz</p>
+</footer>
+
+<script>
+// ==========================================
+// BACKGROUND CANVAS (Floating Gears/Dots)
+// ==========================================
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const ACCENT = '#00e5a0';
+  class Particle {
+    constructor(){
+      this.x = Math.random()*W; this.y = Math.random()*H;
+      this.r = 2 + Math.random()*3;
+      this.vx = (Math.random()-.5)*.4; this.vy = (Math.random()-.5)*.4;
+      this.alpha = .15 + Math.random()*.35;
+      this.gear = Math.random() > .7;
+      this.gearR = 12 + Math.random()*22;
+      this.gearAngle = Math.random()*Math.PI*2;
+      this.gearSpeed = (Math.random()-.5)*.008;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; this.gearAngle+=this.gearSpeed;
+      if(this.x<-50)this.x=W+50; if(this.x>W+50)this.x=-50;
+      if(this.y<-50)this.y=H+50; if(this.y>H+50)this.y=-50; }
+    draw(){
+      ctx.save(); ctx.globalAlpha=this.alpha;
+      if(this.gear){
+        drawGear(ctx, this.x, this.y, this.gearR, this.gearR*.6, 8, this.gearAngle, ACCENT);
+      } else {
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=ACCENT; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  function drawGear(ctx,cx,cy,ro,ri,teeth,ang,color){
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath();
+    for(let i=0;i<teeth;i++){
+      const a1=(i/teeth)*Math.PI*2, a2=((i+.5)/teeth)*Math.PI*2, a3=((i+1)/teeth)*Math.PI*2;
+      if(i===0) ctx.moveTo(Math.cos(a1)*ro,Math.sin(a1)*ro);
+      ctx.lineTo(Math.cos(a2)*ro,Math.sin(a2)*ro);
+      ctx.lineTo(Math.cos(a2)*(ro+4),Math.sin(a2)*(ro+4));
+      const h=(a2+a3)/2;
+      ctx.lineTo(Math.cos(h)*(ro+4),Math.sin(h)*(ro+4));
+      ctx.lineTo(Math.cos(a3)*ro,Math.sin(a3)*ro);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,ri,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  for(let i=0;i<40;i++) particles.push(new Particle());
+  function drawLines(){
+    for(let i=0;i<particles.length;i++)
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<140){
+          ctx.save(); ctx.globalAlpha=.08*(1-d/140);
+          ctx.strokeStyle=ACCENT; ctx.lineWidth=.8;
+          ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); ctx.restore();
+        }
+      }
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W/2,H/2,H*.1,W/2,H/2,H*.7);
+    g.addColorStop(0,'rgba(7,14,22,0)'); g.addColorStop(1,'rgba(7,14,22,.7)');
+    drawLines();
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ==========================================
+// GSAP SCROLL TRIGGER ANIMATIONS
+// ==========================================
+gsap.registerPlugin(ScrollTrigger);
+document.querySelectorAll('.fade-in').forEach(el=>{
+  gsap.to(el,{ opacity:1, y:0, duration:.6, ease:'power2.out',
+    scrollTrigger:{ trigger:el, start:'top 90%', toggleActions:'play none none none' }});
+});
+
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-120) cur=s.id; });
+  navLinks.forEach(a=>{ a.classList.toggle('active',a.getAttribute('href')==='#'+cur); });
+});
+
+// ==========================================
+// ACCORDIONS
+// ==========================================
+document.querySelectorAll('.acc-header').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const item=h.parentElement;
+    const body=item.querySelector('.acc-body');
+    const isOpen=item.classList.contains('open');
+    document.querySelectorAll('.acc-item.open').forEach(o=>{
+      o.classList.remove('open'); o.querySelector('.acc-body').style.maxHeight='0';
+    });
+    if(!isOpen){ item.classList.add('open'); body.style.maxHeight=body.scrollHeight+40+'px'; }
+  });
+});
+
+// ==========================================
+// INTERACTIVE CALCULATOR
+// ==========================================
+function calculateKPIs() {
+  const tCal = parseFloat(document.getElementById('c-calendario').value) || 0;
+  const tPlan = parseFloat(document.getElementById('c-planificado').value) || 0;
+  const tDown = parseFloat(document.getElementById('c-downtime').value) || 0;
+  const nFallas = parseFloat(document.getElementById('c-fallas').value) || 1;
+
+  const uptime = tCal - tPlan - tDown;
+  const mtbf = uptime > 0 ? (uptime / nFallas) : 0;
+  const mttr = tDown / nFallas;
+  const avail = (mtbf + mttr) > 0 ? (mtbf / (mtbf + mttr)) * 100 : 0;
+  const lambda = mtbf > 0 ? 1 / mtbf : 0;
+
+  document.getElementById('res-mtbf').textContent = mtbf.toFixed(1) + ' h';
+  document.getElementById('res-mttr').textContent = mttr.toFixed(1) + ' h';
+  document.getElementById('res-avail').textContent = avail.toFixed(1) + '%';
+  document.getElementById('res-lambda').textContent = lambda.toFixed(4);
+}
+['c-calendario', 'c-planificado', 'c-downtime', 'c-fallas'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calculateKPIs);
+});
+calculateKPIs();
+
+// ==========================================
+// SIMULATOR (CMMS CASES)
+// ==========================================
+const companiesData = {
+  petro: [
+    {
+      id: 'bomb-1', name: 'Bomba Multifásica PetroAndina',
+      logs: [
+        { desc: 'Falla de Sello Mecánico', start: 'Día 4, 08:00', end: 'Día 4, 14:00', type: 'Falla', hours: 6 },
+        { desc: 'Lubricación de Rodamiento', start: 'Día 10, 09:00', end: 'Día 10, 11:00', type: 'Preventivo', hours: 2 },
+        { desc: 'Rotura de Acoplamiento', start: 'Día 18, 22:00', end: 'Día 19, 04:00', type: 'Falla', hours: 6 },
+        { desc: 'Falla de Instrumentación de Presión', start: 'Día 25, 14:00', end: 'Día 25, 18:00', type: 'Falla', hours: 4 }
+      ],
+      answers: { mtbf: 234.7, mttr: 5.3, avail: 97.80 } // 720h. Downtime de fallas = 6+6+4=16. Uptime = 704. Fallas = 3. MTBF = 704/3 = 234.66. MTTR = 16/3 = 5.33. Avail = 704/720 = 97.77%
+    },
+    {
+      id: 'comp-1', name: 'Compresor Reciprocante de Gas',
+      logs: [
+        { desc: 'Sobrecalentamiento en Pistón', start: 'Día 5, 06:00', end: 'Día 5, 16:00', type: 'Falla', hours: 10 },
+        { desc: 'Vibración Excesiva en Vástago', start: 'Día 14, 12:00', end: 'Día 14, 22:00', type: 'Falla', hours: 10 },
+        { desc: 'Inspección de Válvulas', start: 'Día 20, 08:00', end: 'Día 20, 12:00', type: 'Preventivo', hours: 4 },
+        { desc: 'Fallo de Arrancador Eléctrico', start: 'Día 27, 03:00', end: 'Día 27, 13:00', type: 'Falla', hours: 10 }
+      ],
+      answers: { mtbf: 230.0, mttr: 10.0, avail: 95.83 } // 720h. Downtime fallas = 30h. Uptime = 690. Fallas = 3. MTBF = 690/3 = 230. MTTR = 30/3 = 10. Avail = 690/720 = 95.83%
+    }
+  ],
+  agro: [
+    {
+      id: 'trac-1', name: 'Tractor John Deere 6150M',
+      logs: [
+        { desc: 'Pérdida de Presión Hidráulica', start: 'Día 2, 10:00', end: 'Día 2, 18:00', type: 'Falla', hours: 8 },
+        { desc: 'Rotura de Correa de Alternador', start: 'Día 15, 08:00', end: 'Día 15, 12:00', type: 'Falla', hours: 4 },
+        { desc: 'Falla de Transmisión (Desembrague)', start: 'Día 24, 07:00', end: 'Día 24, 19:00', type: 'Falla', hours: 12 }
+      ],
+      answers: { mtbf: 232.0, mttr: 8.0, avail: 96.67 } // 720h. Downtime fallas = 24. Uptime = 696. Fallas = 3. MTBF = 696/3 = 232. MTTR = 24/3 = 8. Avail = 696/720 = 96.67%
+    },
+    {
+      id: 'riego-1', name: 'Sistema de Riego de Pivote Central',
+      logs: [
+        { desc: 'Fallo de Motor de Avance Pivote 3', start: 'Día 8, 14:00', end: 'Día 9, 02:00', type: 'Falla', hours: 12 },
+        { desc: 'Obstrucción de Boquillas Principales', start: 'Día 22, 10:00', end: 'Día 22, 22:00', type: 'Falla', hours: 12 }
+      ],
+      answers: { mtbf: 348.0, mttr: 12.0, avail: 96.67 } // 720h. Downtime fallas = 24. Uptime = 696. Fallas = 2. MTBF = 696/2 = 348. MTTR = 24/2 = 12. Avail = 696/720 = 96.67%
+    }
+  ],
+  metal: [
+    {
+      id: 'cnc-1', name: 'Torno CNC Haas ST-20',
+      logs: [
+        { desc: 'Alarma de Error en Torreta', start: 'Día 6, 09:00', end: 'Día 6, 12:00', type: 'Falla', hours: 3 },
+        { desc: 'Fallo de Bomba de Refrigeración', start: 'Día 12, 15:00', end: 'Día 12, 17:00', type: 'Falla', hours: 2 },
+        { desc: 'Descalibración de Eje X', start: 'Día 21, 14:00', end: 'Día 21, 19:00', type: 'Falla', hours: 5 },
+        { desc: 'Reemplazo de Husillo Desgastado', start: 'Día 28, 08:00', end: 'Día 28, 18:00', type: 'Falla', hours: 10 }
+      ],
+      answers: { mtbf: 175.0, mttr: 5.0, avail: 97.22 } // 720h. Downtime fallas = 20. Uptime = 700. Fallas = 4. MTBF = 700/4 = 175. MTTR = 20/4 = 5. Avail = 700/720 = 97.22%
+    }
+  ]
+};
+
+let currentCompany = 'petro';
+let currentAssetIndex = 0;
+
+function changeCompany() {
+  currentCompany = document.getElementById('sim-company').value;
+  currentAssetIndex = 0;
+  loadAssetTabs();
+}
+
+function loadAssetTabs() {
+  const assets = companiesData[currentCompany];
+  const container = document.getElementById('asset-tabs');
+  container.innerHTML = assets.map((a, idx) => `
+    <button class="asset-tab ${idx === currentAssetIndex ? 'active' : ''}" onclick="selectAsset(${idx})">
+      <i class="fas fa-cog"></i> ${a.name}
+    </button>
+  `).join('');
+  loadAssetData();
+}
+
+function selectAsset(idx) {
+  currentAssetIndex = idx;
+  const tabs = document.querySelectorAll('.asset-tab');
+  tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+  loadAssetData();
+}
+
+function loadAssetData() {
+  const asset = companiesData[currentCompany][currentAssetIndex];
+  const tbody = document.getElementById('log-table-body');
+  tbody.innerHTML = asset.logs.map(l => `
+    <tr>
+      <td><strong>${l.desc}</strong></td>
+      <td>${l.start}</td>
+      <td>${l.end}</td>
+      <td>
+        <span class="badge-status ${l.type === 'Falla' ? 'fail' : 'repair'}">
+          ${l.type === 'Falla' ? '⚠ Falla / Paro' : '🔧 Mtto. Planificado'}
+        </span>
+        (${l.hours} h)
+      </td>
+    </tr>
+  `).join('');
+
+  // Reset values
+  document.getElementById('ans-mtbf').value = '';
+  document.getElementById('ans-mttr').value = '';
+  document.getElementById('ans-avail').value = '';
+  document.getElementById('sim-feedback').style.display = 'none';
+}
+
+function checkSimAnswers() {
+  const asset = companiesData[currentCompany][currentAssetIndex];
+  const userMtbf = parseFloat(document.getElementById('ans-mtbf').value) || 0;
+  const userMttr = parseFloat(document.getElementById('ans-mttr').value) || 0;
+  const userAvail = parseFloat(document.getElementById('ans-avail').value) || 0;
+
+  const diffMtbf = Math.abs(userMtbf - asset.answers.mtbf);
+  const diffMttr = Math.abs(userMttr - asset.answers.mttr);
+  const diffAvail = Math.abs(userAvail - asset.answers.avail);
+
+  const feedback = document.getElementById('sim-feedback');
+  feedback.style.display = 'block';
+
+  if (diffMtbf <= 0.5 && diffMttr <= 0.1 && diffAvail <= 0.1) {
+    feedback.className = 'sim-feedback success';
+    feedback.innerHTML = `<h4>✅ ¡Excelente trabajo!</h4>
+      Los cálculos son correctos. 
+      <br>• MTBF = ${asset.answers.mtbf.toFixed(1)} h
+      <br>• MTTR = ${asset.answers.mttr.toFixed(1)} h
+      <br>• Disponibilidad = ${asset.answers.avail.toFixed(2)}%`;
+  } else {
+    feedback.className = 'sim-feedback error';
+    feedback.innerHTML = `<h4>❌ Hay errores en tus cálculos</h4>
+      Revisa las fórmulas. Recuerda:
+      <br>1. Sumar **únicamente** los tiempos de parada correspondientes a **Falla / Paro** (ignora los mantenimientos preventivos para el downtime).
+      <br>2. Uptime = 720h − Downtime.
+      <br>3. MTBF = Uptime / N° Fallas.
+      <br>4. MTTR = Downtime / N° Fallas.
+      <br>5. Disponibilidad = (Uptime / 720) * 100.`;
+  }
+}
+
+// Init simulator
+changeCompany();
+
+// ==========================================
+// CHECKLIST SYSTEM
+// ==========================================
+const chkData = [
+  { text: "Participación en clase presencial (Taller de cálculo)", cat: "Clase" },
+  { text: "Investigación sobre estándares de Disponibilidad en el sector petrolero, agroindustrial y manufacturero", cat: "Investigación" },
+  { text: "Elaborar la tabla comparativa de valores de disponibilidad con fuentes bibliográficas", cat: "Informe" },
+  { text: "Resolver el Taller Práctico de cálculo de MTBF/MTTR y Disponibilidad en clase (15% de la nota)", cat: "Evaluación" }
+];
+
+const chkListEl = document.getElementById('checklist-items');
+chkListEl.innerHTML = chkData.map((item, idx) => `
+  <div class="checklist-item" id="chk-item-${idx}" onclick="toggleCheck(${idx})">
+    <div class="chk-box" id="chk-box-${idx}"></div>
+    <div class="chk-label" id="chk-lbl-${idx}">
+      ${item.text} <span class="chk-tag m">${item.cat}</span>
+    </div>
+  </div>
+`).join('');
+
+let checkedState = new Array(chkData.length).fill(false);
+
+function toggleCheck(idx) {
+  checkedState[idx] = !checkedState[idx];
+  const item = document.getElementById(`chk-item-${idx}`);
+  const box = document.getElementById(`chk-box-${idx}`);
+  
+  if (checkedState[idx]) {
+    item.classList.add('checked');
+    box.innerHTML = '✔';
+  } else {
+    item.classList.remove('checked');
+    box.innerHTML = '';
+  }
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const completed = checkedState.filter(Boolean).length;
+  const progress = (completed / chkData.length) * 100;
+  document.getElementById('chk-bar').style.width = progress + '%';
+  document.getElementById('chk-count').textContent = `${completed} / ${chkData.length} completados`;
+}
+
+function resetChecklist() {
+  checkedState.fill(false);
+  for(let i=0; i<chkData.length; i++) {
+    document.getElementById(`chk-item-${i}`).classList.remove('checked');
+    document.getElementById(`chk-box-${i}`).innerHTML = '';
+  }
+  updateChecklistProgress();
+}
+
+// ==========================================
+// QUIZ SYSTEM
+// ==========================================
+const quizQuestions = [
+  {
+    q: "1. Si un activo opera un total de 680 horas en un período y presenta 4 fallas que sumaron 20 horas de reparación, ¿cuál es su MTBF?",
+    opts: [
+      "170 horas",
+      "165 horas",
+      "175 horas",
+      "150 horas"
+    ],
+    ans: 1, // 680 - 20 = 660 horas operativas. 660 / 4 = 165 horas
+    fb: "¡Correcto! El tiempo operativo real (uptime) es 680 - 20 = 660 horas. El MTBF es 660 / 4 = 165 horas."
+  },
+  {
+    q: "2. De los siguientes factores, ¿cuál afecta directamente el indicador MTTR de un equipo?",
+    opts: [
+      "La calidad de los componentes instalados",
+      "La disponibilidad de herramientas adecuadas y repuestos en el almacén",
+      "La frecuencia de las inspecciones preventivas",
+      "La carga operativa del activo"
+    ],
+    ans: 1,
+    fb: "¡Correcto! El MTTR mide la mantenibilidad y la rapidez de reparación, lo cual depende fuertemente de la pericia técnica, acceso a repuestos, herramientas y logística de mantenimiento."
+  },
+  {
+    q: "3. La tasa de fallas (λ) es un indicador matemático directo. Si un ventilador industrial tiene un MTBF de 250 horas, su tasa de fallas por hora es de:",
+    opts: [
+      "0.004 fallas/hora",
+      "0.04 fallas/hora",
+      "2.5 fallas/hora",
+      "0.002 fallas/hora"
+    ],
+    ans: 0, // 1/250 = 0.004
+    fb: "¡Correcto! λ = 1 / MTBF. En este caso, 1 / 250 = 0.004 fallas por hora."
+  },
+  {
+    q: "4. Un motor reductor trabaja con un MTBF de 780 horas y un MTTR de 20 horas. ¿Cuál es su Disponibilidad Operativa aproximada?",
+    opts: [
+      "95.4%",
+      "96.8%",
+      "97.5%",
+      "98.1%"
+    ],
+    ans: 2, // 780 / (780 + 20) = 780/800 = 97.5%
+    fb: "¡Correcto! A = MTBF / (MTBF + MTTR) = 780 / 800 = 0.975 (97.5%)."
+  },
+  {
+    q: "5. ¿Qué tipo de parada NO se debe incluir en la sumatoria del Downtime para el cálculo de MTBF y MTTR operativos?",
+    opts: [
+      "Falla de lubricación del motor",
+      "Parada para ajuste de bandas debido a desgaste imprevisto",
+      "Parada planificada por mantenimiento preventivo quincenal",
+      "Falla de suministro eléctrico externo"
+    ],
+    ans: 2,
+    fb: "¡Correcto! El MTBF y el MTTR miden el comportamiento ante paradas *por falla imprevistas*. Las paradas planificadas por preventivos no corresponden a averías operacionales."
+  }
+];
+
+const quizContainer = document.getElementById('quiz-container');
+let answersState = new Array(quizQuestions.length).fill(null);
+
+function renderQuiz() {
+  quizContainer.innerHTML = quizQuestions.map((q, qIdx) => `
+    <div class="quiz-card" id="q-card-${qIdx}">
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((opt, oIdx) => `
+          <label class="quiz-option" id="q-opt-${qIdx}-${oIdx}">
+            <input type="radio" name="q-${qIdx}" onclick="answerQuestion(${qIdx}, ${oIdx})" ${answersState[qIdx] === oIdx ? 'checked' : ''}>
+            ${opt}
+          </label>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="q-fb-${qIdx}"></div>
+    </div>
+  `).join('');
+}
+
+function answerQuestion(qIdx, oIdx) {
+  answersState[qIdx] = oIdx;
+  const q = quizQuestions[qIdx];
+  const fb = document.getElementById(`q-fb-${qIdx}`);
+  fb.className = 'quiz-feedback show';
+  
+  // Highlight options
+  for(let i=0; i<q.opts.length; i++) {
+    const el = document.getElementById(`q-opt-${qIdx}-${i}`);
+    el.classList.remove('correct', 'wrong');
+  }
+
+  if (oIdx === q.ans) {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = q.fb;
+  } else {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('wrong');
+    document.getElementById(`q-opt-${qIdx}-${q.ans}`).classList.add('correct');
+    fb.className = 'quiz-feedback show err';
+    fb.innerHTML = `❌ Incorrecto. La respuesta correcta es la opción ${q.ans + 1}. ` + q.fb;
+  }
+  checkQuizComplete();
+}
+
+function checkQuizComplete() {
+  if (answersState.filter(v => v !== null).length === quizQuestions.length) {
+    const score = answersState.reduce((sum, val, idx) => sum + (val === quizQuestions[idx].ans ? 1 : 0), 0);
+    const scorePct = (score / quizQuestions.length) * 100;
+    
+    document.getElementById('score-num').textContent = `${scorePct}%`;
+    let msg = '';
+    if (scorePct >= 80) msg = '🎉 ¡Felicitaciones! Has comprendido perfectamente la lógica de cálculo e interpretación de los KPIs.';
+    else if (scorePct >= 60) msg = '👍 Buen trabajo, pero te recomendamos repasar los ejercicios y los casos para afianzar los conceptos.';
+    else msg = '✏️ Te aconsejamos volver a leer la teoría y repasar la calculadora de fallas antes del examen parcial.';
+    
+    document.getElementById('score-msg').textContent = msg;
+    document.getElementById('score-display').classList.add('show');
+    document.getElementById('score-display').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function restartQuiz() {
+  answersState.fill(null);
+  document.getElementById('score-display').classList.remove('show');
+  renderQuiz();
+}
+
+renderQuiz();
+
+</script>
+</body>
+</html>

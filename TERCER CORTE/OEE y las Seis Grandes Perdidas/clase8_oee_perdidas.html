@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OEE — Efectividad Global del Equipo y las Seis Grandes Pérdidas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070e16;--surface:#0d1825;--card:#111f30;--border:#1e3a52;
+  --accent:#00e5a0;--accent2:#0ea5e9;--accent3:#f59e0b;
+  --red:#ef4444;--text:#e2e8f0;--muted:#7a9db8;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:900px;padding:0 2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.3);color:var(--accent2);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.8rem;font-weight:700}
+.hero-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 20%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem}
+.hero-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin:0 auto 2.5rem}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:1rem}
+.meta-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;color:var(--muted)}
+.meta-chip span{color:var(--text);font-weight:700}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.72rem}
+.arrow{width:22px;height:22px;border-right:2px solid var(--accent2);border-bottom:2px solid var(--accent2);transform:rotate(45deg);animation:bounce 1.4s ease infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(7px)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,14,22,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.4rem;padding:.65rem 1rem;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:.8rem;padding:.35rem .9rem;border-radius:8px;transition:.2s;font-weight:600}
+nav a:hover,nav a.active{background:rgba(14,165,233,.12);color:var(--accent2)}
+
+/* LAYOUT */
+main{max-width:1160px;margin:0 auto;padding:0 1.5rem}
+section{padding:5rem 0}
+.section-label{display:inline-flex;align-items:center;gap:.5rem;color:var(--accent2);font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;margin-bottom:.8rem}
+.section-label::before{content:'';display:block;width:28px;height:2px;background:var(--accent2);border-radius:2px}
+h2{font-size:clamp(1.7rem,3vw,2.6rem);font-weight:800;margin-bottom:1.2rem}
+.section-intro{color:var(--muted);font-size:1rem;max-width:700px;margin-bottom:3rem;line-height:1.8}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* CARDS */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent2);box-shadow:0 10px 36px rgba(14,165,233,.1)}
+.card-icon{font-size:2.2rem;margin-bottom:.9rem}
+.card h3{font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
+.card p{font-size:.87rem;color:var(--muted);line-height:1.65}
+.card.hl{border-color:rgba(14,165,233,.4);background:linear-gradient(135deg,rgba(14,165,233,.07),var(--card))}
+
+/* OEE DISPLAY */
+.oee-factors-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.4rem;margin:2rem 0}
+.factor-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;text-align:center;position:relative;overflow:hidden}
+.factor-pct{font-size:2.2rem;font-weight:900;color:var(--accent2);margin-bottom:.3rem}
+.factor-name{font-size:.95rem;font-weight:700;margin-bottom:.4rem}
+.factor-desc{font-size:.8rem;color:var(--muted);line-height:1.5}
+.factor-standard{font-family:'JetBrains Mono',monospace;font-size:.74rem;background:rgba(0,229,160,.06);color:var(--accent);padding:.2rem .6rem;border-radius:4px;display:inline-block;margin-top:.8rem}
+
+/* CALCULATOR */
+.calc-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2.5rem 0}
+.calc-box h3{font-size:1.15rem;font-weight:700;margin-bottom:1.4rem;color:var(--accent2);display:flex;align-items:center;gap:.5rem}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.2rem;margin-bottom:1.5rem}
+.calc-field label{display:block;font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.calc-field input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.6rem .8rem;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.calc-field input:focus{border-color:var(--accent2)}
+.oee-result-wrap{background:var(--surface);border:1px solid rgba(14,165,233,.22);border-radius:10px;padding:1.5rem;margin-top:1.5rem}
+.oee-main-score{text-align:center;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.oee-main-val{font-size:3.2rem;font-weight:900;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.oee-main-lbl{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.oee-main-status{font-size:.85rem;font-weight:700;margin-top:.4rem;padding:.2rem .8rem;border-radius:4px;display:inline-block}
+.oee-factors-res{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.2rem;text-align:center}
+@media(max-width:600px){.oee-factors-res{grid-template-columns:1fr}}
+.oee-factor-item{padding:.6rem}
+.oee-factor-val{font-size:1.5rem;font-weight:800;color:var(--accent2)}
+.oee-factor-lbl{font-size:.74rem;color:var(--muted)}
+
+/* SLIDER SIMULATOR */
+.sim-container{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2.5rem 0}
+.sim-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:2rem}
+@media(max-width:800px){.sim-grid{grid-template-columns:1fr}}
+.sim-controls{display:flex;flex-direction:column;gap:1.2rem}
+.slider-group{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;position:relative}
+.slider-info{display:flex;justify-content:space-between;font-size:.82rem;font-weight:700;margin-bottom:.5rem}
+.slider-info .loss-name{color:var(--text)}
+.slider-info .loss-val{color:var(--accent3)}
+.slider-group input[type=range]{width:100%;accent-color:var(--accent3);background:var(--bg);height:6px;border-radius:3px;outline:none}
+.loss-impact{font-size:.7rem;color:var(--muted);margin-top:.3rem}
+.sim-visualization{display:flex;flex-direction:column;justify-content:center;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;text-align:center}
+.chart-container{position:relative;width:100%;max-width:240px;height:240px}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin-bottom:1.2rem}
+.quiz-question{font-weight:700;font-size:.95rem;margin-bottom:1rem;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;font-size:.87rem;color:var(--text);transition:.2s}
+.quiz-option:hover{border-color:var(--accent2);background:rgba(14,165,233,.05)}
+.quiz-option.correct{border-color:var(--accent);background:rgba(0,229,160,.1);color:var(--accent)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.08);color:var(--red)}
+.quiz-feedback{margin-top:.8rem;font-size:.85rem;padding:.6rem 1rem;border-radius:8px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.quiz-feedback.err{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.score-display{background:var(--card);border:1px solid rgba(14,165,233,.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-top:2rem;display:none}
+.score-display.show{display:block}
+.score-num{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-quiz{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.84rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-quiz:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-quiz.primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;font-weight:800}
+
+/* WORKSHOP SECTION */
+.workshop-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2rem 0}
+.workshop-nav{display:flex;gap:.5rem;margin-bottom:1.5rem;overflow-x:auto;padding-bottom:.4rem}
+.w-tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:.2s;font-weight:600}
+.w-tab.active,.w-tab:hover{background:rgba(0,229,160,.1);border-color:var(--accent);color:var(--text)}
+.w-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:2rem}
+@media(max-width:800px){.w-grid{grid-template-columns:1fr}}
+.w-desc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem;font-size:.86rem;line-height:1.7}
+.w-desc h4{color:var(--accent);font-size:.95rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.w-desc ul{list-style:disc;padding-left:1.2rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem}
+.w-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+.w-feedback{margin-top:1rem;padding:.6rem 1rem;border-radius:8px;font-size:.8rem;display:none}
+.w-feedback.success{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.2)}
+.w-feedback.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+/* CHECKLIST */
+.checklist-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.checklist-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.checklist-item{display:flex;align-items:center;gap:.9rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;transition:background .2s;user-select:none}
+.checklist-item:hover{background:rgba(14,165,233,.05)}
+.checklist-item.checked{opacity:.6}
+.chk-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-size:.8rem}
+.checklist-item.checked .chk-box{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.chk-label{font-size:.88rem;color:var(--muted);transition:color .2s}
+.checklist-item.checked .chk-label{text-decoration:line-through;color:rgba(122,157,184,.5)}
+.chk-progress{height:6px;background:var(--surface);border-radius:3px;margin-top:1.2rem;overflow:hidden}
+.chk-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .5s ease;width:0%}
+.chk-count{font-size:.78rem;color:var(--muted);margin-top:.5rem;text-align:right}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.83rem}
+footer strong{color:var(--accent2)}
+
+/* UTILS */
+.fade-in{opacity:0;transform:translateY(24px)}
+@media(max-width:768px){nav{gap:.2rem}nav a{font-size:.74rem;padding:.3rem .6rem}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">📊 Eficiencia Operativa en Mantenimiento</div>
+    <h1 class="hero-title">OEE y las Seis Grandes Pérdidas</h1>
+    <p class="hero-sub">Domina el indicador global de eficiencia de manufactura y aprende a clasificar y mitigar las paradas imprevistas, microparadas, y mermas de calidad.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Esp. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>3er Corte</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="arrow"></div><span>Desplázate</span></div>
+</section>
+
+<nav id="main-nav">
+  <a href="#s-intro" class="active">Introducción</a>
+  <a href="#s-oee">Pilares OEE</a>
+  <a href="#s-losses">Las 6 Pérdidas</a>
+  <a href="#s-calc">Calculadora</a>
+  <a href="#s-sim">Simulador</a>
+  <a href="#s-workshop">Taller Práctico</a>
+  <a href="#s-checklist">Entregables</a>
+  <a href="#s-quiz">Autoevaluación</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════ SECCIÓN 1 · INTRODUCCIÓN ═══════════════ -->
+<section id="s-intro">
+  <div class="section-label">01 · Productividad Global</div>
+  <h2>¿Qué es el OEE?</h2>
+  <p class="section-intro">El **OEE (Overall Equipment Effectiveness / Efectividad Global del Equipo)** es el estándar de oro para medir la productividad en manufactura. A diferencia de los indicadores parciales de mantenimiento, el OEE unifica tres aspectos fundamentales: la disponibilidad mecánica, la velocidad del proceso y la calidad del producto terminado.</p>
+
+  <div class="grid-3">
+    <div class="card fade-in">
+      <div class="card-icon">⚙️</div>
+      <h3>Mantenibilidad y TPM</h3>
+      <p>El OEE nació como la columna vertebral de evaluación del TPM (Mantenimiento Productivo Total), cuyo objetivo es alcanzar el ideal de "Cero Averías, Cero Defectos y Cero Accidentes".</p>
+    </div>
+    <div class="card fade-in hl">
+      <div class="card-icon">📊</div>
+      <h3>Visión Gerencial</h3>
+      <p>Permite a la gerencia comprender si las pérdidas de capacidad productiva se deben a fallas en los equipos, falta de insumos, o descalibraciones en la velocidad de la máquina.</p>
+    </div>
+    <div class="card fade-in">
+      <div class="card-icon">🎯</div>
+      <h3>Estándar de Clase Mundial</h3>
+      <p>Establece una meta clara: las plantas de primer nivel operan con OEE superior al 85%, optimizando cada factor operativo.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 2 · PILARES DEL OEE ═══════════════ -->
+<section id="s-oee">
+  <div class="section-label">02 · Estructura de Cálculo</div>
+  <h2>Los Tres Pilares del OEE</h2>
+  <p class="section-intro">El OEE se calcula multiplicando tres factores porcentuales, penalizando fuertemente los desempeños deficientes en cualquiera de ellos:</p>
+
+  <div class="oee-factors-grid fade-in">
+    <div class="factor-card">
+      <div class="factor-pct" id="f-dispo-std">90.0%</div>
+      <div class="factor-name">📈 Disponibilidad</div>
+      <div class="factor-desc">Relación entre el tiempo que el equipo operó y el tiempo planificado de operación.
+        <br><br>
+        <code>D = T. Operativo / T. Planificado</code>
+      </div>
+      <div class="factor-standard">Estándar Mundial: ≥ 90%</div>
+    </div>
+    <div class="factor-card">
+      <div class="factor-pct" id="f-perf-std">95.0%</div>
+      <div class="factor-name">⚡ Rendimiento</div>
+      <div class="factor-desc">Mide la velocidad real del equipo comparada con su velocidad teórica nominal de diseño.
+        <br><br>
+        <code>R = Piezas Reales / Piezas Teóricas</code>
+      </div>
+      <div class="factor-standard">Estándar Mundial: ≥ 95%</div>
+    </div>
+    <div class="factor-card">
+      <div class="factor-pct" id="f-qual-std">99.0%</div>
+      <div class="factor-name">🛡️ Calidad</div>
+      <div class="factor-desc">Proporción de piezas producidas que cumplen con las especificaciones sin requerir re-trabajo.
+        <br><br>
+        <code>C = Piezas Buenas / Piezas Producidas</code>
+      </div>
+      <div class="factor-standard">Estándar Mundial: ≥ 99%</div>
+    </div>
+  </div>
+
+  <div class="card hl fade-in" style="max-width:700px; margin:0 auto; text-align:center;">
+    <div style="font-size:1.8rem; font-weight:900; background:linear-gradient(90deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+      Fórmula General: OEE = Disponibilidad × Rendimiento × Calidad
+    </div>
+    <div style="font-size:.8rem; color:var(--muted); margin-top:.4rem; font-family:'JetBrains Mono',monospace;">
+      Ejemplo: 90% D × 95% R × 99% C = 84.6% OEE (Cerca de Clase Mundial)
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 3 · LAS SEIS GRANDES PÉRDIDAS ═══════════════ -->
+<section id="s-losses">
+  <div class="section-label">03 · Clasificación TPM</div>
+  <h2>Las Seis Grandes Pérdidas del TPM</h2>
+  <p class="section-intro">Para mejorar el OEE, mantenimiento y operaciones deben atacar las seis pérdidas que degradan cada uno de los factores:</p>
+
+  <div class="grid-3">
+    <div class="card fade-in">
+      <h3 style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i> 1. Averías e Incendios</h3>
+      <p>Paradas inesperadas que suspenden la producción por fallas mecánicas, eléctricas o de software. Afectan la <strong>Disponibilidad</strong>.</p>
+    </div>
+    <div class="card fade-in">
+      <h3 style="color:var(--accent3)"><i class="fas fa-sliders"></i> 2. Ajustes y Configuración</h3>
+      <p>Tiempos de preparación de herramientas, limpiezas y cambios de molde (setups). Afectan la <strong>Disponibilidad</strong>.</p>
+    </div>
+    <div class="card fade-in">
+      <h3 style="color:var(--accent2)"><i class="fas fa-arrows-spin"></i> 3. Microparadas</h3>
+      <p>Interrupciones menores (generalmente de menos de 10 min) debidas a atascos leves o sensores sucios. Afectan el <strong>Rendimiento</strong>.</p>
+    </div>
+    <div class="card fade-in">
+      <h3 style="color:var(--accent2)"><i class="fas fa-gauge"></i> 4. Velocidad Reducida</h3>
+      <p>Operar la máquina por debajo de su velocidad teórica nominal para evitar desgastes o fallas. Afectan el <strong>Rendimiento</strong>.</p>
+    </div>
+    <div class="card fade-in">
+      <h3 style="color:var(--accent)"><i class="fas fa-circle-xmark"></i> 5. Rechazos y Deshechos</h3>
+      <p>Piezas producidas con fallas geométricas o funcionales detectadas en control de calidad. Afectan la <strong>Calidad</strong>.</p>
+    </div>
+    <div class="card fade-in">
+      <h3 style="color:var(--accent)"><i class="fas fa-rotate-left"></i> 6. Puesta en Marcha (Mermas)</h3>
+      <p>Pérdidas de calidad que ocurren al estabilizar el proceso tras encender la máquina. Afectan la <strong>Calidad</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 4 · CALCULADORA DE OEE ═══════════════ -->
+<section id="s-calc">
+  <div class="section-label">04 · Herramienta Interactiva</div>
+  <h2>Calculadora de Pérdidas y OEE</h2>
+  <p class="section-intro">Ingresa los datos de producción de un turno para desglosar el cálculo del OEE paso a paso y evaluar las desviaciones.</p>
+
+  <div class="calc-box fade-in">
+    <h3><i class="fas fa-calculator"></i> Calculadora Paso a Paso de OEE</h3>
+    
+    <div class="calc-grid">
+      <div class="calc-field">
+        <label>Duración del Turno (horas)</label>
+        <input type="number" id="c-turno" value="8" step="0.5">
+      </div>
+      <div class="calc-field">
+        <label>Paradas Programadas (minutos)</label>
+        <input type="number" id="c-plan" value="45" min="0">
+      </div>
+      <div class="calc-field">
+        <label>Paradas por Falla (Downtime - min)</label>
+        <input type="number" id="c-downtime" value="30" min="0">
+      </div>
+      <div class="calc-field">
+        <label>Tiempo Ciclo Nominal (seg/pieza)</label>
+        <input type="number" id="c-ciclo" value="4.0" step="0.1" min="0.1">
+      </div>
+      <div class="calc-field">
+        <label>Producción Total (piezas)</label>
+        <input type="number" id="c-piezas" value="5800" min="1">
+      </div>
+      <div class="calc-field">
+        <label>Piezas Defectuosas</label>
+        <input type="number" id="c-defectos" value="120" min="0">
+      </div>
+    </div>
+
+    <div class="oee-result-wrap">
+      <div class="oee-main-score">
+        <div class="oee-main-val" id="oee-total">0.0%</div>
+        <div class="oee-main-lbl">Efectividad Global del Equipo (OEE)</div>
+        <div class="oee-main-status" id="oee-status" style="background:var(--border);color:var(--text)">Indefinido</div>
+      </div>
+      <div class="oee-factors-res">
+        <div class="oee-factor-item">
+          <div class="oee-factor-val" id="oee-res-d">0.0%</div>
+          <div class="oee-factor-lbl">Disponibilidad (D)</div>
+        </div>
+        <div class="oee-factor-item">
+          <div class="oee-factor-val" id="oee-res-r">0.0%</div>
+          <div class="oee-factor-lbl">Rendimiento (R)</div>
+        </div>
+        <div class="oee-factor-item">
+          <div class="oee-factor-val" id="oee-res-c">0.0%</div>
+          <div class="oee-factor-lbl">Calidad (C)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 5 · SIMULADOR DINÁMICO ═══════════════ -->
+<section id="s-sim">
+  <div class="section-label">05 · Simulación de Pérdidas</div>
+  <h2>Afectación de las Seis Grandes Pérdidas</h2>
+  <p class="section-intro">Mueve las barras de pérdidas para experimentar cómo cada tipo de fallo degrada el OEE y sus componentes. Observa el gráfico en tiempo real.</p>
+
+  <div class="sim-container fade-in">
+    <div class="sim-grid">
+      <div class="sim-controls">
+        <div class="slider-group">
+          <div class="slider-info">
+            <span class="loss-name">💥 Pérdidas por Averías (Downtime)</span>
+            <span class="loss-val" id="lbl-l-averias">30 min</span>
+          </div>
+          <input type="range" id="sim-l-averias" min="0" max="180" value="30">
+          <div class="loss-impact">Penaliza la Disponibilidad del activo.</div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-info">
+            <span class="loss-name">🔧 Ajustes y Preparaciones</span>
+            <span class="loss-val" id="lbl-l-ajustes">20 min</span>
+          </div>
+          <input type="range" id="sim-l-ajustes" min="0" max="120" value="20">
+          <div class="loss-impact">Penaliza la Disponibilidad del activo.</div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-info">
+            <span class="loss-name">🛑 Microparadas</span>
+            <span class="loss-val" id="lbl-l-micro">15 min</span>
+          </div>
+          <input type="range" id="sim-l-micro" min="0" max="60" value="15">
+          <div class="loss-impact">Ralentiza la marcha, penaliza el Rendimiento.</div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-info">
+            <span class="loss-name">🐢 Velocidad Reducida (Factor de pérdida)</span>
+            <span class="loss-val" id="lbl-l-vel">10%</span>
+          </div>
+          <input type="range" id="sim-l-vel" min="0" max="50" value="10">
+          <div class="loss-impact">Mide cuánto disminuyó el ritmo, penaliza el Rendimiento.</div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-info">
+            <span class="loss-name">❌ Piezas Defectuosas (Rechazos)</span>
+            <span class="loss-val" id="lbl-l-def">150 u</span>
+          </div>
+          <input type="range" id="sim-l-def" min="0" max="1000" value="150">
+          <div class="loss-impact">Mermas físicas directas, penaliza la Calidad.</div>
+        </div>
+      </div>
+
+      <div class="sim-visualization">
+        <h4 style="margin-bottom:1rem;font-size:1rem;color:var(--text)">Estado del OEE Simulado</h4>
+        <div class="chart-container">
+          <canvas id="gaugeChart"></canvas>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding-top:40px">
+            <div id="sim-oee-val" style="font-size:2.2rem;font-weight:900;color:var(--accent)">75%</div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase">OEE Resultante</div>
+          </div>
+        </div>
+        <div id="sim-gauge-lbl" style="font-size:.85rem;font-weight:700;margin-top:1rem;padding:.2rem 1rem;border-radius:4px">Aceptable</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 6 · TALLER PRÁCTICO ═══════════════ -->
+<section id="s-workshop">
+  <div class="section-label">06 · Diagnóstico en Planta</div>
+  <h2>Taller de Diagnóstico OEE (15% de la nota)</h2>
+  <p class="section-intro">Analiza los registros de tres plantas industriales diferentes de nuestras empresas del CMMS. Calcula su OEE, diagnostica el pilar crítico y comprueba tu propuesta técnica.</p>
+
+  <div class="workshop-box fade-in">
+    <div class="workshop-nav">
+      <button class="w-tab active" onclick="selectWorkshopTab(0)">🏭 PetroAndina (Envasadora de Lubricantes)</button>
+      <button class="w-tab" onclick="selectWorkshopTab(1)">🌾 AgroVerde (Molino de Harina)</button>
+      <button class="w-tab" onclick="selectWorkshopTab(2)">⚙️ MetalPrecision (Prensa Hidráulica)</button>
+    </div>
+
+    <div class="w-grid">
+      <div class="w-desc" id="w-desc-container">
+        <!-- Content will be rendered here dynamically -->
+      </div>
+
+      <div class="w-form">
+        <h4 style="font-size:.9rem;color:var(--text);margin-bottom:1rem;">Ingresa tus Cálculos de la Planta</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+          <div class="calc-field">
+            <label>Disponibilidad (%)</label>
+            <input type="number" id="w-ans-d" placeholder="0.0" step="0.1">
+          </div>
+          <div class="calc-field">
+            <label>Rendimiento (%)</label>
+            <input type="number" id="w-ans-r" placeholder="0.0" step="0.1">
+          </div>
+        </div>
+        <div class="calc-field" style="margin-bottom:.8rem">
+          <label>Calidad (%)</label>
+          <input type="number" id="w-ans-c" placeholder="0.0" step="0.1">
+        </div>
+        <div class="calc-field" style="margin-bottom:1.2rem">
+          <label>OEE Final (%)</label>
+          <input type="number" id="w-ans-oee" placeholder="0.0" step="0.1">
+        </div>
+
+        <button class="btn-quiz primary" style="width:100%;margin-top:0;" onclick="checkWorkshopAnswers()">Verificar Respuestas</button>
+        <div class="w-feedback" id="w-feedback"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 7 · ENTREGABLES Y TI ═══════════════ -->
+<section id="s-checklist">
+  <div class="section-label">07 · Tarea Independiente</div>
+  <h2>Actividades y Entregables de la Semana</h2>
+  <p class="section-intro">Planifica tu estudio independiente de 4 horas para cumplir con los entregables de este corte:</p>
+
+  <div class="checklist-wrap fade-in">
+    <h3>📋 Checklist del Módulo</h3>
+    <div id="checklist-items"></div>
+    <div class="chk-progress"><div class="chk-progress-bar" id="chk-bar"></div></div>
+    <div class="chk-count" id="chk-count">0 / 3 verificados</div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 8 · AUTOEVALUACIÓN ═══════════════ -->
+<section id="s-quiz">
+  <div class="section-label">08 · Evaluación Rápida</div>
+  <h2>Autoevaluación</h2>
+  <p class="section-intro">Responde las preguntas interactivas para validar tu comprensión teórica del OEE y TPM.</p>
+
+  <div id="quiz-container"></div>
+  <div class="score-display" id="score-display">
+    <div style="font-size:2rem;margin-bottom:.5rem">🎉</div>
+    <div class="score-num" id="score-num"></div>
+    <div style="color:var(--muted);margin-top:.5rem;font-size:.9rem" id="score-msg"></div>
+    <button class="btn-quiz primary" onclick="restartQuiz()" style="margin-top:1.5rem">↩ Reintentar</button>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Docente: Esp. Marlon Gómez · Tecnología electromecanica Unipaz</p>
+</footer>
+
+<script>
+// ==========================================
+// BACKGROUND CANVAS (Floating Gears/Dots)
+// ==========================================
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const ACCENT = '#0ea5e9';
+  class Particle {
+    constructor(){
+      this.x = Math.random()*W; this.y = Math.random()*H;
+      this.r = 2 + Math.random()*3;
+      this.vx = (Math.random()-.5)*.4; this.vy = (Math.random()-.5)*.4;
+      this.alpha = .15 + Math.random()*.35;
+      this.gear = Math.random() > .7;
+      this.gearR = 12 + Math.random()*22;
+      this.gearAngle = Math.random()*Math.PI*2;
+      this.gearSpeed = (Math.random()-.5)*.008;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; this.gearAngle+=this.gearSpeed;
+      if(this.x<-50)this.x=W+50; if(this.x>W+50)this.x=-50;
+      if(this.y<-50)this.y=H+50; if(this.y>H+50)this.y=-50; }
+    draw(){
+      ctx.save(); ctx.globalAlpha=this.alpha;
+      if(this.gear){
+        drawGear(ctx, this.x, this.y, this.gearR, this.gearR*.6, 8, this.gearAngle, ACCENT);
+      } else {
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=ACCENT; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  function drawGear(ctx,cx,cy,ro,ri,teeth,ang,color){
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath();
+    for(let i=0;i<teeth;i++){
+      const a1=(i/teeth)*Math.PI*2, a2=((i+.5)/teeth)*Math.PI*2, a3=((i+1)/teeth)*Math.PI*2;
+      if(i===0) ctx.moveTo(Math.cos(a1)*ro,Math.sin(a1)*ro);
+      ctx.lineTo(Math.cos(a2)*ro,Math.sin(a2)*ro);
+      ctx.lineTo(Math.cos(a2)*(ro+4),Math.sin(a2)*(ro+4));
+      const h=(a2+a3)/2;
+      ctx.lineTo(Math.cos(h)*(ro+4),Math.sin(h)*(ro+4));
+      ctx.lineTo(Math.cos(a3)*ro,Math.sin(a3)*ro);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,ri,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  for(let i=0;i<40;i++) particles.push(new Particle());
+  function drawLines(){
+    for(let i=0;i<particles.length;i++)
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<140){
+          ctx.save(); ctx.globalAlpha=.08*(1-d/140);
+          ctx.strokeStyle=ACCENT; ctx.lineWidth=.8;
+          ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); ctx.restore();
+        }
+      }
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W/2,H/2,H*.1,W/2,H/2,H*.7);
+    g.addColorStop(0,'rgba(7,14,22,0)'); g.addColorStop(1,'rgba(7,14,22,.7)');
+    drawLines();
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ==========================================
+// GSAP SCROLL TRIGGER ANIMATIONS
+// ==========================================
+gsap.registerPlugin(ScrollTrigger);
+document.querySelectorAll('.fade-in').forEach(el=>{
+  gsap.to(el,{ opacity:1, y:0, duration:.6, ease:'power2.out',
+    scrollTrigger:{ trigger:el, start:'top 90%', toggleActions:'play none none none' }});
+});
+
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-120) cur=s.id; });
+  navLinks.forEach(a=>{ a.classList.toggle('active',a.getAttribute('href')==='#'+cur); });
+});
+
+// ==========================================
+// INTERACTIVE CALCULATOR (OEE)
+// ==========================================
+function calculateOEE() {
+  const hours = parseFloat(document.getElementById('c-turno').value) || 0;
+  const plannedMin = parseFloat(document.getElementById('c-plan').value) || 0;
+  const downtimeMin = parseFloat(document.getElementById('c-downtime').value) || 0;
+  const cycleSec = parseFloat(document.getElementById('c-ciclo').value) || 1;
+  const totalParts = parseFloat(document.getElementById('c-piezas').value) || 0;
+  const defParts = parseFloat(document.getElementById('c-defectos').value) || 0;
+
+  // Timings
+  const totalTime = hours * 60; // en minutos
+  const plannedTime = totalTime - plannedMin;
+  const operatingTime = plannedTime - downtimeMin;
+
+  // 1. Disponibilidad
+  const dispo = plannedTime > 0 ? (operatingTime / plannedTime) * 100 : 0;
+
+  // 2. Rendimiento
+  // Capacidad de piezas teórica en el operatingTime
+  // operatingTime está en minutos, ciclo en segundos
+  const theoreticalQty = operatingTime > 0 ? (operatingTime * 60) / cycleSec : 0;
+  const performance = theoreticalQty > 0 ? (totalParts / theoreticalQty) * 100 : 0;
+
+  // 3. Calidad
+  const goodParts = totalParts - defParts;
+  const quality = totalParts > 0 ? (goodParts / totalParts) * 100 : 0;
+
+  // 4. OEE
+  const oee = (dispo / 100) * (performance / 100) * (quality / 100) * 100;
+
+  // Render
+  document.getElementById('oee-res-d').textContent = dispo.toFixed(1) + '%';
+  document.getElementById('oee-res-r').textContent = performance.toFixed(1) + '%';
+  document.getElementById('oee-res-c').textContent = quality.toFixed(1) + '%';
+  document.getElementById('oee-total').textContent = oee.toFixed(1) + '%';
+
+  const statusEl = document.getElementById('oee-status');
+  if (oee >= 85) {
+    statusEl.textContent = 'Clase Mundial (Excelente)';
+    statusEl.style.background = 'rgba(0,229,160,.15)';
+    statusEl.style.color = 'var(--accent)';
+  } else if (oee >= 70) {
+    statusEl.textContent = 'Aceptable (Estable)';
+    statusEl.style.background = 'rgba(14,165,233,.15)';
+    statusEl.style.color = 'var(--accent2)';
+  } else if (oee >= 60) {
+    statusEl.textContent = 'Regular (Mejorable)';
+    statusEl.style.background = 'rgba(245,158,11,.15)';
+    statusEl.style.color = 'var(--accent3)';
+  } else {
+    statusEl.textContent = 'Deficiente (Inaceptable)';
+    statusEl.style.background = 'rgba(239,68,68,.15)';
+    statusEl.style.color = 'var(--red)';
+  }
+}
+
+['c-turno', 'c-plan', 'c-downtime', 'c-ciclo', 'c-piezas', 'c-defectos'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calculateOEE);
+});
+calculateOEE();
+
+// ==========================================
+// LOSSES SLIDER SIMULATOR
+// ==========================================
+let gaugeChartObj = null;
+
+function initGaugeChart() {
+  const ctx = document.getElementById('gaugeChart');
+  if (!ctx) return;
+  gaugeChartObj = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Eficiente', 'Pérdidas'],
+      datasets: [{
+        data: [75, 25],
+        backgroundColor: ['#0ea5e9', '#1e3a52'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: 270
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      cutout: '80%'
+    }
+  });
+}
+
+function updateSimulation() {
+  const lAverias = parseFloat(document.getElementById('sim-l-averias').value);
+  const lAjustes = parseFloat(document.getElementById('sim-l-ajustes').value);
+  const lMicro = parseFloat(document.getElementById('sim-l-micro').value);
+  const lVel = parseFloat(document.getElementById('sim-l-vel').value);
+  const lDef = parseFloat(document.getElementById('sim-l-def').value);
+
+  // Update Labels
+  document.getElementById('lbl-l-averias').textContent = lAverias + ' min';
+  document.getElementById('lbl-l-ajustes').textContent = lAjustes + ' min';
+  document.getElementById('lbl-l-micro').textContent = lMicro + ' min';
+  document.getElementById('lbl-l-vel').textContent = lVel + '%';
+  document.getElementById('lbl-l-def').textContent = lDef + ' u';
+
+  // Base parameters: 8 hour shift (480 mins), no planned pauses.
+  const totalMins = 480;
+  
+  // Disponibilidad
+  const uptime = totalMins - lAverias - lAjustes;
+  const d = Math.max((uptime / totalMins) * 100, 0);
+
+  // Rendimiento
+  // Suponiendo velocidad teórica de 1200 piezas en turno completo.
+  // Microparadas quitan capacidad
+  const effectiveTime = uptime - lMicro;
+  const velocityFactor = 1 - (lVel / 100);
+  const totalProduced = Math.max(Math.floor((effectiveTime / totalMins) * 1200 * velocityFactor), 0);
+  const theoreticalMax = (uptime / totalMins) * 1200;
+  const r = theoreticalMax > 0 ? Math.min((totalProduced / theoreticalMax) * 100, 100) : 0;
+
+  // Calidad
+  const goodParts = Math.max(totalProduced - lDef, 0);
+  const c = totalProduced > 0 ? (goodParts / totalProduced) * 100 : 0;
+
+  // OEE
+  const oee = (d / 100) * (r / 100) * (c / 100) * 100;
+
+  // Render Gauge
+  document.getElementById('sim-oee-val').textContent = oee.toFixed(0) + '%';
+  
+  const statusEl = document.getElementById('sim-gauge-lbl');
+  let color = '#ef4444';
+  let lbl = 'Inaceptable';
+
+  if (oee >= 85) {
+    color = '#00e5a0'; lbl = 'Clase Mundial';
+  } else if (oee >= 70) {
+    color = '#0ea5e9'; lbl = 'Aceptable';
+  } else if (oee >= 60) {
+    color = '#f59e0b'; lbl = 'Regular';
+  }
+
+  statusEl.textContent = lbl;
+  statusEl.style.color = '#070e16';
+  statusEl.style.background = color;
+
+  if (gaugeChartObj) {
+    gaugeChartObj.data.datasets[0].data = [oee, 100 - oee];
+    gaugeChartObj.data.datasets[0].backgroundColor = [color, '#1e3a52'];
+    gaugeChartObj.update();
+  }
+}
+
+['sim-l-averias', 'sim-l-ajustes', 'sim-l-micro', 'sim-l-vel', 'sim-l-def'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateSimulation);
+});
+
+initGaugeChart();
+updateSimulation();
+
+// ==========================================
+// WORKSHOP DIAGNOSTICS (TPM CASES)
+// ==========================================
+const workshopCases = [
+  {
+    title: "Planta PetroAndina (Envasadora)",
+    desc: `<h4>📋 Datos Operativos - Planta de Lubricantes</h4>
+      Un turno operativo programado de **8 horas**. 
+      <br>• Parada planificada para almuerzo: **30 minutos**.
+      <br>• Parada inesperada por rotura de boquilla (falla): **45 minutos**.
+      <br>• Velocidad estándar nominal de diseño: **60 envases por minuto** (1 envase/seg).
+      <br>• Envases totales reportados producidos: **23,400 unidades**.
+      <br>• Envases rechazados por sensor de nivel (defectos): **450 unidades**.
+      <br><br>
+      <strong>Diagnóstico:</strong> Determina la Disponibilidad (D), Rendimiento (R), Calidad (C) y el OEE global.`,
+    answers: { d: 90.0, r: 86.7, c: 98.1, oee: 76.5 } // Plan = 480-30 = 450. Up = 450-45=405. D = 405/450 = 90%. TheoQty = 405*60 = 24,300. R = 23,400/24,300 = 96.3% -> WAIT: 23400/24300 = 96.29%. Let's check calculations carefully.
+    // Wait, let's recalculate:
+    // Turn = 480 min. Planned pause = 30 min. Planned time = 450 min.
+    // Downtime due to fault = 45 min. Operating time = 405 min.
+    // D = 405/450 = 90.0%.
+    // Performance: nominal speed is 60 envases/minute.
+    // Operating time = 405 mins. Theoretical parts = 405 * 60 = 24,300 parts.
+    // Total parts produced = 23,400 parts.
+    // Performance = 23,400 / 24,300 = 96.29% -> 96.3%.
+    // Quality: total parts = 23,400. Defective = 450. Good parts = 22,950.
+    // Quality = 22,950 / 23,400 = 98.07% -> 98.1%.
+    // OEE = 0.90 * 0.96296 * 0.98077 = 85.0% -> wait! 0.90 * 0.963 * 0.981 = 85.0%.
+    // Let's refine the answers to match these exactly:
+    // D = 90.0, R = 96.3, C = 98.1, OEE = 85.0
+  },
+  {
+    title: "Planta AgroVerde (Molino)",
+    desc: `<h4>📋 Datos Operativos - Empacadora de Harina</h4>
+      Un turno de **12 horas** completas.
+      <br>• Paradas planificadas por limpieza sanitaria rutinaria: **60 minutos**.
+      <br>• Paradas por falla mecánica de dosificador: **90 minutos**.
+      <br>• Tiempo de ciclo teórico nominal: **1.5 segundos por saco de harina** (40 sacos/minuto).
+      <br>• Sacos totales llenados en el turno: **20,500 sacos**.
+      <br>• Sacos rotos detectados en sellado (defectos): **615 sacos**.
+      <br><br>
+      <strong>Diagnóstico:</strong> Calcula los tres factores y el OEE resultante para evaluar si cumple con Clase Mundial.`,
+    answers: { d: 86.4, r: 91.5, c: 97.0, oee: 76.7 }
+    // Recalculating:
+    // Turn = 12 hours = 720 minutes.
+    // Planned pause = 60 minutes. Planned time = 660 minutes.
+    // Fault downtime = 90 minutes. Operating time = 570 minutes.
+    // D = 570 / 660 = 86.36% -> 86.4%.
+    // Performance: Nominal speed is 40 bags/min.
+    // Operating time = 570 mins. Theoretical parts = 570 * 40 = 22,800.
+    // Total parts produced = 20,500.
+    // Performance = 20,500 / 22,800 = 89.91% -> 89.9%. Let's update standard answers to match 89.9.
+    // Quality: total parts = 20,500. Defective = 615.
+    // Quality = (20500 - 615)/20500 = 19885/20500 = 97.0%.
+    // OEE = 0.8636 * 0.8991 * 0.970 = 75.3%.
+    // Let's list answers as: D = 86.4%, R = 89.9%, C = 97.0%, OEE = 75.3%
+  },
+  {
+    title: "MetalPrecision (Prensa)",
+    desc: `<h4>📋 Datos Operativos - Troquelado Metálico</h4>
+      Un turno programado de **8 horas**.
+      <br>• Parada planificada de mantenimiento autónomo: **15 minutos**.
+      <br>• Parada por recalentamiento de pistón hidráulico: **80 minutos**.
+      <br>• Ritmo de diseño teórico: **10 golpes de prensa por minuto** (600 golpes/hora).
+      <br>• Golpes reales registrados (piezas totales): **2,200 piezas**.
+      <br>• Piezas rotas o con rebabas descartadas: **22 piezas**.
+      <br><br>
+      <strong>Diagnóstico:</strong> Analiza las pérdidas. ¿Cuál pilar es la mayor restricción de producción?`,
+    answers: { d: 82.8, r: 57.1, c: 99.0, oee: 46.8 }
+    // Recalculating:
+    // Turn = 480 mins. Planned pause = 15 mins. Planned time = 465 mins.
+    // Fault downtime = 80 mins. Operating time = 385 mins.
+    // D = 385 / 465 = 82.80% -> 82.8%.
+    // Performance: Nominal speed is 10 parts/min.
+    // Operating time = 385 mins. Theoretical parts = 385 * 10 = 3,850.
+    // Total parts produced = 2,200.
+    // Performance = 2,200 / 3,850 = 57.14% -> 57.1%.
+    // Quality: total parts = 2200. Defective = 22.
+    // Quality = (2200 - 22)/2200 = 2178/2200 = 99.0%.
+    // OEE = 0.8280 * 0.5714 * 0.99 = 46.8%.
+    // Matches perfectly: D = 82.8%, R = 57.1%, C = 99.0%, OEE = 46.8%
+  }
+];
+
+// Adjusting answers to match precise maths:
+workshopCases[0].answers = { d: 90.0, r: 96.3, c: 98.1, oee: 85.0 };
+workshopCases[1].answers = { d: 86.4, r: 89.9, c: 97.0, oee: 75.3 };
+workshopCases[2].answers = { d: 82.8, r: 57.1, c: 99.0, oee: 46.8 };
+
+let currentWorkshopTab = 0;
+
+function selectWorkshopTab(idx) {
+  currentWorkshopTab = idx;
+  const tabs = document.querySelectorAll('.w-tab');
+  tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+  renderWorkshopCase();
+}
+
+function renderWorkshopCase() {
+  const wCase = workshopCases[currentWorkshopTab];
+  document.getElementById('w-desc-container').innerHTML = wCase.desc;
+  
+  // Clear inputs
+  document.getElementById('w-ans-d').value = '';
+  document.getElementById('w-ans-r').value = '';
+  document.getElementById('w-ans-c').value = '';
+  document.getElementById('w-ans-oee').value = '';
+  document.getElementById('w-feedback').style.display = 'none';
+}
+
+function checkWorkshopAnswers() {
+  const wCase = workshopCases[currentWorkshopTab];
+  const userD = parseFloat(document.getElementById('w-ans-d').value) || 0;
+  const userR = parseFloat(document.getElementById('w-ans-r').value) || 0;
+  const userC = parseFloat(document.getElementById('w-ans-c').value) || 0;
+  const userOEE = parseFloat(document.getElementById('w-ans-oee').value) || 0;
+
+  const diffD = Math.abs(userD - wCase.answers.d);
+  const diffR = Math.abs(userR - wCase.answers.r);
+  const diffC = Math.abs(userC - wCase.answers.c);
+  const diffOEE = Math.abs(userOEE - wCase.answers.oee);
+
+  const fb = document.getElementById('w-feedback');
+  fb.style.display = 'block';
+
+  if (diffD <= 0.2 && diffR <= 0.2 && diffC <= 0.2 && diffOEE <= 0.2) {
+    fb.className = 'w-feedback success';
+    fb.innerHTML = `<h4>🎉 ¡Resultados Correctos!</h4>
+      Tus cálculos coinciden perfectamente con el análisis técnico de planta:
+      <br>• Disponibilidad = ${wCase.answers.d.toFixed(1)}%
+      <br>• Rendimiento = ${wCase.answers.r.toFixed(1)}%
+      <br>• Calidad = ${wCase.answers.c.toFixed(1)}%
+      <br>• OEE = ${wCase.answers.oee.toFixed(1)}%
+      <br><strong>Diagnóstico de cuello de botella:</strong>
+      ${currentWorkshopTab === 0 ? 'Excelente OEE (Clase Mundial). Se debe enfocar en control preventivo de calidad para reducir rechazos.' :
+        currentWorkshopTab === 1 ? 'OEE Aceptable. La mayor pérdida está en el Rendimiento (microparadas y velocidad lenta del empaque).' :
+        'OEE Crítico. Fuerte cuello de botella en Rendimiento (velocidad reducida en un 43% para evitar recalentamiento, requiere intervención de mantenimiento correctivo/rediseño inmediato).'}
+    `;
+  } else {
+    fb.className = 'w-feedback error';
+    fb.innerHTML = `<h4>❌ Hay desviaciones en tus cálculos</h4>
+      Verifica los valores e intenta nuevamente. Recuerda redondear a un decimal.
+      <br><strong>Ayuda:</strong>
+      <br>• T. Planificado = Turno − Almuerzos/Limpieza planificada
+      <br>• T. Operativo = T. Planificado − Paradas por fallas
+      <br>• Producción Teórica = T. Operativo (segundos) / Tiempo ciclo nominal (segundos/pieza)`;
+  }
+}
+
+// Init workshop
+renderWorkshopCase();
+
+// ==========================================
+// CHECKLIST SYSTEM
+// ==========================================
+const chkData = [
+  { text: "Resolver el Taller Práctico de Diagnóstico OEE en clase (15% de la nota)", cat: "Evaluación" },
+  { text: "Participación activa en el debate presencial sobre pérdidas de mantenimiento y TPM", cat: "Clase" },
+  { text: "Investigar e incluir en la bitácora un caso real de implementación OEE en la industria colombiana", cat: "Bitácora" }
+];
+
+const chkListEl = document.getElementById('checklist-items');
+chkListEl.innerHTML = chkData.map((item, idx) => `
+  <div class="checklist-item" id="chk-item-${idx}" onclick="toggleCheck(${idx})">
+    <div class="chk-box" id="chk-box-${idx}"></div>
+    <div class="chk-label" id="chk-lbl-${idx}">
+      ${item.text} <span class="chk-tag m">${item.cat}</span>
+    </div>
+  </div>
+`).join('');
+
+let checkedState = new Array(chkData.length).fill(false);
+
+function toggleCheck(idx) {
+  checkedState[idx] = !checkedState[idx];
+  const item = document.getElementById(`chk-item-${idx}`);
+  const box = document.getElementById(`chk-box-${idx}`);
+  
+  if (checkedState[idx]) {
+    item.classList.add('checked');
+    box.innerHTML = '✔';
+  } else {
+    item.classList.remove('checked');
+    box.innerHTML = '';
+  }
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const completed = checkedState.filter(Boolean).length;
+  const progress = (completed / chkData.length) * 100;
+  document.getElementById('chk-bar').style.width = progress + '%';
+  document.getElementById('chk-count').textContent = `${completed} / ${chkData.length} completados`;
+}
+
+// ==========================================
+// QUIZ SYSTEM
+// ==========================================
+const quizQuestions = [
+  {
+    q: "1. ¿Cuál es el rango mínimo que se considera 'Clase Mundial' en el indicador global OEE?",
+    opts: [
+      "OEE ≥ 75%",
+      "OEE ≥ 80%",
+      "OEE ≥ 85%",
+      "OEE ≥ 90%"
+    ],
+    ans: 2,
+    fb: "¡Correcto! Una planta se considera manufactura de 'Clase Mundial' (World Class) cuando su OEE global alcanza o supera el 85%."
+  },
+  {
+    q: "2. Las pérdidas asociadas a las 'Microparadas' de menos de 10 minutos y a la velocidad reducida afectan directamente a qué pilar del OEE:",
+    opts: [
+      "Disponibilidad",
+      "Rendimiento",
+      "Calidad",
+      "Ninguna de las anteriores"
+    ],
+    ans: 1,
+    fb: "¡Correcto! El Rendimiento mide la velocidad y el ritmo del equipo. Las microparadas y la velocidad reducida disminuyen la capacidad productiva sin generar paradas de mantenimiento prolongadas, degradando el Rendimiento."
+  },
+  {
+    q: "3. Si una prensa troqueladora opera con una disponibilidad del 90%, un rendimiento del 80% y una calidad del 95%, ¿cuál es su OEE global?",
+    opts: [
+      "68.4%",
+      "72.0%",
+      "80.0%",
+      "65.5%"
+    ],
+    ans: 0, // 0.9 * 0.8 * 0.95 = 0.72 * 0.95 = 68.4%
+    fb: "¡Correcto! OEE = D × R × C = 90% × 80% × 95% = 68.4%."
+  },
+  {
+    q: "4. ¿Cuál de las Seis Grandes Pérdidas se asocia directamente a la pérdida de calidad al estabilizar el proceso tras reiniciar una máquina?",
+    opts: [
+      "Rechazos de producción",
+      "Puestas en marcha y mermas iniciales",
+      "Preparación y ajustes de moldes",
+      "Velocidad reducida"
+    ],
+    ans: 1,
+    fb: "¡Correcto! Los defectos producidos al reiniciar el proceso tras encender la máquina representan mermas iniciales de puesta en marcha."
+  },
+  {
+    q: "5. ¿Cuál es la diferencia fundamental entre el Tiempo Calendario y el Tiempo Planificado en OEE?",
+    opts: [
+      "El Tiempo Planificado descuenta las fallas del dosificador",
+      "El Tiempo Planificado descuenta paradas organizacionales programadas (días festivos, turnos no contratados, huelgas)",
+      "Son exactamente iguales en todas las plantas",
+      "El Tiempo Calendario excluye el mantenimiento preventivo"
+    ],
+    ans: 1,
+    fb: "¡Correcto! El Tiempo Planificado descuenta las paradas donde el activo no debió operar (ejemplo: fines de semana cerrados, huelgas, paradas por falta de personal). El OEE evalúa el desempeño en base al tiempo que *sí debió operar*."
+  }
+];
+
+const quizContainer = document.getElementById('quiz-container');
+let answersState = new Array(quizQuestions.length).fill(null);
+
+function renderQuiz() {
+  quizContainer.innerHTML = quizQuestions.map((q, qIdx) => `
+    <div class="quiz-card" id="q-card-${qIdx}">
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((opt, oIdx) => `
+          <label class="quiz-option" id="q-opt-${qIdx}-${oIdx}">
+            <input type="radio" name="q-${qIdx}" onclick="answerQuestion(${qIdx}, ${oIdx})" ${answersState[qIdx] === oIdx ? 'checked' : ''}>
+            ${opt}
+          </label>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="q-fb-${qIdx}"></div>
+    </div>
+  `).join('');
+}
+
+function answerQuestion(qIdx, oIdx) {
+  answersState[qIdx] = oIdx;
+  const q = quizQuestions[qIdx];
+  const fb = document.getElementById(`q-fb-${qIdx}`);
+  fb.className = 'quiz-feedback show';
+  
+  // Highlight options
+  for(let i=0; i<q.opts.length; i++) {
+    const el = document.getElementById(`q-opt-${qIdx}-${i}`);
+    el.classList.remove('correct', 'wrong');
+  }
+
+  if (oIdx === q.ans) {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = q.fb;
+  } else {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('wrong');
+    document.getElementById(`q-opt-${qIdx}-${q.ans}`).classList.add('correct');
+    fb.className = 'quiz-feedback show err';
+    fb.innerHTML = `❌ Incorrecto. La respuesta correcta es la opción ${q.ans + 1}. ` + q.fb;
+  }
+  checkQuizComplete();
+}
+
+function checkQuizComplete() {
+  if (answersState.filter(v => v !== null).length === quizQuestions.length) {
+    const score = answersState.reduce((sum, val, idx) => sum + (val === quizQuestions[idx].ans ? 1 : 0), 0);
+    const scorePct = (score / quizQuestions.length) * 100;
+    
+    document.getElementById('score-num').textContent = `${scorePct}%`;
+    let msg = '';
+    if (scorePct >= 80) msg = '🎉 ¡Felicitaciones! Comprendes con éxito los factores del OEE y la clasificación del TPM.';
+    else if (scorePct >= 60) msg = '👍 Muy bien. Te recomendamos repasar las diferencias entre microparadas y averías.';
+    else msg = '✏️ Te sugerimos estudiar a fondo las Seis Grandes Pérdidas antes de avanzar al caso integrador.';
+    
+    document.getElementById('score-msg').textContent = msg;
+    document.getElementById('score-display').classList.add('show');
+    document.getElementById('score-display').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function restartQuiz() {
+  answersState.fill(null);
+  document.getElementById('score-display').classList.remove('show');
+  renderQuiz();
+}
+
+renderQuiz();
+
+</script>
+</body>
+</html>
