@@ -88,6 +88,13 @@ body {
   display: flex;
 }
 
+#appContainer {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -298,6 +305,7 @@ a {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
   min-width: 0;
 }
 
@@ -3095,14 +3103,19 @@ input[type="number"]::-webkit-outer-spin-button {
     display: none !important;
   }
 
-  /* Swipeable technician tabs on tablet and mobile */
+  /* Sticky & Swipeable technician tabs on tablet and mobile */
   .tech-view-tabs {
+    position: sticky !important;
+    top: 59px !important; /* just below topbar (60px height) */
+    background: var(--bg-deepest) !important;
+    z-index: 45 !important;
     display: flex !important;
     gap: 8px !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
     white-space: nowrap !important;
-    padding-bottom: 8px !important;
+    padding: 12px 4px 8px 4px !important;
+    margin-top: -12px !important;
     margin-bottom: 16px !important;
     border-bottom: 1px solid var(--border) !important;
   }

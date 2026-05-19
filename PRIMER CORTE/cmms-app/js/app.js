@@ -523,7 +523,13 @@ class App {
         const tabs = ['MisTareas', 'Calendario', 'Solicitudes', 'Inventario'];
         tabs.forEach(t => {
             const btn = document.getElementById(`tab${t}`);
-            const pane = document.getElementById(`techTab${t === 'MisTareas' ? 'Tasks' : t}`);
+            let paneId = '';
+            if (t === 'MisTareas') paneId = 'techTabTasks';
+            else if (t === 'Calendario') paneId = 'techTabCalendar';
+            else if (t === 'Solicitudes') paneId = 'techTabSolicitudes';
+            else if (t === 'Inventario') paneId = 'techTabInventario';
+
+            const pane = document.getElementById(paneId);
             if (btn) btn.classList.toggle('tech-tab-active', t === tabName);
             if (pane) pane.style.display = t === tabName ? '' : 'none';
         });
