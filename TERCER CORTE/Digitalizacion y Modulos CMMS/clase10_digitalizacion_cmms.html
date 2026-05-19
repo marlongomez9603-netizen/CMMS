@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Digitalización del Mantenimiento y Control Avanzado con CMMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070e16;--surface:#0d1825;--card:#111f30;--border:#1e3a52;
+  --accent:#00e5a0;--accent2:#0ea5e9;--accent3:#f59e0b;
+  --red:#ef4444;--text:#e2e8f0;--muted:#7a9db8;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:950px;padding:0 2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:var(--accent);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem 1.1rem;border-radius:99px;margin-bottom:1.8rem;font-weight:700}
+.hero-title{font-size:clamp(1.8rem,5vw,3.4rem);font-weight:900;line-height:1.15;background:linear-gradient(135deg,#fff 20%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem}
+.hero-sub{color:var(--muted);font-size:1.05rem;max-width:700px;margin:0 auto 2.5rem}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:1rem}
+.meta-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.4rem 1rem;border-radius:8px;font-size:.82rem;color:var(--muted)}
+.meta-chip span{color:var(--text);font-weight:700}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.72rem}
+.arrow{width:22px;height:22px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);animation:bounce 1.4s ease infinite}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(7px)}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,14,22,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.4rem;padding:.65rem 1rem;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:.8rem;padding:.35rem .9rem;border-radius:8px;transition:.2s;font-weight:600}
+nav a:hover,nav a.active{background:rgba(0,229,160,.12);color:var(--accent)}
+
+/* LAYOUT */
+main{max-width:1160px;margin:0 auto;padding:0 1.5rem}
+section{padding:5rem 0}
+.section-label{display:inline-flex;align-items:center;gap:.5rem;color:var(--accent);font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800;margin-bottom:.8rem}
+.section-label::before{content:'';display:block;width:28px;height:2px;background:var(--accent);border-radius:2px}
+h2{font-size:clamp(1.7rem,3vw,2.6rem);font-weight:800;margin-bottom:1.2rem}
+.section-intro{color:var(--muted);font-size:1rem;max-width:750px;margin-bottom:3rem;line-height:1.8}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* CARDS */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 10px 36px rgba(0,229,160,.1)}
+.card-icon{font-size:2.2rem;margin-bottom:.9rem}
+.card h3{font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
+.card p{font-size:.87rem;color:var(--muted);line-height:1.65}
+.card.hl{border-color:rgba(0,229,160,0.4);background:linear-gradient(135deg,rgba(0,229,160,0.07),var(--card))}
+.card.hl2{border-color:rgba(14,165,233,0.4);background:linear-gradient(135deg,rgba(14,165,233,0.07),var(--card))}
+
+/* CONCEPT BOX */
+.concept-box{background:linear-gradient(135deg,rgba(0,229,160,.07),rgba(14,165,233,.05));border:1px solid rgba(0,229,160,.22);border-radius:var(--radius);padding:1.8rem 2rem;margin-bottom:1.6rem}
+.concept-box .quote{font-size:1.02rem;font-style:italic;color:var(--text);border-left:3px solid var(--accent);padding-left:1.2rem;margin-bottom:.7rem}
+.concept-box .source{font-size:.78rem;color:var(--muted)}
+
+/* ACCORDION */
+.accordion{display:flex;flex-direction:column;gap:.6rem}
+.acc-item{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.acc-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.3rem;cursor:pointer;font-weight:700;font-size:.9rem;transition:background .2s;user-select:none}
+.acc-header:hover{background:rgba(0,229,160,.06)}
+.acc-icon{font-size:1.1rem;transition:transform .3s;color:var(--accent)}
+.acc-item.open .acc-icon{transform:rotate(45deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.acc-body-inner{padding:0 1.3rem 1.2rem;font-size:.87rem;color:var(--muted);line-height:1.7}
+.acc-body-inner ul{list-style:disc;padding-left:1.2rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem}
+.acc-body-inner strong{color:var(--text)}
+
+/* SIMULATOR (PLANNING CHALLENGE) */
+.sim-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:2rem 0}
+.sim-box h3{font-size:1.15rem;font-weight:800;margin-bottom:1rem;color:var(--accent)}
+.sim-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:1.6rem}
+@media(max-width:850px){.sim-grid{grid-template-columns:1fr}}
+.case-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem;margin-bottom:1rem}
+.case-title{font-size:.95rem;font-weight:700;color:var(--accent2);display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+.case-desc{font-size:.86rem;color:var(--text);margin-bottom:.8rem}
+.case-meta{font-size:.78rem;color:var(--muted);display:flex;gap:1rem;border-top:1px solid rgba(255,255,255,0.05);padding-top:.5rem}
+
+.sim-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+.sim-form-title{font-size:.9rem;font-weight:700;margin-bottom:1rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:.5rem}
+.sim-field{margin-bottom:1rem}
+.sim-field label{display:block;font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.sim-field select,.sim-field input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.6rem .8rem;border-radius:8px;font-size:.86rem;outline:none;transition:border-color .2s}
+.sim-field select:focus,.sim-field input:focus{border-color:var(--accent)}
+.cost-estimation{background:rgba(0,229,160,0.04);border:1px solid rgba(0,229,160,0.15);border-radius:8px;padding:.8rem;margin-bottom:1rem}
+.cost-row{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-bottom:.3rem}
+.cost-row.total{border-top:1px solid rgba(0,229,160,0.2);padding-top:.4rem;margin-top:.4rem;font-weight:700;color:var(--accent)}
+.sim-feedback{margin-top:1rem;padding:.75rem 1rem;border-radius:8px;font-size:.82rem;display:none;line-height:1.6}
+.sim-feedback.success{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.25)}
+.sim-feedback.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+
+/* CHECKLIST */
+.checklist-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem}
+.checklist-wrap h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.checklist-item{display:flex;align-items:center;gap:.9rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;transition:background .2s;user-select:none}
+.checklist-item:hover{background:rgba(0,229,160,.05)}
+.checklist-item.checked{opacity:.6}
+.chk-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-size:.8rem}
+.checklist-item.checked .chk-box{background:var(--accent);border-color:var(--accent);color:#000}
+.chk-label{font-size:.88rem;color:var(--muted);transition:color .2s}
+.checklist-item.checked .chk-label{text-decoration:line-through;color:rgba(122,157,184,.5)}
+.chk-progress{height:6px;background:var(--surface);border-radius:3px;margin-top:1.2rem;overflow:hidden}
+.chk-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease;width:0%}
+.chk-count{font-size:.78rem;color:var(--muted);margin-top:.5rem;text-align:right}
+.chk-tag{font-size:.65rem;padding:.15rem .45rem;border-radius:4px;font-weight:700;margin-left:.5rem;text-transform:uppercase}
+.chk-tag.m{background:rgba(0,229,160,.15);color:var(--accent)}
+.chk-tag.i{background:rgba(14,165,233,.15);color:var(--accent2)}
+.chk-tag.e{background:rgba(245,158,11,.15);color:var(--accent3)}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin-bottom:1.2rem}
+.quiz-question{font-weight:700;font-size:.95rem;margin-bottom:1rem;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;font-size:.87rem;color:var(--text);transition:.2s}
+.quiz-option:hover{border-color:var(--accent);background:rgba(0,229,160,.05)}
+.quiz-option.correct{border-color:var(--accent);background:rgba(0,229,160,.1);color:var(--accent)}
+.quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.08);color:var(--red)}
+.quiz-option input[type=radio]{accent-color:var(--accent)}
+.quiz-feedback{margin-top:.8rem;font-size:.85rem;padding:.6rem 1rem;border-radius:8px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.ok{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.quiz-feedback.err{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.score-display{background:var(--card);border:1px solid rgba(0,229,160,.3);border-radius:var(--radius);padding:2rem;text-align:center;margin-top:2rem;display:none}
+.score-display.show{display:block}
+.score-num{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.btn-quiz{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.84rem;font-family:'Inter',sans-serif;margin-top:1rem;transition:.2s}
+.btn-quiz:hover{border-color:var(--accent);color:var(--accent)}
+.btn-quiz.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;font-weight:800}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 1.5rem;text-align:center;color:var(--muted);font-size:.83rem}
+footer strong{color:var(--accent)}
+
+/* UTILS */
+.fade-in{opacity:0;transform:translateY(24px)}
+@media(max-width:768px){nav{gap:.2rem}nav a{font-size:.74rem;padding:.3rem .6rem}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge"><i class="fas fa-desktop"></i> Digitalización y Control Operativo</div>
+    <h1 class="hero-title">Gestión Avanzada del Mantenimiento<br/>con Sistemas CMMS</h1>
+    <p class="hero-sub">Estudio conceptual y práctico del flujo digitalizado de mantenimiento: desde el reporte operativo de averías, el control financiero de inventarios, hasta el análisis RCA (5 Porqués) y la programación de correctivos diferidos.</p>
+    <div class="hero-meta">
+      <div class="meta-chip">👨‍🏫 <span>Esp. Marlon Gómez</span></div>
+      <div class="meta-chip">🕐 <span>3 horas</span></div>
+      <div class="meta-chip">📘 <span>3er Corte</span></div>
+      <div class="meta-chip">💻 <span>Plataforma MaintPro</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="arrow"></div><span>Desplázate</span></div>
+</section>
+
+<nav id="main-nav">
+  <a href="#s-intro" class="active">Introducción</a>
+  <a href="#s-teoria">Flujo y Conceptos</a>
+  <a href="#s-sim">Simulador Planificador</a>
+  <a href="#s-checklist">Entregables</a>
+  <a href="#s-quiz">Autoevaluación</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════ SECCIÓN 1 · INTRODUCCIÓN ═══════════════ -->
+<section id="s-intro">
+  <div class="section-label">01 · Transformación Digital</div>
+  <h2>El Salto de la Bitácora de Papel al CMMS</h2>
+  <p class="section-intro">El mantenimiento moderno no sobrevive en cuadernos de apuntes ni en archivos de Excel aislados. La digitalización mediante sistemas **CMMS (Computerized Maintenance Management System)** centraliza los datos técnicos y operativos para optimizar los recursos y eliminar las fallas crónicas.</p>
+
+  <div class="concept-box fade-in">
+    <div class="quote">"El propósito principal de un CMMS no es registrar lo que se rompió, sino proporcionar los datos estructurados necesarios para prevenir que vuelva a fallar, controlando los costos y garantizando la confiabilidad operacional."</div>
+    <div class="source">— Wireman, T. · <em>Computerized Maintenance Management Systems</em></div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card fade-in hl">
+      <div class="card-icon"><i class="fas fa-hand-holding-hand" style="color: var(--accent);"></i></div>
+      <h3>Mantenimiento Autónomo</h3>
+      <p>Involucrar a los operarios en el reporte inmediato de averías acorta el tiempo de respuesta y previene la degradación acelerada de la maquinaria.</p>
+    </div>
+    <div class="card fade-in hl2">
+      <div class="card-icon"><i class="fas fa-file-invoice-dollar" style="color: var(--accent2);"></i></div>
+      <h3>Trazabilidad de Costos</h3>
+      <p>Cargar repuestos e insumos específicos a las Órdenes de Trabajo permite calcular de forma exacta el costo de ciclo de vida (LCC) de cada equipo.</p>
+    </div>
+    <div class="card fade-in">
+      <div class="card-icon"><i class="fas fa-magnifying-glass-chart" style="color: var(--accent3);"></i></div>
+      <h3>Análisis Sistémico (RCA)</h3>
+      <p>Identificar la causa raíz física, humana y organizativa de las averías en vez de limitarse a "cambiar repuestos" y reiniciar la producción.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 2 · CONCEPTOS TEÓRICOS ═══════════════ -->
+<section id="s-teoria">
+  <div class="section-label">02 · Fundamento Teórico</div>
+  <h2>Módulos del CMMS y su Importancia Académica</h2>
+  <p class="section-intro">A continuación, analizaremos los fundamentos teóricos detrás de las nuevas herramientas incorporadas en MaintPro:</p>
+
+  <div class="accordion">
+    <div class="acc-item">
+      <div class="acc-header">📋 1. Solicitudes de Trabajo vs. Órdenes de Trabajo (OT)<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        En un entorno industrial realista, existe una clara separación de funciones:
+        <br><br>
+        *   **Solicitud de Trabajo (Work Request):** Es un reporte emitido por un operario de producción u operador de planta al detectar una anomalía (ruido extraño, vibración, fuga menor). No autoriza el gasto de recursos; es una alerta de planta.
+        *   **Orden de Trabajo (Work Order - OT):** Es un documento oficial creado y aprobado por el coordinador de mantenimiento. La OT asigna un técnico calificado, herramientas, repuestos, y define la fecha programada.
+        <br><br>
+        <strong>¿Por qué separarlos?</strong> Evita que los operarios decidan unilateralmente qué se repara y cuándo, permitiendo al departamento de mantenimiento priorizar los trabajos según criticidad de los activos y disponibilidad presupuestal.
+      </div></div>
+    </div>
+    
+    <div class="acc-item">
+      <div class="acc-header">📦 2. Integración de Almacén y Costeo en OTs<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        El costo total de mantenimiento no se compone solo del salario del técnico. Se calcula matemáticamente de la siguiente manera:
+        <br><br>
+        <code style="background:var(--surface); padding:.3rem .6rem; border-radius:6px; color:var(--accent); font-family: 'JetBrains Mono', monospace;">Costo OT = (Horas Reales × Tarifa Mano de Obra) + ∑(Cantidad Repuesto × Costo Unitario)</code>
+        <br><br>
+        <strong>Parámetros clave de inventario en el CMMS:</strong>
+        <ul>
+          <li>**Stock de Seguridad:** Cantidad mínima necesaria para evitar desabastecimiento en reparaciones críticas.</li>
+          <li>**Punto de Reorden:** Nivel de inventario que dispara una solicitud de compra automática para reabastecer stock.</li>
+          <li>**Aprobación de Compras:** Mecanismo de control interno (en MaintPro, administrado por el Docente) que valida el flujo financiero y evita compras injustificadas o fuera de presupuesto.</li>
+        </ul>
+      </div></div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-header">🔍 3. Análisis de Causa Raíz (RCA) - Los 5 Porqués y Pareto<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        Cuando un equipo crítico falla de forma correctiva, reparar no es suficiente. Se debe realizar un **RCA (Root Cause Analysis)**:
+        <br><br>
+        *   **Método de los 5 Porqués:** Técnica de cuestionamiento iterativa para indagar las relaciones de causa-efecto hasta llegar a la causa raíz (usualmente organizativa o procedimental).
+        *   **Modos de Falla:** Clasificación de la causa física del fallo (ej. Mecánico, Eléctrico, Lubricación, Desgaste, Operación incorrecta).
+        *   **Diagrama de Pareto (Principio 80/20):** Regla empírica que demuestra que el 80% de los tiempos de parada e indisponibilidad en planta son causados por el 20% de los modos de falla. Su representación en el CMMS ayuda a enfocar los esfuerzos de ingeniería donde hay mayor impacto.
+      </div></div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-header">📅 4. Gestión del Tiempo: Correctivo Inmediato vs. Diferido<span class="acc-icon">+</span></div>
+      <div class="acc-body"><div class="acc-body-inner">
+        No todas las fallas requieren atención urgente el mismo día. La programación avanzada distingue entre:
+        <br><br>
+        *   **Correctivo Inmediato (Emergencia):** Se ejecuta al instante porque la falla detiene la producción o compromete la seguridad. Tiene un alto costo debido al desorden logístico y la parada imprevista.
+        *   **Correctivo Diferido (Programado):** La falla se identifica (ej. desgaste de un rodamiento detectado por vibraciones), pero el equipo puede seguir operando con ciertas precauciones. Se programa para una fecha futura conveniente (ej. parada de fin de semana o mantenimiento general), optimizando el uso de la mano de obra y repuestos.
+        <br><br>
+        La inclusión de la **Fecha Programada** permite visualizar en calendarios semanales y mensuales la carga de trabajo real de los técnicos de planta, evitando la sobrecarga de tareas.
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 3 · SIMULADOR INTERACTIVO ═══════════════ -->
+<section id="s-sim">
+  <div class="section-label">03 · Laboratorio de Programación</div>
+  <h2>Simulador de Toma de Decisiones en el CMMS</h2>
+  <p class="section-intro">Actúa como el Coordinador de Mantenimiento de Planta. Analiza el reporte de avería y define la mejor estrategia de planificación: tipo de mantenimiento, programar fecha, asignar el personal adecuado y seleccionar repuestos correspondientes.</p>
+
+  <div class="sim-box fade-in">
+    <h3><i class="fas fa-sliders"></i> Panel de Toma de Decisiones</h3>
+    
+    <div class="sim-grid">
+      <div>
+        <div class="case-card">
+          <div class="case-title"><i class="fas fa-triangle-exclamation"></i> Reporte de Avería Recibido</div>
+          <div class="case-desc" id="case-text">"Se detecta fuerte vibración en el extractor de aire de la Caldera Principal (criticidad Alta). El extractor sigue funcionando pero emite un sonido metálico intermitente."</div>
+          <div class="case-meta">
+            <span><strong>Reportado por:</strong> Operador Carlos Ruiz</span>
+            <span><strong>Ubicación:</strong> Área de Generación</span>
+          </div>
+        </div>
+
+        <div class="sim-field">
+          <label>1. Acción/Estrategia de Mantenimiento</label>
+          <select id="sim-strategy" onchange="updateSimCosts()">
+            <option value="inmediato">Mantenimiento Correctivo Inmediato (Ejecutar hoy mismo)</option>
+            <option value="diferido">Mantenimiento Correctivo Diferido (Programar a 5 días durante parada de caldera)</option>
+            <option value="preventivo">Programar Mantenimiento Preventivo Rutinario</option>
+            <option value="reject">Rechazar Solicitud (No requiere acción de mantenimiento)</option>
+          </select>
+        </div>
+
+        <div class="sim-field">
+          <label>2. Programación de Fecha (Días desde hoy)</label>
+          <input type="number" id="sim-days" value="5" min="0" max="30" oninput="updateSimCosts()">
+        </div>
+
+        <div class="sim-field">
+          <label>3. Asignar Personal Técnico</label>
+          <select id="sim-tech" onchange="updateSimCosts()">
+            <option value="none">Sin asignar</option>
+            <option value="mecanico">Técnico Mecánico (Tarifa: $35,000 / hora)</option>
+            <option value="electricista">Técnico Electricista (Tarifa: $32,000 / hora)</option>
+            <option value="ayudante">Ayudante General (Tarifa: $18,000 / hora)</option>
+          </select>
+        </div>
+
+        <div class="sim-field">
+          <label>4. Estimar Horas de Trabajo</label>
+          <input type="number" id="sim-hours" value="4" min="1" max="48" oninput="updateSimCosts()">
+        </div>
+
+        <div class="sim-field">
+          <label>5. Seleccionar Repuestos en Almacén</label>
+          <select id="sim-spare" onchange="updateSimCosts()">
+            <option value="none">Ninguno</option>
+            <option value="rodamiento">Rodamiento SKF 6205 (Costo: $95,000 COP) - Stock: 5</option>
+            <option value="correa">Correa de Transmisión en V (Costo: $45,000 COP) - Stock: 10</option>
+            <option value="motor">Motor Eléctrico 5HP Trifásico (Costo: $1,200,000 COP) - Stock: 1</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div class="sim-form">
+          <div class="sim-form-title">Costeo Planificado e Impacto</div>
+          
+          <div class="cost-estimation">
+            <div class="cost-row">
+              <span>Costo Mano de Obra:</span>
+              <span id="cost-labor">$0 COP</span>
+            </div>
+            <div class="cost-row">
+              <span>Costo de Repuestos:</span>
+              <span id="cost-material">$0 COP</span>
+            </div>
+            <div class="cost-row">
+              <span>Pérdida por Paro de Planta:</span>
+              <span id="cost-downtime-loss" style="color: var(--red);">$0 COP</span>
+            </div>
+            <div class="cost-row total">
+              <span>Costo Estimado Total:</span>
+              <span id="cost-total">$0 COP</span>
+            </div>
+          </div>
+
+          <button class="btn-quiz primary" style="width: 100%; margin-top: 0;" onclick="submitPlanningDecision()">Enviar Plan al CMMS</button>
+          
+          <div class="sim-feedback" id="sim-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 4 · ENTREGABLES Y ACTIVIDADES ═══════════════ -->
+<section id="s-checklist">
+  <div class="section-label">04 · Tarea Dirigida</div>
+  <h2>Actividades Independientes de Aprendizaje</h2>
+  <p class="section-intro">Desarrolla las siguientes actividades guiadas utilizando la plataforma CMMS MaintPro configurada para tu número de cédula:</p>
+
+  <div class="checklist-wrap fade-in">
+    <h3>📋 Checklist de Actividades en el CMMS (4 horas)</h3>
+    <div id="checklist-items"></div>
+    <div class="chk-progress"><div class="chk-progress-bar" id="chk-bar"></div></div>
+    <div class="chk-count" id="chk-count">0 / 4 verificados</div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ═══════════════ SECCIÓN 5 · AUTOEVALUACIÓN ═══════════════ -->
+<section id="s-quiz">
+  <div class="section-label">05 · Evaluación de Conceptos</div>
+  <h2>Autoevaluación Académica</h2>
+  <p class="section-intro">Responde las preguntas teóricas para validar tus conocimientos sobre la digitalización, análisis de causa raíz y programación de mantenimientos.</p>
+
+  <div id="quiz-container"></div>
+  <div class="score-display" id="score-display">
+    <div style="font-size:2rem;margin-bottom:.5rem">🎉</div>
+    <div class="score-num" id="score-num"></div>
+    <div style="color:var(--muted);margin-top:.5rem;font-size:.9rem" id="score-msg"></div>
+    <button class="btn-quiz primary" onclick="restartQuiz()" style="margin-top:1.5rem"><i class="fas fa-rotate-left"></i> Reintentar</button>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>📘 <strong>Programación y Control del Mantenimiento</strong> · Asignatura 730502 · TOSEM · UNIPAZ</p>
+  <p style="margin-top:.4rem">Docente: Esp. Marlon Gómez · Tecnología Electromecánica Unipaz</p>
+</footer>
+
+<script>
+// ==========================================
+// BACKGROUND CANVAS (Floating Gears/Dots)
+// ==========================================
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const ACCENT = '#00e5a0';
+  class Particle {
+    constructor(){
+      this.x = Math.random()*W; this.y = Math.random()*H;
+      this.r = 2 + Math.random()*3;
+      this.vx = (Math.random()-.5)*.4; this.vy = (Math.random()-.5)*.4;
+      this.alpha = .15 + Math.random()*.35;
+      this.gear = Math.random() > .7;
+      this.gearR = 12 + Math.random()*22;
+      this.gearAngle = Math.random()*Math.PI*2;
+      this.gearSpeed = (Math.random()-.5)*.008;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; this.gearAngle+=this.gearSpeed;
+      if(this.x<-50)this.x=W+50; if(this.x>W+50)this.x=-50;
+      if(this.y<-50)this.y=H+50; if(this.y>H+50)this.y=-50; }
+    draw(){
+      ctx.save(); ctx.globalAlpha=this.alpha;
+      if(this.gear){
+        drawGear(ctx, this.x, this.y, this.gearR, this.gearR*.6, 8, this.gearAngle, ACCENT);
+      } else {
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=ACCENT; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  function drawGear(ctx,cx,cy,ro,ri,teeth,ang,color){
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.beginPath();
+    for(let i=0;i<teeth;i++){
+      const a1=(i/teeth)*Math.PI*2, a2=((i+.5)/teeth)*Math.PI*2, a3=((i+1)/teeth)*Math.PI*2;
+      if(i===0) ctx.moveTo(Math.cos(a1)*ro,Math.sin(a1)*ro);
+      ctx.lineTo(Math.cos(a2)*ro,Math.sin(a2)*ro);
+      ctx.lineTo(Math.cos(a2)*(ro+4),Math.sin(a2)*(ro+4));
+      const h=(a2+a3)/2;
+      ctx.lineTo(Math.cos(h)*(ro+4),Math.sin(h)*(ro+4));
+      ctx.lineTo(Math.cos(a3)*ro,Math.sin(a3)*ro);
+    }
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,ri,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  for(let i=0;i<40;i++) particles.push(new Particle());
+  function drawLines(){
+    for(let i=0;i<particles.length;i++)
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<140){
+          ctx.save(); ctx.globalAlpha=.08*(1-d/140);
+          ctx.strokeStyle=ACCENT; ctx.lineWidth=.8;
+          ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); ctx.restore();
+        }
+      }
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W/2,H/2,H*.1,W/2,H/2,H*.7);
+    g.addColorStop(0,'rgba(7,14,22,0)'); g.addColorStop(1,'rgba(7,14,22,.7)');
+    drawLines();
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ==========================================
+// GSAP SCROLL TRIGGER ANIMATIONS
+// ==========================================
+gsap.registerPlugin(ScrollTrigger);
+document.querySelectorAll('.fade-in').forEach(el=>{
+  gsap.to(el,{ opacity:1, y:0, duration:.6, ease:'power2.out',
+    scrollTrigger:{ trigger:el, start:'top 90%', toggleActions:'play none none none' }});
+});
+
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-120) cur=s.id; });
+  navLinks.forEach(a=>{ a.classList.toggle('active',a.getAttribute('href')==='#'+cur); });
+});
+
+// ==========================================
+// ACCORDIONS
+// ==========================================
+document.querySelectorAll('.acc-header').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const item=h.parentElement;
+    const body=item.querySelector('.acc-body');
+    const isOpen=item.classList.contains('open');
+    document.querySelectorAll('.acc-item.open').forEach(o=>{
+      o.classList.remove('open'); o.querySelector('.acc-body').style.maxHeight='0';
+    });
+    if(!isOpen){ item.classList.add('open'); body.style.maxHeight=body.scrollHeight+40+'px'; }
+  });
+});
+
+// ==========================================
+// INTERACTIVE DECISION SIMULATOR
+// ==========================================
+const simRates = {
+  tech: { none: 0, mecanico: 35000, electricista: 32000, ayudante: 18000 },
+  spare: { none: 0, rodamiento: 95000, correa: 45000, motor: 1200000 }
+};
+
+function formatMoney(num) {
+  return '$' + num.toLocaleString('es-CO') + ' COP';
+}
+
+function updateSimCosts() {
+  const strategy = document.getElementById('sim-strategy').value;
+  const days = parseInt(document.getElementById('sim-days').value) || 0;
+  const tech = document.getElementById('sim-tech').value;
+  const hours = parseFloat(document.getElementById('sim-hours').value) || 0;
+  const spare = document.getElementById('sim-spare').value;
+
+  // Calculate labor
+  const laborCost = (simRates.tech[tech] || 0) * hours;
+  
+  // Calculate materials
+  const materialCost = simRates.spare[spare] || 0;
+
+  // Calculate downtime loss
+  // If immediate, caldera halts today (high loss: 2,000,000 due to emergency shutdown).
+  // If deferred to day 5 (planned caldera stop, loss is $0).
+  // If other strategies:
+  let downtimeLoss = 0;
+  if (strategy === 'inmediato') {
+    downtimeLoss = 2500000; // Emergency production halt loss
+  } else if (strategy === 'diferido') {
+    if (days >= 4 && days <= 6) {
+      downtimeLoss = 0; // Planned stopping window
+    } else {
+      downtimeLoss = 800000; // scheduled outside optimal window
+    }
+  } else if (strategy === 'preventivo') {
+    downtimeLoss = 1500000; // insufficient strategy for existing damage (leads to failure soon)
+  }
+
+  const total = laborCost + materialCost + downtimeLoss;
+
+  document.getElementById('cost-labor').textContent = formatMoney(laborCost);
+  document.getElementById('cost-material').textContent = formatMoney(materialCost);
+  document.getElementById('cost-downtime-loss').textContent = formatMoney(downtimeLoss);
+  document.getElementById('cost-total').textContent = formatMoney(total);
+}
+
+function submitPlanningDecision() {
+  const strategy = document.getElementById('sim-strategy').value;
+  const days = parseInt(document.getElementById('sim-days').value) || 0;
+  const tech = document.getElementById('sim-tech').value;
+  const hours = parseFloat(document.getElementById('sim-hours').value) || 0;
+  const spare = document.getElementById('sim-spare').value;
+  
+  const feedback = document.getElementById('sim-feedback');
+  feedback.style.display = 'block';
+
+  if (strategy === 'diferido' && (days >= 4 && days <= 6) && tech === 'mecanico' && spare === 'rodamiento') {
+    feedback.className = 'sim-feedback success';
+    feedback.innerHTML = `<h4>🎯 ¡Planificación Perfecta!</h4>
+      <strong>Justificación Técnica:</strong> 
+      <br>1. Elegiste **Correctivo Diferido** a 5 días: Esto permite que el extractor siga operando hasta la parada planificada de la caldera, evitando pérdidas de producción por detención de emergencia ($0 COP de downtime).
+      <br>2. Asignaste un **Técnico Mecánico**: Perfil ideal para resolver problemas de vibración física y sonido metálico.
+      <br>3. Consumiste un **Rodamiento SKF**: La causa de la vibración es un daño interno en el rodamiento del extractor.
+      <br><br><em>¡Felicitaciones! Has ahorrado más de $2.5 millones de pesos en costos de parada imprevista a la compañía.</em>`;
+  } else {
+    feedback.className = 'sim-feedback error';
+    let errors = [];
+    if (strategy !== 'diferido') {
+      errors.push("• **Estrategia incorrecta**: Detener el extractor de inmediato para una falla no catastrófica detiene la Caldera Principal en hora pico, causando $2.5M en pérdidas. O bien, un preventivo básico no corregirá el daño mecánico existente.");
+    }
+    if (days < 4 || days > 6) {
+      errors.push("• **Fecha incorrecta**: La parada programada de la caldera es en el día 5. Programar en otro día causará paros innecesarios.");
+    }
+    if (tech !== 'mecanico') {
+      errors.push("• **Personal incorrecto**: Las vibraciones mecánicas y ruidos de rodamiento deben ser atendidos por un Especialista Mecánico, no por electricistas o ayudantes.");
+    }
+    if (spare !== 'rodamiento') {
+      errors.push("• **Repuesto incorrecto**: Un extractor con sonido metálico y vibración requiere el reemplazo de los rodamientos de apoyo (Rodamiento SKF 6205), no correas ni motores enteros.");
+    }
+    
+    feedback.innerHTML = `<h4>⚠ Decisión No Optimizada</h4>
+      Tu planificación generó costos innecesarios o riesgos operacionales.
+      <br><br>${errors.join('<br>')}`;
+  }
+}
+
+// Initial calculation
+updateSimCosts();
+
+// ==========================================
+// CHECKLIST SYSTEM
+// ==========================================
+const chkData = [
+  { text: "Crear un reporte de avería (Solicitud de Trabajo) desde la vista de Técnico Operario", cat: "Familiarización", pts: "i" },
+  { text: "Aprobar la solicitud en la vista de Coordinador, programando un Mantenimiento Correctivo Diferido a futuro", cat: "Programación", pts: "m" },
+  { text: "Iniciar y completar la Orden de Trabajo como técnico asignado, descontando repuestos reales del inventario", cat: "Almacén", pts: "e" },
+  { text: "Registrar el Análisis de Causa Raíz (RCA) completando los 5 Porqués obligatorios y verificar el gráfico de Pareto", cat: "Análisis", pts: "m" }
+];
+
+const chkListEl = document.getElementById('checklist-items');
+chkListEl.innerHTML = chkData.map((item, idx) => `
+  <div class="checklist-item" id="chk-item-${idx}" onclick="toggleCheck(${idx})">
+    <div class="chk-box" id="chk-box-${idx}"></div>
+    <div class="chk-label" id="chk-lbl-${idx}">
+      ${item.text} <span class="chk-tag ${item.pts}">${item.cat}</span>
+    </div>
+  </div>
+`).join('');
+
+let checkedState = new Array(chkData.length).fill(false);
+
+function toggleCheck(idx) {
+  checkedState[idx] = !checkedState[idx];
+  const item = document.getElementById(`chk-item-${idx}`);
+  const box = document.getElementById(`chk-box-${idx}`);
+  
+  if (checkedState[idx]) {
+    item.classList.add('checked');
+    box.innerHTML = '<i class="fas fa-check"></i>';
+  } else {
+    item.classList.remove('checked');
+    box.innerHTML = '';
+  }
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const completed = checkedState.filter(Boolean).length;
+  const progress = (completed / chkData.length) * 100;
+  document.getElementById('chk-bar').style.width = progress + '%';
+  document.getElementById('chk-count').textContent = `${completed} / ${chkData.length} completados`;
+}
+
+// ==========================================
+// QUIZ SYSTEM
+// ==========================================
+const quizQuestions = [
+  {
+    q: "1. ¿Cuál es la diferencia operativa fundamental entre una 'Solicitud de Trabajo' y una 'Orden de Trabajo' (OT) en el CMMS?",
+    opts: [
+      "No hay diferencia; ambos términos significan lo mismo en la planta.",
+      "La solicitud de trabajo es una alerta o reporte de anomalía emitido por producción; la OT es el documento autorizado que asigna técnicos y recursos para ejecutar la reparación.",
+      "La solicitud de trabajo consume presupuesto de inmediato; la OT es de carácter netamente informativo.",
+      "La solicitud de trabajo solo aplica para tareas de limpieza y el preventivo para fallas graves."
+    ],
+    ans: 1,
+    fb: "¡Correcto! Separar la solicitud (alerta de operario) de la OT (planificación de mantenimiento) evita que se ejecuten tareas sin previa priorización y autorización de recursos."
+  },
+  {
+    q: "2. ¿Por qué es una buena práctica de ingeniería implementar el Mantenimiento Correctivo Diferido en lugar del Correctivo Inmediato cuando la falla lo permite?",
+    opts: [
+      "Porque disminuye la vida útil del activo de manera deliberada.",
+      "Porque permite esperar a que el equipo se destruya completamente antes de intervenir.",
+      "Porque reduce las pérdidas financieras al programar la reparación durante paradas de producción ya existentes, optimizando la asignación de técnicos y repuestos.",
+      "Porque así no es necesario registrar repuestos en el sistema de inventarios."
+    ],
+    ans: 2,
+    fb: "¡Correcto! El correctivo diferido se planifica para ventanas de tiempo óptimas, minimizando el impacto económico de detenciones imprevistas."
+  },
+  {
+    q: "3. ¿Qué beneficio directo ofrece la vinculación y el descuento automático del inventario dentro de una Orden de Trabajo en el CMMS?",
+    opts: [
+      "Aumentar el desorden en el almacén de repuestos.",
+      "Garantizar la trazabilidad del costo real de mantenimiento (LCC) del activo y alertar variaciones de stock frente al punto de reorden.",
+      "Impedir que el técnico sepa qué repuestos utilizó.",
+      "Eliminar por completo la necesidad de realizar compras al docente."
+    ],
+    ans: 1,
+    fb: "¡Correcto! Al descontar automáticamente el inventario, el CMMS suma los costos de materiales a la mano de obra, ofreciendo el costo total acumulado y previniendo quiebres de stock."
+  },
+  {
+    q: "4. En el análisis RCA (Causa Raíz) mediante la metodología de los 5 Porqués, el objetivo principal al completar una OT correctiva es:",
+    opts: [
+      "Encontrar un culpable directo en el equipo de operación para sancionarlo.",
+      "Justificar el cobro de horas extra del técnico ejecutor.",
+      "Indagar de forma sistemática la causa latente (física, humana u organizacional) que originó la falla para implementar acciones que eviten su recurrencia.",
+      "Llenar un campo de texto cualquiera para poder cerrar la orden."
+    ],
+    ans: 2,
+    fb: "¡Correcto! El fin del RCA no es buscar culpables, sino encontrar los fallos organizativos o físicos sistémicos que provocaron la avería para erradicarlos de raíz."
+  },
+  {
+    q: "5. Si en el Dashboard de Reportes de Pareto de Fallas de MaintPro, el 80% de los fallos corresponden a 'Lubricación', la acción de ingeniería correcta es:",
+    opts: [
+      "Ignorar el reporte, pues la lubricación es una actividad menor.",
+      "Priorizar la creación de un plan de lubricación estructurado y capacitar al personal en técnicas de lubricación limpia (Regla de Pareto 80/20).",
+      "Comprar un extractor de caldera nuevo para reemplazar el existente.",
+      "Rechazar todas las solicitudes de compra del almacén."
+    ],
+    ans: 1,
+    fb: "¡Correcto! Según el análisis de Pareto, corregir la causa del 20% de los problemas (en este caso, lubricación inadecuada) eliminará el 80% de los paros de planta de la empresa."
+  }
+];
+
+const quizContainer = document.getElementById('quiz-container');
+let answersState = new Array(quizQuestions.length).fill(null);
+
+function renderQuiz() {
+  quizContainer.innerHTML = quizQuestions.map((q, qIdx) => `
+    <div class="quiz-card" id="q-card-${qIdx}">
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((opt, oIdx) => `
+          <label class="quiz-option" id="q-opt-${qIdx}-${oIdx}">
+            <input type="radio" name="q-${qIdx}" onclick="answerQuestion(${qIdx}, ${oIdx})" ${answersState[qIdx] === oIdx ? 'checked' : ''}>
+            ${opt}
+          </label>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="q-fb-${qIdx}"></div>
+    </div>
+  `).join('');
+}
+
+function answerQuestion(qIdx, oIdx) {
+  answersState[qIdx] = oIdx;
+  const q = quizQuestions[qIdx];
+  const fb = document.getElementById(`q-fb-${qIdx}`);
+  fb.className = 'quiz-feedback show';
+  
+  for(let i=0; i<q.opts.length; i++) {
+    const el = document.getElementById(`q-opt-${qIdx}-${i}`);
+    el.classList.remove('correct', 'wrong');
+  }
+
+  if (oIdx === q.ans) {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = q.fb;
+  } else {
+    document.getElementById(`q-opt-${qIdx}-${oIdx}`).classList.add('wrong');
+    document.getElementById(`q-opt-${qIdx}-${q.ans}`).classList.add('correct');
+    fb.className = 'quiz-feedback show err';
+    fb.innerHTML = `❌ Incorrecto. La respuesta correcta es la opción ${q.ans + 1}. ` + q.fb;
+  }
+  checkQuizComplete();
+}
+
+function checkQuizComplete() {
+  if (answersState.filter(v => v !== null).length === quizQuestions.length) {
+    const score = answersState.reduce((sum, val, idx) => sum + (val === quizQuestions[idx].ans ? 1 : 0), 0);
+    const scorePct = (score / quizQuestions.length) * 100;
+    
+    document.getElementById('score-num').textContent = `${scorePct}%`;
+    let msg = '';
+    if (scorePct >= 80) msg = '🎉 ¡Excelente! Tienes un dominio total sobre los conceptos de digitalización, costeo y análisis de causa raíz en sistemas de gestión CMMS.';
+    else if (scorePct >= 60) msg = '👍 Buen trabajo. Repasa los puntos erróneos para afianzar tus competencias en planificación del mantenimiento.';
+    else msg = '✏️ Te recomendamos revisar las justificaciones y volver a leer la teoría del flujo digitalizado de trabajo.';
+    
+    document.getElementById('score-msg').textContent = msg;
+    document.getElementById('score-display').classList.add('show');
+    document.getElementById('score-display').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function restartQuiz() {
+  answersState.fill(null);
+  document.getElementById('score-display').classList.remove('show');
+  renderQuiz();
+}
+
+renderQuiz();
+
+</script>
+</body>
+</html>
