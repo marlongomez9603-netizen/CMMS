@@ -334,21 +334,23 @@ class App {
         <div class="tech-mode-banner">
             <i class="fas fa-hard-hat"></i>
             <div>
-                <strong>Modo T\u00e9cnico Operativo</strong>
-                <span>Selecciona tu perfil para ver tus tareas asignadas</span>
+                <strong>Modo Técnico Operativo</strong>
+                <span>Selecciona tu perfil para ver tus tareas asignadas y gestionar solicitudes</span>
             </div>
         </div>
 
         <!-- View tabs -->
-        <div class="tech-view-tabs">
+        <div class="tech-view-tabs" style="display:flex; gap:8px; margin-bottom:16px;">
             <button class="tech-tab tech-tab-active" id="tabMisTareas"><i class="fas fa-clipboard-list"></i> Mis Tareas</button>
             <button class="tech-tab" id="tabCalendario"><i class="fas fa-calendar-week"></i> Calendario Semanal</button>
+            <button class="tech-tab" id="tabSolicitudes"><i class="fas fa-envelope-open-text"></i> Solicitudes</button>
+            <button class="tech-tab" id="tabInventario"><i class="fas fa-boxes-stacked"></i> Inventario</button>
         </div>
 
         <!-- Tab: Tasks -->
         <div id="techTabTasks">
             <div class="card" style="margin-bottom:20px">
-                <div class="card-header"><div class="card-title"><i class="fas fa-users"></i> Seleccionar T\u00e9cnico</div></div>
+                <div class="card-header"><div class="card-title"><i class="fas fa-users"></i> Seleccionar Técnico</div></div>
                 <div class="tech-selector-grid">
                     ${personnel.map(p => `
                     <div class="tech-selector-card" data-tech="${p.id}">
@@ -367,31 +369,84 @@ class App {
             <div id="techWeekArea"></div>
         </div>
 
+        <!-- Tab: Work Requests -->
+        <div id="techTabSolicitudes" style="display:none">
+            <div class="card" style="margin-bottom:20px">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="card-title"><i class="fas fa-envelope-open-text"></i> Solicitudes de Trabajo / Reportes</div>
+                    <button class="btn btn-primary btn-sm" id="btnTechNewRequest" style="margin-left:auto"><i class="fas fa-plus"></i> Nueva Solicitud</button>
+                </div>
+                <div class="table-container" style="padding:12px; overflow-x:auto;">
+                    <table class="data-table" style="font-size:0.85rem">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Equipo</th>
+                                <th>Descripción</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="techReqTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Inventory -->
+        <div id="techTabInventario" style="display:none">
+            <div class="card" style="margin-bottom:20px">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-boxes-stacked"></i> Repuestos en Almacén (Solo Lectura)</div>
+                </div>
+                <div class="toolbar" style="padding:12px">
+                    <div class="search-input"><i class="fas fa-search"></i><input type="text" id="techInvSearch" placeholder="Buscar repuesto..."></div>
+                </div>
+                <div class="table-container" style="padding:12px; overflow-x:auto;">
+                    <table class="data-table" style="font-size:0.85rem">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Proveedor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="techInvTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Sticky report button -->
         <div class="tech-report-bar" id="techReportBar">
             <button class="btn btn-danger btn-lg" id="btnReportFault">
-                <i class="fas fa-triangle-exclamation"></i> Reportar Aver\u00eda en Equipo
+                <i class="fas fa-triangle-exclamation"></i> Reportar Avería / Crear Solicitud
             </button>
         </div>`;
 
         // Tab switching
-        document.getElementById('tabMisTareas').addEventListener('click', () => {
-            document.getElementById('tabMisTareas').classList.add('tech-tab-active');
-            document.getElementById('tabCalendario').classList.remove('tech-tab-active');
-            document.getElementById('techTabTasks').style.display = '';
-            document.getElementById('techTabCalendar').style.display = 'none';
-            document.getElementById('techReportBar').style.display = '';
-        });
-
+        document.getElementById('tabMisTareas').addEventListener('click', () => this.setTechTab('MisTareas'));
         document.getElementById('tabCalendario').addEventListener('click', () => {
-            document.getElementById('tabMisTareas').classList.remove('tech-tab-active');
-            document.getElementById('tabCalendario').classList.add('tech-tab-active');
-            document.getElementById('techTabTasks').style.display = 'none';
-            document.getElementById('techTabCalendar').style.display = '';
-            document.getElementById('techReportBar').style.display = 'none';
+            this.setTechTab('Calendario');
             this.techWeekOffset = 0;
             this.renderTechWeeklyCalendar(this._selectedTech);
         });
+        document.getElementById('tabSolicitudes').addEventListener('click', () => {
+            this.setTechTab('Solicitudes');
+            this.renderTechRequestsList();
+        });
+        document.getElementById('tabInventario').addEventListener('click', () => {
+            this.setTechTab('Inventario');
+            this.renderTechInventoryList();
+        });
+
+        // Add event listener to the top new request button if it exists
+        const btnNewReq = document.getElementById('btnTechNewRequest');
+        if (btnNewReq) {
+            btnNewReq.addEventListener('click', () => this.showRequestForm());
+        }
 
         // Technician selector
         el.querySelectorAll('.tech-selector-card').forEach(card => {
@@ -406,7 +461,7 @@ class App {
             });
         });
 
-        document.getElementById('btnReportFault').addEventListener('click', () => this.showFaultReportForm());
+        document.getElementById('btnReportFault').addEventListener('click', () => this.showRequestForm());
 
         if (personnel.length > 0) {
             this._selectedTech = personnel[0].id;
@@ -460,10 +515,154 @@ class App {
             this.showCompleteWOModal(b.dataset.techComplete, () => this.renderTechTasks(this._selectedTech));
         }));
         area.querySelectorAll('[data-tech-view]').forEach(b => b.addEventListener('click', () => {
-            this.viewingAssetId = b.dataset.techView;
-            this.toggleTechnicianMode();
-            this.navigate('assetDetail');
+            this.showAssetDetailModal(b.dataset.techView);
         }));
+    }
+
+    setTechTab(tabName) {
+        const tabs = ['MisTareas', 'Calendario', 'Solicitudes', 'Inventario'];
+        tabs.forEach(t => {
+            const btn = document.getElementById(`tab${t}`);
+            const pane = document.getElementById(`techTab${t === 'MisTareas' ? 'Tasks' : t}`);
+            if (btn) btn.classList.toggle('tech-tab-active', t === tabName);
+            if (pane) pane.style.display = t === tabName ? '' : 'none';
+        });
+        const reportBar = document.getElementById('techReportBar');
+        if (reportBar) {
+            reportBar.style.display = (tabName === 'MisTareas' || tabName === 'Solicitudes') ? '' : 'none';
+        }
+    }
+
+    renderTechRequestsList() {
+        const tbody = document.getElementById('techReqTableBody');
+        if (!tbody) return;
+        const requests = store.getWorkRequests();
+        if (requests.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state" style="padding:20px"><i class="fas fa-envelope-open-text"></i><h3>Sin solicitudes</h3><p>Crea una nueva solicitud usando el botón superior o el botón rojo inferior.</p></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = requests.map(r => {
+            const asset = store.getAsset(r.assetId);
+            const statusLabels = { pendiente: 'Pendiente', aprobada: 'Aprobada', rechazada: 'Rechazada' };
+            const statusCls = { pendiente: 'warning', aprobada: 'success', rechazada: 'muted' };
+            return `
+            <tr>
+                <td>${this.fmtDate(r.requestDate)}</td>
+                <td><strong>${asset ? asset.name : 'Desconocido'}</strong><br><span style="font-size:0.75rem;color:var(--text-muted)">${asset ? asset.code : '—'}</span></td>
+                <td>${r.description || '—'}</td>
+                <td>${this.priorityBadge(r.priority)}</td>
+                <td><span class="badge badge-${statusCls[r.status]} badge-dot">${statusLabels[r.status]}</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    renderTechInventoryList() {
+        const tbody = document.getElementById('techInvTableBody');
+        if (!tbody) return;
+        const items = store.getInventory();
+        this.renderTechInventoryRows(items);
+
+        const search = document.getElementById('techInvSearch');
+        if (search) {
+            search.replaceWith(search.cloneNode(true)); // remove previous listeners
+            const newSearch = document.getElementById('techInvSearch');
+            newSearch.addEventListener('input', () => {
+                const q = newSearch.value.toLowerCase();
+                const filtered = q ? items.filter(i => (i.name + i.code + i.category).toLowerCase().includes(q)) : items;
+                this.renderTechInventoryRows(filtered);
+            });
+        }
+    }
+
+    renderTechInventoryRows(items) {
+        const tbody = document.getElementById('techInvTableBody');
+        if (!tbody) return;
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state" style="padding:20px"><i class="fas fa-boxes-stacked"></i><h3>Sin repuestos encontrados</h3></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(i => {
+            const low = parseFloat(i.quantity) <= parseFloat(i.minStock);
+            const pct = parseFloat(i.maxStock) > 0 ? Math.min((parseFloat(i.quantity) / parseFloat(i.maxStock)) * 100, 100) : 0;
+            return `
+            <tr ${low ? 'style="background:var(--danger-bg)"' : ''}>
+                <td><strong>${i.code}</strong></td>
+                <td>${i.name}</td>
+                <td>${i.category}</td>
+                <td>
+                    <strong ${low ? 'style="color:var(--danger)"' : ''}>${i.quantity} ${i.unit}</strong>
+                    <div class="progress-bar" style="margin-top:4px"><div class="progress-fill ${low ? 'fill-danger' : pct > 60 ? 'fill-success' : 'fill-warning'}" style="width:${pct}%"></div></div>
+                </td>
+                <td>${i.supplier || 'Proveedor local'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    showAssetDetailModal(assetId) {
+        const asset = store.getAsset(assetId);
+        if (!asset) return;
+        const kpis = store.getAssetKPIs(assetId);
+        const wos = store.getWorkOrders().filter(w => w.assetId === assetId).sort((a, b) => (b.createdDate || '').localeCompare(a.createdDate || ''));
+        const plans = store.getPreventivePlans().filter(p => p.assetId === assetId);
+        const today = store.today();
+        const warrantyLabel = asset.warrantyDate ? (asset.warrantyDate < today ? '<span style="color:var(--danger)">Garantía Vencida</span>' : `<span style="color:var(--success)">Vigente hasta ${this.fmtDate(asset.warrantyDate)}</span>`) : '—';
+        const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
+
+        const html = `
+        <div style="max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+            <div class="asset-detail-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 class="asset-detail-name" style="margin:0; font-size:1.4rem; color:var(--text-color);">${asset.name}</h3>
+                    <div class="asset-detail-code" style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">${asset.code} · ${asset.brand || ''} ${asset.model || ''}</div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+                    ${this.statusBadge(asset.status)} ${this.criticalityHTML(asset.criticality)}
+                </div>
+            </div>
+            
+            <div class="detail-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                <div class="detail-field"><div class="detail-field-label" style="font-size:0.75rem; color:var(--text-muted)">Categoría</div><div class="detail-field-value" style="font-weight:600">${asset.category}</div></div>
+                <div class="detail-field"><div class="detail-field-label" style="font-size:0.75rem; color:var(--text-muted)">Ubicación</div><div class="detail-field-value" style="font-weight:600">${asset.location}</div></div>
+                <div class="detail-field"><div class="detail-field-label" style="font-size:0.75rem; color:var(--text-muted)">Serial</div><div class="detail-field-value" style="font-weight:600">${asset.serial || '—'}</div></div>
+                <div class="detail-field"><div class="detail-field-label" style="font-size:0.75rem; color:var(--text-muted)">Garantía</div><div class="detail-field-value" style="font-weight:600">${warrantyLabel}</div></div>
+                ${asset.manualUrl ? `<div class="detail-field"><div class="detail-field-label" style="font-size:0.75rem; color:var(--text-muted)">Manual</div><div class="detail-field-value"><a href="${asset.manualUrl}" target="_blank" style="color:var(--primary); font-weight:600"><i class="fas fa-file-pdf"></i> Ver Manual</a></div></div>` : ''}
+            </div>
+
+            <div class="kpi-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                <div class="kpi-card kpi-primary" style="padding:10px;"><div class="kpi-content"><div class="kpi-label" style="font-size:0.7rem;">Total OTs</div><div class="kpi-value" style="font-size:1.2rem; font-weight:700;">${kpis.totalWOs}</div></div></div>
+                <div class="kpi-card kpi-success" style="padding:10px;"><div class="kpi-content"><div class="kpi-label" style="font-size:0.7rem;">MTTR</div><div class="kpi-value" style="font-size:1.2rem; font-weight:700;">${kpis.mttr}h</div></div></div>
+                <div class="kpi-card kpi-warning" style="padding:10px;"><div class="kpi-content"><div class="kpi-label" style="font-size:0.7rem;">Horas Acum.</div><div class="kpi-value" style="font-size:1.2rem; font-weight:700;">${kpis.totalHours}h</div></div></div>
+            </div>
+
+            <h4 style="margin: 16px 0 8px 0; border-bottom:1px solid var(--border-color); padding-bottom:4px;"><i class="fas fa-history"></i> Historial e Incidencias (RCA)</h4>
+            ${wos.length === 0 ? '<div class="empty-state" style="padding:20px"><p>Sin historial de intervenciones.</p></div>' : `
+            <div class="timeline" style="margin-left: 8px;">
+                ${wos.map(w => {
+                    const rcaBox = w.failureMode ? `
+                    <div class="rca-box" style="margin-top:6px;padding:8px;background:rgba(255,82,82,0.04);border-left:2px solid var(--danger);border-radius:4px">
+                        <div style="font-size:0.75rem;font-weight:600;color:var(--danger);margin-bottom:2px"><i class="fas fa-search-minus"></i> Causa Raíz (5 Porqués) — Modo: ${w.failureMode}</div>
+                        <ol style="margin:0;padding-left:14px;font-size:0.72rem;color:var(--text-secondary)">
+                            <li>${w.why1 || ''}</li>
+                            ${w.why2 ? `<li>${w.why2}</li>` : ''}
+                            ${w.why3 ? `<li>${w.why3}</li>` : ''}
+                            ${w.why4 ? `<li>${w.why4}</li>` : ''}
+                            ${w.why5 ? `<li>${w.why5}</li>` : ''}
+                        </ol>
+                    </div>` : '';
+                    return `
+                    <div class="timeline-item" style="padding-bottom:12px; border-left:1px solid var(--border-color); padding-left:12px; position:relative; margin-bottom:12px;">
+                        <div class="timeline-date" style="font-size:0.75rem; color:var(--text-muted);">${this.fmtDate(w.createdDate)}${w.completedDate ? ' → ' + this.fmtDate(w.completedDate) : ''}</div>
+                        <div class="timeline-content" style="margin-top:4px;">
+                            ${this.statusBadge(w.status)} <span class="badge badge-${w.type === 'correctivo' ? 'danger' : 'success'}" style="font-size:0.7rem;">${typeLabels[w.type]}</span>
+                            <div style="font-weight:500; font-size:0.82rem; margin: 4px 0;">${w.description}</div>
+                            ${rcaBox}
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>`}
+        </div>`;
+
+        this.showModal('📄 Ficha Técnica e Historial', html, null);
     }
 
     renderTechTaskCard(w, isCompleted = false) {
@@ -687,7 +886,7 @@ class App {
         </div>
 
         <div style="margin-top:12px;font-size:0.75rem;color:var(--text-muted);text-align:center">
-            <i class="fas fa-info-circle"></i> Score basado en: Disponibilidad (30%), Cumplimiento PM (25%), PMs vencidos (-10c/u), Stock bajo (-5c/u). Umbral aprobación de compras: ${this.fmtMoney(1000000)}.
+            <i class="fas fa-info-circle"></i> Score basado en: Disponibilidad (30%), Cumplimiento PM (25%), PMs vencidos (-10c/u), Stock bajo (-5c/u). Umbral aprobación de compras: Todas (requieren aprobación docente).
         </div>`;
 
         // Bind view student
@@ -765,7 +964,7 @@ class App {
         const pending = targetStore.getPurchases().filter(p => p.status === 'pendiente_gerencia');
 
         const html = `
-        <div style="margin-bottom:16px"><strong>${studentName}</strong> — ${pending.length} solicitud(es) requieren aprobación (> ${this.fmtMoney(1000000)})</div>
+        <div style="margin-bottom:16px"><strong>${studentName}</strong> — ${pending.length} solicitud(es) requieren aprobación del Docente</div>
         ${pending.map(p => `
         <div class="approval-request-card" id="appr_${p.id}">
             <div class="approval-request-header">
@@ -833,7 +1032,7 @@ class App {
         el.innerHTML = `
         ${k.overduePMs > 0 ? `<div class="alert-bar alert-danger"><i class="fas fa-exclamation-circle"></i><strong>${k.overduePMs} plan(es) preventivo(s) vencido(s)</strong> — Requieren atención inmediata</div>` : ''}
         ${k.lowStockCount > 0 ? `<div class="alert-bar alert-warning"><i class="fas fa-boxes-stacked"></i><strong>${k.lowStockCount} ítem(s) con stock bajo</strong></div>` : ''}
-        ${k.pendingManagerPurchases > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${k.pendingManagerPurchases} compra(s) pendientes de aprobación del docente</strong> (> ${this.fmtMoney(1000000)})</div>` : ''}
+        ${k.pendingManagerPurchases > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${k.pendingManagerPurchases} compra(s) pendientes de aprobación del docente</strong></div>` : ''}
         ${pendingFaults.length > 0 ? `
         <div class="alert-bar alert-danger" style="border-left:4px solid var(--danger);animation:pulse 2s infinite">
             <i class="fas fa-triangle-exclamation"></i>
@@ -1410,7 +1609,7 @@ class App {
         const purchases = store.getPurchases();
         const managerPending = purchases.filter(p => p.status === 'pendiente_gerencia');
         el.innerHTML = `
-        ${managerPending.length > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${managerPending.length} solicitud(es) en espera de aprobación del Docente</strong> — Valor > ${this.fmtMoney(1000000)}</div>` : ''}
+        ${managerPending.length > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${managerPending.length} solicitud(es) en espera de aprobación del Docente</strong></div>` : ''}
         <div class="toolbar"><div class="toolbar-left"><div class="search-input"><i class="fas fa-search"></i><input type="text" id="purSearch" placeholder="Buscar compras..."></div>
             <select class="filter-select" id="purStatusFilter"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="pendiente_gerencia">Aprobación Gerencia</option><option value="aprobada">Aprobada</option><option value="recibida">Recibida</option><option value="cancelada">Cancelada</option></select></div>
             <div class="toolbar-right"><button class="btn btn-primary" id="btnAddPur"><i class="fas fa-plus"></i> Nueva Solicitud</button></div></div>
@@ -1422,14 +1621,13 @@ class App {
     }
 
     renderPurRows(purchases) {
-        if (purchases.length === 0) return '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-cart-shopping"></i><h3>Sin solicitudes de compra</h3><p>Se crean automáticamente cuando el stock cae por debajo del mínimo, o créalas manualmente. Compras > $1.000.000 requieren aprobación del Docente.</p></div></td></tr>';
+        if (purchases.length === 0) return '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-cart-shopping"></i><h3>Sin solicitudes de compra</h3><p>Se crean automáticamente cuando el stock cae por debajo del mínimo, o créalas manualmente. Todas las compras requieren aprobación del Docente.</p></div></td></tr>';
         return purchases.map(p => `<tr ${p.status === 'pendiente_gerencia' ? 'style="background:var(--warning-bg)"' : ''}>
         <td>${this.fmtDate(p.requestDate)}</td><td><strong>${p.itemName || 'Manual'}</strong>${p.itemCode ? `<br><span style="color:var(--text-muted);font-size:0.75rem">${p.itemCode}</span>` : ''}</td>
         <td>${p.quantity} ${p.unit || ''}</td><td>${p.supplier || '—'}</td>
-        <td><strong ${parseFloat(p.estimatedCost) >= 1000000 ? 'style="color:var(--warning)"' : ''}>${this.fmtMoney(p.estimatedCost)}</strong></td>
+        <td><strong ${p.status === 'pendiente_gerencia' ? 'style="color:var(--warning)"' : ''}>${this.fmtMoney(p.estimatedCost)}</strong></td>
         <td>${this.priorityBadge(p.priority || 'media')}</td><td>${this.statusBadge(p.status)}</td>
         <td><div class="action-btns">
-            ${p.status === 'pendiente' ? `<button class="btn btn-sm btn-success" data-approvepur="${p.id}"><i class="fas fa-check"></i></button>` : ''}
             ${p.status === 'aprobada' ? `<button class="btn btn-sm btn-success" data-receivepur="${p.id}" data-tooltip="Recibir"><i class="fas fa-box-open"></i></button>` : ''}
             ${p.status === 'pendiente_gerencia' ? `<span style="font-size:0.72rem;color:var(--warning)"><i class="fas fa-hourglass-half"></i> Docente</span>` : ''}
             <button class="btn btn-icon btn-sm" data-editpur="${p.id}"><i class="fas fa-pen"></i></button>
@@ -1471,7 +1669,7 @@ class App {
         <div class="form-row"><div class="form-group"><label class="form-label">Nombre del Ítem <span class="required">*</span></label><input class="form-control" id="fPurName" value="${p.itemName || ''}"></div>
             <div class="form-group"><label class="form-label">Cantidad</label><input class="form-control" type="number" id="fPurQty" value="${p.quantity || '1'}"></div></div>
         <div class="form-row"><div class="form-group"><label class="form-label">Proveedor</label><input class="form-control" id="fPurSupp" value="${p.supplier || ''}"></div>
-            <div class="form-group"><label class="form-label">Costo Estimado <span style="font-size:0.7rem;color:var(--warning)">> $1.000.000 requiere aprobación docente</span></label><input class="form-control" type="number" id="fPurCost" value="${p.estimatedCost || ''}"></div></div>
+            <div class="form-group"><label class="form-label">Costo Estimado <span style="font-size:0.7rem;color:var(--warning)">requiere aprobación docente</span></label><input class="form-control" type="number" id="fPurCost" value="${p.estimatedCost || ''}"></div></div>
         <div class="form-row"><div class="form-group"><label class="form-label">Prioridad</label><select class="form-control" id="fPurPriority"><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></div>
             <div class="form-group"><label class="form-label">Motivo</label><input class="form-control" id="fPurReason" value="${p.reason || ''}"></div></div>
         <div class="form-group"><label class="form-label">Notas</label><textarea class="form-control" id="fPurNotes" rows="2">${p.notes || ''}</textarea></div>`;
@@ -1481,7 +1679,7 @@ class App {
             const data = { itemId: itemId || null, itemName: document.getElementById('fPurName').value || (item ? item.name : ''), itemCode: item ? item.code : '', quantity: document.getElementById('fPurQty').value, unit: item ? item.unit : 'und', supplier: document.getElementById('fPurSupp').value, estimatedCost: document.getElementById('fPurCost').value, priority: document.getElementById('fPurPriority').value, reason: document.getElementById('fPurReason').value, notes: document.getElementById('fPurNotes').value, requestDate: p.requestDate || store.today(), status: p.status || 'pendiente' };
             if (!data.itemName) { this.toast('Nombre del ítem es obligatorio', 'danger'); return; }
             if (editId) { store.updatePurchase(editId, data); this.toast('Solicitud actualizada'); }
-            else { store.addPurchase(data); store.addLog({ action: 'purchase_created', message: `Solicitud de compra: ${data.itemName}` }); this.toast(parseFloat(data.estimatedCost) >= 1000000 ? '⚠️ Enviado a aprobación del Docente' : 'Solicitud creada'); }
+            else { store.addPurchase(data); store.addLog({ action: 'purchase_created', message: `Solicitud de compra: ${data.itemName}` }); this.toast('⚠️ Enviado a aprobación del Docente'); }
             this.closeModal(); this.renderPurchases();
         });
         setTimeout(() => {
@@ -2157,7 +2355,11 @@ class App {
             store.addLog({ action: 'system', message: `Nueva solicitud de trabajo creada por ${requester}` });
             this.toast('Solicitud registrada correctamente');
             this.closeModal();
-            this.renderRequests();
+            if (this.currentView === 'technician') {
+                this.renderTechRequestsList();
+            } else {
+                this.renderRequests();
+            }
         });
     }
 

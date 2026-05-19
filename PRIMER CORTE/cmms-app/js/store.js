@@ -507,7 +507,7 @@ class DataStore {
 
     // ---------- Purchases ----------
     // Purchases > $1,000,000 COP require docente approval (needsApproval flag)
-    APPROVAL_THRESHOLD = 1000000;
+    APPROVAL_THRESHOLD = 0;
 
     getPurchases() { return this._getCollection('purchases'); }
     getPurchase(id) { return this._getById('purchases', id); }
