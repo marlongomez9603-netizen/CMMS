@@ -680,13 +680,22 @@ class App {
         const typeColor = { correctivo: 'danger', preventivo: 'success', predictivo: 'info', mejora: 'warning' };
         const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
         const injectedBadge = w.injected ? `<span class="badge badge-danger" style="margin-left:4px;animation:pulse 1s infinite">⚡ URGENTE</span>` : '';
+        
+        let subtypeBadge = '';
+        if (w.type === 'correctivo') {
+            if (w.subtype === 'diferido') {
+                subtypeBadge = `<span class="badge badge-warning" style="margin-left:4px"><i class="fas fa-calendar-alt"></i> Diferido</span>`;
+            } else {
+                subtypeBadge = `<span class="badge badge-danger" style="margin-left:4px"><i class="fas fa-bolt"></i> Inmediato</span>`;
+            }
+        }
 
         return `
         <div class="tech-task-card ${w.status === 'en_progreso' ? 'tech-task-card--active' : ''} ${isCompleted ? 'tech-task-card--done' : ''}">
             ${w.status === 'en_progreso' ? '<div class="tech-task-progress-bar"></div>' : ''}
             <div class="tech-task-header">
                 <span class="badge badge-${typeColor[w.type] || 'info'}">${typeLabels[w.type] || w.type}</span>
-                ${this.priorityBadge(w.priority)} ${injectedBadge}
+                ${subtypeBadge} ${this.priorityBadge(w.priority)} ${injectedBadge}
                 <span class="tech-task-id">#${w.id.substring(0, 6).toUpperCase()}</span>
             </div>
             <div class="tech-task-asset" data-tech-view="${w.assetId}" style="cursor:pointer; transition: opacity var(--transition-fast);" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
@@ -695,9 +704,10 @@ class App {
                 ${asset ? `<span style="font-size:0.75rem;color:var(--text-muted)">(${asset.location})</span>` : ''}
             </div>
             <div class="tech-task-desc">${w.description || '—'}</div>
-            <div class="tech-task-meta">
+            <div class="tech-task-meta" style="flex-wrap: wrap; gap: 10px;">
                 <span><i class="fas fa-clock"></i> Est: ${w.estimatedHours || '—'}h</span>
-                <span><i class="fas fa-calendar"></i> ${this.fmtDate(w.createdDate)}</span>
+                <span><i class="fas fa-calendar-plus"></i> Creado: ${this.fmtDate(w.createdDate)}</span>
+                <span><i class="fas fa-calendar-check"></i> Prog: <strong style="color:var(--warning)">${this.fmtDate(w.scheduledDate || w.createdDate)}</strong></span>
             </div>
             ${!isCompleted ? `
             <div class="tech-task-actions">
@@ -1379,13 +1389,27 @@ class App {
         ${fr.assetId ? `<div class="fault-report-header" style="margin-bottom:16px"><i class="fas fa-triangle-exclamation"></i><div><strong>OT basada en Reporte de Avería</strong><p style="margin:0;font-size:0.82rem;color:var(--text-muted)">Equipo: ${fr.assetName} · Reportado por: ${fr.reportedBy}</p></div></div>` : ''}
         <div class="form-row"><div class="form-group"><label class="form-label">Equipo <span class="required">*</span></label><select class="form-control" id="fWOAsset"><option value="">Seleccionar...</option>${assets.map(a => `<option value="${a.id}" ${prefillAsset === a.id ? 'selected' : ''}>${a.code} - ${a.name}</option>`).join('')}</select></div>
             <div class="form-group"><label class="form-label">Tipo</label><select class="form-control" id="fWOType"><option value="correctivo" ${prefillType === 'correctivo' ? 'selected' : ''}>Correctivo</option><option value="preventivo" ${prefillType === 'preventivo' ? 'selected' : ''}>Preventivo</option><option value="predictivo" ${prefillType === 'predictivo' ? 'selected' : ''}>Predictivo</option><option value="mejora" ${prefillType === 'mejora' ? 'selected' : ''}>Mejora</option></select></div></div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">Fecha Programada de Ejecución <span class="required">*</span></label><input class="form-control" type="date" id="fWOScheduledDate" value="${w.scheduledDate || fr.reportedDate || store.today()}"></div>
+            <div class="form-group" id="woSubtypeGroup" style="${prefillType === 'correctivo' ? '' : 'display:none'}"><label class="form-label">Subtipo de Correctivo</label><select class="form-control" id="fWOSubtype"><option value="inmediato" ${w.subtype === 'inmediato' ? 'selected' : ''}>Inmediato (Emergencia)</option><option value="diferido" ${w.subtype === 'diferido' ? 'selected' : ''}>Diferido (Programado)</option></select></div>
+        </div>
         <div class="form-row"><div class="form-group"><label class="form-label">Prioridad</label><select class="form-control" id="fWOPriority"><option value="baja" ${prefillPriority === 'baja' ? 'selected' : ''}>Baja</option><option value="media" ${prefillPriority === 'media' ? 'selected' : ''}>Media</option><option value="alta" ${prefillPriority === 'alta' ? 'selected' : ''}>Alta</option><option value="critica" ${prefillPriority === 'critica' ? 'selected' : ''}>Crítica</option></select></div>
             <div class="form-group"><label class="form-label">Asignado a</label><select class="form-control" id="fWOAssigned"><option value="">Sin asignar</option>${personnel.map(p => `<option value="${p.id}" ${w.assignedTo === p.id ? 'selected' : ''}>${p.name} — ${this.fmtMoney(p.hourlyRate)}/h</option>`).join('')}</select></div></div>
         <div class="form-group"><label class="form-label">Descripción <span class="required">*</span></label><textarea class="form-control" id="fWODesc" rows="3">${prefillDesc}</textarea></div>
         <div class="form-row"><div class="form-group"><label class="form-label">Horas Estimadas</label><input class="form-control" type="number" id="fWOEstHours" value="${w.estimatedHours || (fr.assetId ? '4' : '')}"></div>
             <div class="form-group"><label class="form-label">Notas</label><input class="form-control" id="fWONotes" value="${w.notes || ''}"></div></div>`;
         this.showModal(editId ? 'Editar OT' : (fr.assetId ? '🔧 Crear OT Correctiva — Reporte de Avería' : 'Nueva Orden de Trabajo'), html, () => {
-            const data = { assetId: document.getElementById('fWOAsset').value, type: document.getElementById('fWOType').value, priority: document.getElementById('fWOPriority').value, assignedTo: document.getElementById('fWOAssigned').value, description: document.getElementById('fWODesc').value, estimatedHours: document.getElementById('fWOEstHours').value, notes: document.getElementById('fWONotes').value };
+            const data = { 
+                assetId: document.getElementById('fWOAsset').value, 
+                type: document.getElementById('fWOType').value, 
+                priority: document.getElementById('fWOPriority').value, 
+                assignedTo: document.getElementById('fWOAssigned').value, 
+                description: document.getElementById('fWODesc').value, 
+                estimatedHours: document.getElementById('fWOEstHours').value, 
+                notes: document.getElementById('fWONotes').value,
+                scheduledDate: document.getElementById('fWOScheduledDate').value || store.today(),
+                subtype: document.getElementById('fWOType').value === 'correctivo' ? document.getElementById('fWOSubtype').value : ''
+            };
             if (!data.assetId || !data.description) { this.toast('Equipo y Descripción son obligatorios', 'danger'); return; }
             if (editId) { store.updateWorkOrder(editId, data); this.toast('OT actualizada'); }
             else {
@@ -1402,6 +1426,15 @@ class App {
             }
             this.closeModal(); this.renderWorkOrders();
         });
+        setTimeout(() => {
+            const typeSelect = document.getElementById('fWOType');
+            const subtypeGroup = document.getElementById('woSubtypeGroup');
+            if (typeSelect && subtypeGroup) {
+                typeSelect.addEventListener('change', () => {
+                    subtypeGroup.style.display = typeSelect.value === 'correctivo' ? '' : 'none';
+                });
+            }
+        }, 100);
     }
 
     // ========== PREVENTIVE ==========
@@ -1722,7 +1755,7 @@ class App {
         for (let day = 1; day <= lastDay.getDate(); day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const isToday = dateStr === todayStr;
-            const dayWOs = wos.filter(w => w.createdDate === dateStr || w.startDate === dateStr || w.completedDate === dateStr);
+            const dayWOs = wos.filter(w => (w.scheduledDate || w.createdDate) === dateStr || w.startDate === dateStr || w.completedDate === dateStr);
             const dayPMs = plans.filter(p => p.nextExecution === dateStr);
             const hasEvents = dayWOs.length > 0 || dayPMs.length > 0;
             let dots = '';
@@ -1743,7 +1776,7 @@ class App {
 
     showCalDayDetail(dateStr) {
         const detailEl = document.getElementById('calDayDetail');
-        const wos = store.getWorkOrders().filter(w => w.createdDate === dateStr || w.startDate === dateStr || w.completedDate === dateStr);
+        const wos = store.getWorkOrders().filter(w => (w.scheduledDate || w.createdDate) === dateStr || w.startDate === dateStr || w.completedDate === dateStr);
         const plans = store.getPreventivePlans().filter(p => p.nextExecution === dateStr && p.status === 'activo');
         if (wos.length === 0 && plans.length === 0) { detailEl.innerHTML = `<div class="cal-detail-empty"><i class="fas fa-calendar-day"></i> Sin eventos para ${this.fmtDate(dateStr)}</div>`; return; }
         const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
@@ -1976,7 +2009,7 @@ class App {
             const isPast  = ds < todayStr;
             const isWeekend = i >= 5;
 
-            const dayWOs  = wos.filter(w  => w.createdDate === ds || w.startDate === ds || (w.completedDate === ds && w.status === 'completada'));
+            const dayWOs  = wos.filter(w  => (w.scheduledDate || w.createdDate) === ds || w.startDate === ds || (w.completedDate === ds && w.status === 'completada'));
             const dayPMs  = plans.filter(p => p.nextExecution === ds);
             const total   = dayWOs.length + dayPMs.length;
 
@@ -1988,12 +2021,15 @@ class App {
                     ${total > 0 ? `<span class="twc-count">${total}</span>` : ''}
                 </div>
                 <div class="twc-events">
-                    ${dayWOs.map(w => `
-                    <div class="twc-event twc-event--${typeColor[w.type] || 'info'}" data-tech-view="${w.assetId}" style="cursor:pointer">
-                        <div class="twc-event-type">${typeLabel[w.type] || w.type}</div>
-                        <div class="twc-event-name"><i class="fas fa-cog"></i> ${this.getAssetName(w.assetId)}</div>
-                        <div>${this.statusBadge(w.status)}</div>
-                    </div>`).join('')}
+                    ${dayWOs.map(w => {
+                        const subtypeLabel = w.subtype === 'diferido' ? ' (Diferido)' : (w.subtype === 'inmediato' ? ' (Inmediato)' : '');
+                        return `
+                        <div class="twc-event twc-event--${typeColor[w.type] || 'info'}" data-tech-view="${w.assetId}" style="cursor:pointer">
+                            <div class="twc-event-type">${(typeLabel[w.type] || w.type) + subtypeLabel}</div>
+                            <div class="twc-event-name"><i class="fas fa-cog"></i> ${this.getAssetName(w.assetId)}</div>
+                            <div>${this.statusBadge(w.status)}</div>
+                        </div>`;
+                    }).join('')}
                     ${dayPMs.map(p => `
                     <div class="twc-event twc-event--pm" data-tech-view="${p.assetId}" style="cursor:pointer">
                         <div class="twc-event-type"><i class="fas fa-wrench"></i> PM</div>
