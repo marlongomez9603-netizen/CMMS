@@ -2433,6 +2433,19 @@ class App {
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label class="form-label">Fecha Programada de Ejecución <span class="required">*</span></label>
+                <input class="form-control" type="date" id="fApproveScheduledDate" value="${store.today()}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Subtipo de Correctivo</label>
+                <select class="form-control" id="fApproveSubtype">
+                    <option value="inmediato">Inmediato (Emergencia)</option>
+                    <option value="diferido">Diferido (Programado)</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label class="form-label">Prioridad Definitiva</label>
                 <select class="form-control" id="fApprovePriority">
                     <option value="baja" ${req.priority === 'baja' ? 'selected' : ''}>Baja</option>
@@ -2451,6 +2464,8 @@ class App {
             const assignedTo = document.getElementById('fApproveTech').value;
             const priority = document.getElementById('fApprovePriority').value;
             const estimatedHours = document.getElementById('fApproveEstHours').value;
+            const scheduledDate = document.getElementById('fApproveScheduledDate').value || store.today();
+            const subtype = document.getElementById('fApproveSubtype').value;
 
             if (!assignedTo || !estimatedHours) {
                 this.toast('Técnico y horas estimadas son requeridos', 'danger');
@@ -2469,6 +2484,8 @@ class App {
                 assignedTo,
                 description: `🔧 [Basado en Solicitud #${reqId.substring(0,8).toUpperCase()}] ${req.description}`,
                 estimatedHours,
+                scheduledDate,
+                subtype,
                 createdDate: store.today()
             });
 
