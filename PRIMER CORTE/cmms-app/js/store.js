@@ -35,6 +35,17 @@ class DataStore {
         this._lastSaveTimestamp = 0;   // evita reaccionar a nuestros propios cambios
         this._realtimeChannel = null;  // canal realtime de Supabase
         this._saveQueued = false;      // debounce de escrituras a la nube
+        this._readOnly = !!options.readOnly;  // store de solo lectura (vista docente)
+
+        // Modo "preload": construir desde datos ya obtenidos (p.ej. panel docente
+        // que cargó todos los estudiantes en una sola consulta). No carga de la nube.
+        // readOnly evita persistir (ranking); sin readOnly permite escribir los datos
+        // reales (inyección de fallas / aprobación de compras del docente).
+        if (options.preload) {
+            this.data = options.preload;
+            this.currentCompanyId = (this.data.companies && this.data.companies[0]) ? this.data.companies[0].id : null;
+            return;
+        }
 
         // 1. Intentar cargar de localStorage (rápido, sincrónico)
         this.data = this.load();
@@ -165,10 +176,11 @@ class DataStore {
     }
 
     save() {
+        if (this._readOnly) return;  // vista de solo lectura (panel docente): no persiste
         if (this.data) {
             // 1. Guardar localmente (instantáneo)
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
-            // 2. Sincronizar a Firestore en background (no bloquea la UI)
+            // 2. Sincronizar a Supabase en background (no bloquea la UI)
             this._syncToCloud();
         }
     }

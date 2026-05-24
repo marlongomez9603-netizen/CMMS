@@ -100,6 +100,7 @@ class App {
         }
         document.getElementById('btnLogout').onclick = () => {
             if (store && store.stopListening) store.stopListening();
+            this.stopAdminRealtime();
             auth.logout(); store = null; this.technicianMode = false; this.showLogin();
         };
 
@@ -816,10 +817,13 @@ class App {
         const el = document.getElementById('view-adminRanking');
         if (!el) return;
 
-        // Compute KPIs for every student
+        // Compute KPIs for every student.
+        // Si ya cargamos datos reales desde Supabase, los usamos; si no, baseline determinista.
+        const dataMap = this._adminDataMap;
         const rows = STUDENTS.map(s => {
             try {
-                const tempStore = new DataStore(s.cedula);
+                const preload = (dataMap && dataMap.get(String(s.cedula))) || generateStudentData(s.cedula);
+                const tempStore = new DataStore(s.cedula, { preload, readOnly: true });
                 const k = tempStore.getKPIs();
                 const preview = getStudentAssetPreview(s.cedula);
                 // Score: starts at 100, deductions
@@ -922,7 +926,7 @@ class App {
         </div>
 
         <div style="margin-top:12px;font-size:0.75rem;color:var(--text-muted);text-align:center">
-            <i class="fas fa-info-circle"></i> Score basado en: Disponibilidad (30%), Cumplimiento PM (25%), PMs vencidos (-10c/u), Stock bajo (-5c/u). Umbral aprobación de compras: Todas (requieren aprobación docente).
+            <i class="fas fa-info-circle"></i> Score basado en: Disponibilidad (30%), Cumplimiento PM (25%), PMs vencidos (-10c/u), Stock bajo (-5c/u). Umbral aprobación de compras: Todas (requieren aprobación del Gerente).
         </div>`;
 
         // Bind view student
@@ -949,10 +953,60 @@ class App {
             const r = rows[Math.floor(Math.random() * rows.length)];
             this.showInjectFaultModal(r.student.cedula);
         });
+
+        // Cargar datos reales de los estudiantes y activar actualización en tiempo real
+        this._initAdminRealtime();
+    }
+
+    /** Panel docente en tiempo real: carga los datos reales de todos los estudiantes
+     *  desde Supabase y se suscribe a cambios para re-renderizar automáticamente. */
+    _initAdminRealtime() {
+        if (typeof _sb === 'undefined' || !_sb) return;  // sin nube → solo baseline
+
+        // 1. Carga inicial (una sola vez) de todos los estudiantes
+        if (!this._adminLoaded && !this._adminLoading) {
+            this._adminLoading = true;
+            _sb.from('students').select('cedula,data').then(({ data, error }) => {
+                this._adminLoading = false;
+                if (error || !data) { console.warn('[MaintPro] Error al cargar estudiantes:', error?.message); return; }
+                const map = new Map();
+                data.forEach(r => { if (r.data && r.data.companies) map.set(String(r.cedula), r.data); });
+                this._adminDataMap = map;
+                this._adminLoaded = true;
+                if (this.currentView === 'adminRanking') this.renderAdminRanking();
+            });
+        }
+
+        // 2. Suscripción en tiempo real (una sola vez) a la tabla students
+        if (!this._adminChannel) {
+            this._adminChannel = _sb.channel('admin_students_live')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, payload => {
+                    const row = payload.new;
+                    if (!row || !row.cedula || !row.data) return;
+                    if (!this._adminDataMap) this._adminDataMap = new Map();
+                    this._adminDataMap.set(String(row.cedula), row.data);
+                    clearTimeout(this._adminRerenderTimer);
+                    this._adminRerenderTimer = setTimeout(() => {
+                        if (this.currentView === 'adminRanking') this.renderAdminRanking();
+                    }, 300);
+                })
+                .subscribe();
+        }
+    }
+
+    /** Detiene la suscripción en tiempo real del panel docente (logout). */
+    stopAdminRealtime() {
+        if (this._adminChannel && typeof _sb !== 'undefined' && _sb) {
+            try { _sb.removeChannel(this._adminChannel); } catch (e) {}
+        }
+        this._adminChannel = null;
+        this._adminLoaded = false;
+        this._adminDataMap = null;
     }
 
     showInjectFaultModal(cedula) {
-        const targetStore = new DataStore(cedula);
+        const real = this._adminDataMap && this._adminDataMap.get(String(cedula));
+        const targetStore = real ? new DataStore(cedula, { preload: real }) : new DataStore(cedula);
         const student = getStudentByCedula(cedula);
         const assets = targetStore.getAssets();
         const studentName = student ? student.nombre.split(',').reverse().join(' ').trim() : cedula;
@@ -987,6 +1041,7 @@ class App {
             const desc = document.getElementById('fInjectDesc').value;
             const priority = document.getElementById('fInjectPriority').value;
             targetStore.injectFailure(assetId, desc, priority);
+            if (this._adminDataMap && targetStore.data) this._adminDataMap.set(String(cedula), targetStore.data);
             this.toast(`⚡ Avería inyectada en ${studentName}`, 'warning');
             this.closeModal();
             this.navigate('adminRanking');
@@ -994,13 +1049,14 @@ class App {
     }
 
     showManagerApprovalsModal(cedula) {
-        const targetStore = new DataStore(cedula);
+        const real = this._adminDataMap && this._adminDataMap.get(String(cedula));
+        const targetStore = real ? new DataStore(cedula, { preload: real }) : new DataStore(cedula);
         const student = getStudentByCedula(cedula);
         const studentName = student ? student.nombre.split(',').reverse().join(' ').trim() : cedula;
         const pending = targetStore.getPurchases().filter(p => p.status === 'pendiente_gerencia');
 
         const html = `
-        <div style="margin-bottom:16px"><strong>${studentName}</strong> — ${pending.length} solicitud(es) requieren aprobación del Docente</div>
+        <div style="margin-bottom:16px"><strong>${studentName}</strong> — ${pending.length} solicitud(es) requieren aprobación del Gerente</div>
         ${pending.map(p => `
         <div class="approval-request-card" id="appr_${p.id}">
             <div class="approval-request-header">
@@ -1030,7 +1086,8 @@ class App {
                 relatedId: purId,
                 priority: 'alta'
             });
-            targetStore.addLog({ action: 'purchase_approved', message: `Compra aprobada por docente: ${pur?.itemName || purId}` });
+            targetStore.addLog({ action: 'purchase_approved', message: `Compra aprobada por gerente: ${pur?.itemName || purId}` });
+            if (this._adminDataMap && targetStore.data) this._adminDataMap.set(String(cedula), targetStore.data);
             document.getElementById(`appr_${purId}`).style.opacity = '0.4';
             b.disabled = true;
             this.toast('Compra aprobada ✅', 'success');
@@ -1047,7 +1104,8 @@ class App {
                 relatedId: purId,
                 priority: 'media'
             });
-            targetStore.addLog({ action: 'purchase_rejected', message: `Compra rechazada por docente: ${pur?.itemName || purId}` });
+            targetStore.addLog({ action: 'purchase_rejected', message: `Compra rechazada por gerente: ${pur?.itemName || purId}` });
+            if (this._adminDataMap && targetStore.data) this._adminDataMap.set(String(cedula), targetStore.data);
             document.getElementById(`appr_${purId}`).style.opacity = '0.4';
             b.disabled = true;
             this.toast('Compra rechazada ❌', 'danger');
@@ -1068,7 +1126,7 @@ class App {
         el.innerHTML = `
         ${k.overduePMs > 0 ? `<div class="alert-bar alert-danger"><i class="fas fa-exclamation-circle"></i><strong>${k.overduePMs} plan(es) preventivo(s) vencido(s)</strong> — Requieren atención inmediata</div>` : ''}
         ${k.lowStockCount > 0 ? `<div class="alert-bar alert-warning"><i class="fas fa-boxes-stacked"></i><strong>${k.lowStockCount} ítem(s) con stock bajo</strong></div>` : ''}
-        ${k.pendingManagerPurchases > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${k.pendingManagerPurchases} compra(s) pendientes de aprobación del docente</strong></div>` : ''}
+        ${k.pendingManagerPurchases > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${k.pendingManagerPurchases} compra(s) pendientes de aprobación del Gerente</strong></div>` : ''}
         ${pendingFaults.length > 0 ? `
         <div class="alert-bar alert-danger" style="border-left:4px solid var(--danger);animation:pulse 2s infinite">
             <i class="fas fa-triangle-exclamation"></i>
@@ -1142,7 +1200,7 @@ class App {
         return assets.map(a => {
             const warrantyExpired = a.warrantyDate && a.warrantyDate < today;
             const warrantyLabel = a.warrantyDate ? (warrantyExpired ? `<span style="color:var(--text-muted)">Vencida</span>` : `<span style="color:var(--success)">${this.fmtDate(a.warrantyDate)}</span>`) : '—';
-            return `<tr><td><strong>${a.code}</strong></td><td>${a.name}</td><td>${a.category}</td><td>${a.location}</td>
+            return `<tr><td><strong>${a.code}</strong></td><td>${a.name}</td><td>${a.category}</td><td>${a.location}${a.functionalLocation ? `<br><span style="font-size:0.68rem;color:var(--text-muted)"><i class="fas fa-sitemap"></i> ${a.functionalLocation}</span>` : ''}</td>
             <td>${this.criticalityHTML(a.criticality)}</td><td>${this.statusBadge(a.status)}</td><td>${warrantyLabel}</td>
             <td><div class="action-btns"><button class="btn btn-icon btn-sm" data-viewasset="${a.id}" data-tooltip="Ver historial"><i class="fas fa-eye"></i></button><button class="btn btn-icon btn-sm" data-edit="${a.id}"><i class="fas fa-pen"></i></button><button class="btn btn-icon btn-sm" data-del="${a.id}"><i class="fas fa-trash"></i></button></div></td></tr>`;
         }).join('');
@@ -1668,7 +1726,7 @@ class App {
         const purchases = store.getPurchases();
         const managerPending = purchases.filter(p => p.status === 'pendiente_gerencia');
         el.innerHTML = `
-        ${managerPending.length > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${managerPending.length} solicitud(es) en espera de aprobación del Docente</strong></div>` : ''}
+        ${managerPending.length > 0 ? `<div class="alert-bar alert-injected"><i class="fas fa-clock"></i><strong>${managerPending.length} solicitud(es) en espera de aprobación del Gerente</strong></div>` : ''}
         <div class="toolbar"><div class="toolbar-left"><div class="search-input"><i class="fas fa-search"></i><input type="text" id="purSearch" placeholder="Buscar compras..."></div>
             <select class="filter-select" id="purStatusFilter"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="pendiente_gerencia">Aprobación Gerencia</option><option value="aprobada">Aprobada</option><option value="recibida">Recibida</option><option value="cancelada">Cancelada</option></select></div>
             <div class="toolbar-right"><button class="btn btn-primary" id="btnAddPur"><i class="fas fa-plus"></i> Nueva Solicitud</button></div></div>
@@ -1680,7 +1738,7 @@ class App {
     }
 
     renderPurRows(purchases) {
-        if (purchases.length === 0) return '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-cart-shopping"></i><h3>Sin solicitudes de compra</h3><p>Se crean automáticamente cuando el stock cae por debajo del mínimo, o créalas manualmente. Todas las compras requieren aprobación del Docente.</p></div></td></tr>';
+        if (purchases.length === 0) return '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-cart-shopping"></i><h3>Sin solicitudes de compra</h3><p>Se crean automáticamente cuando el stock cae por debajo del mínimo, o créalas manualmente. Todas las compras requieren aprobación del Gerente.</p></div></td></tr>';
         return purchases.map(p => `<tr ${p.status === 'pendiente_gerencia' ? 'style="background:var(--warning-bg)"' : ''}>
         <td>${this.fmtDate(p.requestDate)}</td><td><strong>${p.itemName || 'Manual'}</strong>${p.itemCode ? `<br><span style="color:var(--text-muted);font-size:0.75rem">${p.itemCode}</span>` : ''}</td>
         <td>${p.quantity} ${p.unit || ''}</td><td>${p.supplier || '—'}</td>
@@ -1688,7 +1746,7 @@ class App {
         <td>${this.priorityBadge(p.priority || 'media')}</td><td>${this.statusBadge(p.status)}</td>
         <td><div class="action-btns">
             ${p.status === 'aprobada' ? `<button class="btn btn-sm btn-success" data-receivepur="${p.id}" data-tooltip="Recibir"><i class="fas fa-box-open"></i></button>` : ''}
-            ${p.status === 'pendiente_gerencia' ? `<span style="font-size:0.72rem;color:var(--warning)"><i class="fas fa-hourglass-half"></i> Docente</span>` : ''}
+            ${p.status === 'pendiente_gerencia' ? `<span style="font-size:0.72rem;color:var(--warning)"><i class="fas fa-hourglass-half"></i> Gerente</span>` : ''}
             <button class="btn btn-icon btn-sm" data-editpur="${p.id}"><i class="fas fa-pen"></i></button>
             <button class="btn btn-icon btn-sm" data-delpur="${p.id}"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
     }
@@ -1728,7 +1786,7 @@ class App {
         <div class="form-row"><div class="form-group"><label class="form-label">Nombre del Ítem <span class="required">*</span></label><input class="form-control" id="fPurName" value="${p.itemName || ''}"></div>
             <div class="form-group"><label class="form-label">Cantidad</label><input class="form-control" type="number" id="fPurQty" value="${p.quantity || '1'}"></div></div>
         <div class="form-row"><div class="form-group"><label class="form-label">Proveedor</label><input class="form-control" id="fPurSupp" value="${p.supplier || ''}"></div>
-            <div class="form-group"><label class="form-label">Costo Estimado <span style="font-size:0.7rem;color:var(--warning)">requiere aprobación docente</span></label><input class="form-control" type="number" id="fPurCost" value="${p.estimatedCost || ''}"></div></div>
+            <div class="form-group"><label class="form-label">Costo Estimado <span style="font-size:0.7rem;color:var(--warning)">requiere aprobación del gerente</span></label><input class="form-control" type="number" id="fPurCost" value="${p.estimatedCost || ''}"></div></div>
         <div class="form-row"><div class="form-group"><label class="form-label">Prioridad</label><select class="form-control" id="fPurPriority"><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></div>
             <div class="form-group"><label class="form-label">Motivo</label><input class="form-control" id="fPurReason" value="${p.reason || ''}"></div></div>
         <div class="form-group"><label class="form-label">Notas</label><textarea class="form-control" id="fPurNotes" rows="2">${p.notes || ''}</textarea></div>`;
@@ -1738,7 +1796,7 @@ class App {
             const data = { itemId: itemId || null, itemName: document.getElementById('fPurName').value || (item ? item.name : ''), itemCode: item ? item.code : '', quantity: document.getElementById('fPurQty').value, unit: item ? item.unit : 'und', supplier: document.getElementById('fPurSupp').value, estimatedCost: document.getElementById('fPurCost').value, priority: document.getElementById('fPurPriority').value, reason: document.getElementById('fPurReason').value, notes: document.getElementById('fPurNotes').value, requestDate: p.requestDate || store.today(), status: p.status || 'pendiente' };
             if (!data.itemName) { this.toast('Nombre del ítem es obligatorio', 'danger'); return; }
             if (editId) { store.updatePurchase(editId, data); this.toast('Solicitud actualizada'); }
-            else { store.addPurchase(data); store.addLog({ action: 'purchase_created', message: `Solicitud de compra: ${data.itemName}` }); this.toast('⚠️ Enviado a aprobación del Docente'); }
+            else { store.addPurchase(data); store.addLog({ action: 'purchase_created', message: `Solicitud de compra: ${data.itemName}` }); this.toast('⚠️ Enviado a aprobación del Gerente'); }
             this.closeModal(); this.renderPurchases();
         });
         setTimeout(() => {
@@ -1820,6 +1878,7 @@ class App {
         <div class="detail-grid" style="margin-bottom:24px">
             <div class="detail-field"><div class="detail-field-label">Categoría</div><div class="detail-field-value">${asset.category}</div></div>
             <div class="detail-field"><div class="detail-field-label">Ubicación</div><div class="detail-field-value">${asset.location}</div></div>
+            ${asset.functionalLocation ? `<div class="detail-field"><div class="detail-field-label">Ubicación Funcional (ISO 14224)</div><div class="detail-field-value" style="font-family:monospace"><i class="fas fa-sitemap"></i> ${asset.functionalLocation}</div></div>` : ''}
             <div class="detail-field"><div class="detail-field-label">Serial</div><div class="detail-field-value">${asset.serial || '—'}</div></div>
             <div class="detail-field"><div class="detail-field-label">Garantía</div><div class="detail-field-value">${warrantyLabel}</div></div>
             <div class="detail-field"><div class="detail-field-label">Costo MO acumulado</div><div class="detail-field-value">${this.fmtMoney(kpis.laborCost)}</div></div>

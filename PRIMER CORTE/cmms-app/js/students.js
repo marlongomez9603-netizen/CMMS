@@ -32,7 +32,18 @@ const ADMIN_CREDENTIALS = { username: 'admin', password: 'Tosem2026' };
 // Versión del dataset generado. Súbela para forzar que TODOS los usuarios
 // (incluido el demo) regeneren sus datos con la estructura nueva al entrar.
 // v2: 10 activos, 2 técnicos por especialidad, inventario completo, ≥12 OTs.
-const DATA_VERSION = 2;
+// v3: ubicaciones ISO 14224 (jerarquía + tag) + herramientas/equipos especializados.
+const DATA_VERSION = 3;
+
+// Herramientas y equipos especializados de mantenimiento (transversales a todos los sectores).
+// Se controlan en inventario como activos de soporte (categoría "Herramientas Especiales").
+const SPECIAL_TOOLS = [
+    { name: 'Analizador de Vibraciones', code: 'HER-VIB-001', category: 'Herramientas Especiales', unit: 'und', quantity: '1', minStock: '1', maxStock: '2', unitCost: '8500000', supplier: 'SKF / Pruftechnik' },
+    { name: 'Cámara Termográfica', code: 'HER-TER-001', category: 'Herramientas Especiales', unit: 'und', quantity: '1', minStock: '1', maxStock: '2', unitCost: '6200000', supplier: 'FLIR Systems' },
+    { name: 'Megóhmetro (medidor de aislamiento)', code: 'HER-MEG-001', category: 'Herramientas Especiales', unit: 'und', quantity: '2', minStock: '1', maxStock: '3', unitCost: '1800000', supplier: 'Fluke' },
+    { name: 'Torquímetro Digital', code: 'HER-TOR-001', category: 'Herramientas Especiales', unit: 'und', quantity: '2', minStock: '1', maxStock: '4', unitCost: '950000', supplier: 'Snap-on' },
+    { name: 'Alineador Láser de Ejes', code: 'HER-ALN-001', category: 'Herramientas Especiales', unit: 'und', quantity: '1', minStock: '1', maxStock: '2', unitCost: '12500000', supplier: 'Pruftechnik' }
+];
 
 // ---- Helpers ----
 function getStudentByCedula(cedula) {
@@ -356,18 +367,34 @@ function generateStudentData(cedula) {
 
     // 10 activos deterministas (5 base + 5 adicionales del pool)
     const selectedAssets = pickN(rng, sector.assets.map((a, i) => ({ ...a, _idx: i })), 10);
+
+    // --- Ubicación jerárquica según ISO 14224 ---
+    // Niveles: Instalación → Planta/Unidad → Sistema/Área (clase de equipo) → Equipo.
+    // La categoría del activo actúa como clase de equipo / sistema (nivel 6 ISO).
+    const sanitize = (s) => s.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const instCode = sanitize(sector.companyPrefix).substring(0, 3);      // Instalación
+    const unitCode = sanitize(apellido).substring(0, 3) || 'U01';          // Planta/Unidad
+    const catList = [...new Set(selectedAssets.map(a => a.category))];     // áreas/sistemas
+    const catCode = (cat) => sanitize(cat).substring(0, 3);
+
     const assets = selectedAssets.map((a, i) => {
         const yr = 2019 + Math.floor(rng() * 5);
         const mo = String(1 + Math.floor(rng() * 12)).padStart(2, '0');
         const dy = String(1 + Math.floor(rng() * 28)).padStart(2, '0');
         const warrantyYears = a.criticality === 'alta' ? 3 : 2;
+        const areaNum = catList.indexOf(a.category) + 1;                    // # de área/sistema
+        const seq = String(i + 1).padStart(3, '0');
+        // Tag de ubicación funcional ISO 14224: INST-UNIDAD-AREA-EQUIPO
+        const functionalLocation = `${instCode}-${unitCode}-A${String(areaNum).padStart(2, '0')}-${catCode(a.category)}${seq}`;
         return {
             id: `ast_${cedula}_${i}`,
             companyId: company.id,
             name: a.name,
-            code: `${a.code}-${String(i + 1).padStart(3, '0')}`,
+            code: `${a.code}-${seq}`,
             category: a.category,
-            location: `${sector.locationPrefix} ${apellido} — Zona ${i + 1}`,
+            // Jerarquía funcional legible (ISO 14224): Instalación › Unidad › Sistema/Área
+            location: `${sector.companyPrefix} › ${sector.locationPrefix} ${apellido} › Área ${String(areaNum).padStart(2, '0')} · Sistema de ${a.category}`,
+            functionalLocation,
             brand: a.brand,
             model: a.model,
             serial: `${a.brand.substring(0, 3).toUpperCase()}-${yr}-${String(seed % 90000 + 10000 + i).substring(0, 5)}`,
@@ -432,6 +459,17 @@ function generateStudentData(cedula) {
         ...item,
         location: `Almacén Central — Estante ${String.fromCharCode(65 + (i % 6))}${i + 1}`
     }));
+
+    // Herramientas / equipos especializados de mantenimiento (no se consumen; se controla su disponibilidad).
+    // Necesarios para predictivo, eléctrico y mecánico de precisión en cualquier sector.
+    SPECIAL_TOOLS.forEach((tool, j) => {
+        inventory.push({
+            id: `tool_${cedula}_${j}`,
+            companyId: company.id,
+            ...tool,
+            location: `Pañol de Herramientas — Gabinete ${String.fromCharCode(65 + j)}`
+        });
+    });
 
     // 2 planes preventivos (vinculados a los activos del estudiante)
     const pmRng = createRNG(seed + 300);
