@@ -2158,7 +2158,7 @@ class App {
     //  PDF EXPORT
     // ========================================================
     exportWOtoPDF(woId) {
-        if (!window.jspdf) { this.toast('jsPDF no disponible. Verifica conexi\u00f3n a internet.', 'danger'); return; }
+        if (!window.jspdf) { this.toast('No se pudo cargar el generador de PDF. Recarga la p\u00e1gina.', 'danger'); return; }
         const { jsPDF } = window.jspdf;
         const w   = store.getWorkOrder(woId); if (!w) return;
         const asset   = store.getAsset(w.assetId);
