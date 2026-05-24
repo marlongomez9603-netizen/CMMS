@@ -261,7 +261,7 @@ class App {
         }));
     }
 
-    /** Called by DataStore when a remote change is detected via Firestore onSnapshot */
+    /** Called by DataStore when a remote change is detected via Supabase Realtime */
     _onRemoteUpdate(newAlerts, changeContext = {}) {
         console.info('[MaintPro] 📡 Remote update received, refreshing view...');
         // Re-render the current view with fresh data

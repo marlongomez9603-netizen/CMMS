@@ -1,56 +1,53 @@
 /* ============================================
-   MaintPro CMMS v4.1 - Data Store
-   Almacenamiento híbrido: localStorage (rápido) + Firebase Firestore (nube)
+   MaintPro CMMS v5.0 - Data Store
+   Almacenamiento híbrido: localStorage (rápido) + Supabase (nube)
    Los datos NUNCA se pierden aunque el estudiante borre el caché.
    ============================================ */
 
-// ── Firebase Configuration ──────────────────────────────────────────────────
-const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA1opQnr1pUyNM2vlB1dy08CvBhlw1t5FU",
-    authDomain: "maintpro-cmms-d5e71.firebaseapp.com",
-    projectId: "maintpro-cmms-d5e71",
-    storageBucket: "maintpro-cmms-d5e71.firebasestorage.app",
-    messagingSenderId: "955471872147",
-    appId: "1:955471872147:web:36b9ed3309d788a3c08d66"
-};
-
-// Inicializar Firebase una sola vez
-let _fbApp = null;
-let _fbDb  = null;
+// ── Supabase Configuration ───────────────────────────────────────────────────
+// La configuración vive en js/config.js (SUPABASE_CONFIG). El cliente de
+// Supabase se carga vía CDN en index.html (window.supabase.createClient).
+let _sb = null;   // cliente global de Supabase
 try {
-    if (!firebase.apps.length) {
-        _fbApp = firebase.initializeApp(FIREBASE_CONFIG);
+    if (typeof SUPABASE_CONFIG !== 'undefined'
+        && SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.includes('TU-PROYECTO')
+        && window.supabase && typeof window.supabase.createClient === 'function') {
+        _sb = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
+            auth: { persistSession: false }
+        });
+        console.info('[MaintPro] ✅ Supabase conectado.');
     } else {
-        _fbApp = firebase.apps[0];
+        console.warn('[MaintPro] Supabase no configurado — modo offline (solo localStorage).');
     }
-    _fbDb = firebase.firestore();
 } catch(e) {
-    console.warn('[MaintPro] Firebase no disponible (modo offline):', e.message);
+    console.warn('[MaintPro] Supabase no disponible (modo offline):', e.message);
 }
+
+// Compatibilidad: parcial.js usa _fbDb; lo dejamos como alias del cliente Supabase
+let _fbDb = _sb;
 
 class DataStore {
     constructor(cedula, options = {}) {
-        this.cedula = cedula;
+        this.cedula = String(cedula);
         this.STORAGE_KEY = `maintpro_${cedula}`;
-        this.db = _fbDb;  // referencia global a Firestore
-        this._cloudRef = this.db
-            ? this.db.collection('students').doc(String(cedula))
-            : null;
-        this._lastSaveTimestamp = 0;  // prevent circular snapshot triggers
-        this._unsubscribeSnapshot = null;  // Firestore listener handle
+        this.db = _sb;                 // cliente Supabase global
+        this._cloudEnabled = !!_sb;    // ¿hay nube disponible?
+        this._lastSaveTimestamp = 0;   // evita reaccionar a nuestros propios cambios
+        this._realtimeChannel = null;  // canal realtime de Supabase
+        this._saveQueued = false;      // debounce de escrituras a la nube
 
         // 1. Intentar cargar de localStorage (rápido, sincrónico)
         this.data = this.load();
 
         if (!this.data || !this.data.companies || this.data.companies.length === 0) {
-            // 2. Si localStorage vacío → intentar recuperar de Firestore
-            this.data = null;  // se llenará en loadFromCloud (async)
+            // 2. Si localStorage vacío → intentar recuperar de Supabase
+            this.data = null;  // se llenará en _bootstrapFromCloud (async)
             this._bootstrapFromCloud(cedula);  // no esperar async
         } else {
             // Datos locales ok → migrar y sincronizar en background
             this._migrate();
             this.currentCompanyId = this.data ? this.data.companies[0].id : null;
-            this._syncToCloud();  // actualizar Firestore en background
+            this._syncToCloud();  // actualizar Supabase en background
         }
 
         // 3. Start real-time listener ONLY for the main store (not temp instances)
@@ -59,30 +56,54 @@ class DataStore {
         }
     }
 
-    /** Carga desde Firestore si localStorage está vacío (primer login desde nuevo dispositivo) */
+    /** Carga desde Supabase si localStorage está vacío (primer login / nuevo dispositivo).
+     *  IMPORTANTE: solo generamos datos nuevos cuando la nube CONFIRMA que el
+     *  estudiante no existe. Si la lectura falla (red/permisos), NO regeneramos
+     *  ni sobrescribimos la nube — así nunca se borran las tareas. */
     async _bootstrapFromCloud(cedula) {
         let loaded = false;
-        if (this._cloudRef) {
+        let cloudReachable = false;
+
+        if (this._cloudEnabled) {
             try {
-                const snap = await this._cloudRef.get();
-                if (snap.exists) {
-                    const cloudData = snap.data();
-                    if (cloudData && cloudData.companies && cloudData.companies.length > 0) {
-                        this.data = cloudData;
-                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
-                        loaded = true;
-                        console.info('[MaintPro] ✅ Datos recuperados de Firestore para:', cedula);
-                    }
+                const { data: row, error } = await this.db
+                    .from('students')
+                    .select('data')
+                    .eq('cedula', this.cedula)
+                    .maybeSingle();
+
+                if (error) throw error;
+                cloudReachable = true;   // la consulta respondió (exista o no la fila)
+
+                if (row && row.data && row.data.companies && row.data.companies.length > 0) {
+                    this.data = row.data;
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+                    loaded = true;
+                    console.info('[MaintPro] ✅ Datos recuperados de Supabase para:', cedula);
                 }
             } catch(e) {
-                console.warn('[MaintPro] No se pudo leer Firestore:', e.message);
+                console.warn('[MaintPro] No se pudo leer Supabase:', e.message || e);
             }
         }
+
         if (!loaded) {
-            // Sin datos en nube → generar datos iniciales
-            this.data = generateStudentData(cedula);
-            if (this.data) this.save();
+            if (this._cloudEnabled && !cloudReachable) {
+                // La nube no respondió: NO regeneramos para no pisar datos buenos.
+                // Reintentamos suavemente más tarde en lugar de borrar.
+                console.warn('[MaintPro] ⏳ Nube inaccesible — reintentando en 4s (sin regenerar).');
+                this.data = this.load();  // último estado local conocido, si lo hubiera
+                if (!this.data) {
+                    setTimeout(() => { if (!this.data) this._bootstrapFromCloud(cedula); }, 4000);
+                    return;
+                }
+            } else {
+                // Nube confirmó que NO existe el estudiante (o estamos offline sin local):
+                // recién aquí es seguro generar datos iniciales.
+                this.data = generateStudentData(cedula);
+                if (this.data) this.save();
+            }
         }
+
         this._migrate();
         this.currentCompanyId = this.data ? this.data.companies[0].id : null;
         // Notificar a la app que los datos están listos (rerender suave)
@@ -140,22 +161,43 @@ class DataStore {
         }
     }
 
-    /** Sincroniza el estado actual a Firestore (background, no bloquea) */
+    /** Sincroniza el estado actual a Supabase (background, no bloquea).
+     *  Usa upsert por cédula y un pequeño debounce para agrupar escrituras. */
     _syncToCloud() {
-        if (!this._cloudRef || !this.data) return;
-        this._lastSaveTimestamp = Date.now();
-        this._cloudRef.set(this.data)
-            .catch(e => console.warn('[MaintPro] Error sync Firestore:', e.message));
+        if (!this._cloudEnabled || !this.data) return;
+        if (this._saveQueued) return;            // ya hay una escritura encolada
+        this._saveQueued = true;
+        setTimeout(() => {
+            this._saveQueued = false;
+            if (!this.data) return;
+            this._lastSaveTimestamp = Date.now();
+            this.db.from('students')
+                .upsert({
+                    cedula: this.cedula,
+                    nombre: (typeof getStudentByCedula === 'function'
+                             && getStudentByCedula(this.cedula)?.nombre) || null,
+                    data: this.data
+                }, { onConflict: 'cedula' })
+                .then(({ error }) => {
+                    if (error) console.warn('[MaintPro] Error sync Supabase:', error.message);
+                });
+        }, 400);
     }
 
     /** Real-time listener: detects remote changes (teacher fault injection, purchase approvals) */
     _startRealtimeListener() {
-        if (!this._cloudRef) return;
-        this._unsubscribeSnapshot = this._cloudRef.onSnapshot(snap => {
-            // Ignore snapshots triggered by our own save (within 3 seconds)
+        if (!this._cloudEnabled) return;
+        this._realtimeChannel = this.db
+            .channel(`student_${this.cedula}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'students',
+                filter: `cedula=eq.${this.cedula}`
+            }, payload => {
+            // Ignore events triggered by our own save (within 3 seconds)
             if (Date.now() - this._lastSaveTimestamp < 3000) return;
-            if (!snap.exists) return;
-            const remoteData = snap.data();
+            const remoteData = payload.new && payload.new.data;
             if (!remoteData || !remoteData.companies) return;
 
             // Check if remote has new injected alerts we haven't seen
@@ -209,31 +251,35 @@ class DataStore {
                     window.app._onRemoteUpdate(newAlerts, changeContext);
                 }
             }
-        }, err => {
-            console.warn('[MaintPro] Snapshot listener error:', err.message);
-        });
+        })
+            .subscribe();
     }
 
     /** Stop listening (called on logout) */
     stopListening() {
-        if (this._unsubscribeSnapshot) {
-            this._unsubscribeSnapshot();
-            this._unsubscribeSnapshot = null;
+        if (this._realtimeChannel) {
+            try { this.db.removeChannel(this._realtimeChannel); } catch(e) {}
+            this._realtimeChannel = null;
         }
     }
 
-    /** Fuerza recuperar los datos desde Firestore (útil si el docente hizo cambios remotos) */
+    /** Fuerza recuperar los datos desde Supabase (útil si el docente hizo cambios remotos) */
     async refreshFromCloud() {
-        if (!this._cloudRef) return false;
+        if (!this._cloudEnabled) return false;
         try {
-            const snap = await this._cloudRef.get();
-            if (snap.exists) {
-                this.data = snap.data();
+            const { data: row, error } = await this.db
+                .from('students')
+                .select('data')
+                .eq('cedula', this.cedula)
+                .maybeSingle();
+            if (error) throw error;
+            if (row && row.data) {
+                this.data = row.data;
                 localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
                 return true;
             }
         } catch(e) {
-            console.warn('[MaintPro] Error al refrescar desde Firestore:', e.message);
+            console.warn('[MaintPro] Error al refrescar desde Supabase:', e.message || e);
         }
         return false;
     }

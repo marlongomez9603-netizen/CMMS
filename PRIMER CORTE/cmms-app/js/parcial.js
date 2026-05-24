@@ -80,11 +80,13 @@
                     // Force into localStorage (this is what DataStore reads first)
                     localStorage.setItem(`maintpro_${cedula}`, JSON.stringify(emptyData));
                     
-                    // Also force into Firestore
-                    if (_fbDb) {
-                        _fbDb.collection('students').doc(String(cedula)).set(emptyData)
-                            .then(() => console.info('[Parcial] ✅ Datos vacíos sincronizados a Firestore'))
-                            .catch(e => console.warn('[Parcial] Firestore sync error:', e));
+                    // Also force into Supabase
+                    if (_sb) {
+                        _sb.from('students')
+                            .upsert({ cedula: String(cedula), nombre: getStudentByCedula(cedula)?.nombre || null, data: emptyData }, { onConflict: 'cedula' })
+                            .then(({ error }) => error
+                                ? console.warn('[Parcial] Supabase sync error:', error.message)
+                                : console.info('[Parcial] ✅ Datos vacíos sincronizados a Supabase'));
                     }
                     
                     // Mark as initialized so we don't wipe again on refresh
@@ -99,20 +101,23 @@
 
     // ── Lock check ──
     async function checkParcialLock(cedula) {
-        if (!_fbDb) return false;
-        try { return (await _fbDb.collection(PARCIAL_COLLECTION).doc(cedula).get()).exists; }
-        catch(e) { return false; }
+        if (!_sb) return false;
+        try {
+            const { data, error } = await _sb.from('parcial_locks')
+                .select('cedula').eq('cedula', cedula).eq('tipo', 'cmms').maybeSingle();
+            if (error) throw error;
+            return !!data;
+        } catch(e) { return false; }
     }
 
     // ── Lock set ──
     async function setParcialLock(cedula, nombre) {
-        if (!_fbDb) return;
+        if (!_sb) return;
         try {
-            await _fbDb.collection(PARCIAL_COLLECTION).doc(cedula).set({
-                nombre, cedula,
-                submitTime: new Date().toLocaleString('es-CO', {timeZone:'America/Bogota'}),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await _sb.from('parcial_locks').upsert({
+                cedula, nombre, tipo: 'cmms',
+                submit_time: new Date().toLocaleString('es-CO', {timeZone:'America/Bogota'})
+            }, { onConflict: 'cedula,tipo' });
         } catch(e) {}
     }
 
@@ -120,28 +125,28 @@
     //  ADMIN COMMANDS (browser console)
     // ══════════════════════════════════════════════
     window.unlockParcialTeoria = async function(cedula) {
-        if (!_fbDb) return console.error('Firebase no disponible');
+        if (!_sb) return console.error('Supabase no disponible');
         if (!confirm(`¿Desbloquear TEÓRICA de ${cedula}?`)) return;
-        await _fbDb.collection('parcial_teorico_locks').doc(cedula).delete();
+        await _sb.from('parcial_locks').delete().eq('cedula', cedula).eq('tipo', 'teorico');
         alert(`✅ Teórica desbloqueada: ${cedula}`);
     };
 
     window.unlockParcialCMMS = async function(cedula) {
-        if (!_fbDb) return console.error('Firebase no disponible');
+        if (!_sb) return console.error('Supabase no disponible');
         if (!confirm(`¿Desbloquear CMMS de ${cedula}?`)) return;
-        await _fbDb.collection(PARCIAL_COLLECTION).doc(cedula).delete();
+        await _sb.from('parcial_locks').delete().eq('cedula', cedula).eq('tipo', 'cmms');
         alert(`✅ CMMS desbloqueado: ${cedula}`);
     };
 
     window.resetParcialData = async function(cedula) {
-        if (!_fbDb) return console.error('Firebase no disponible');
+        if (!_sb) return console.error('Supabase no disponible');
         if (!confirm(`⚠️ RESETEAR datos CMMS de ${cedula}? Borra TODO.`)) return;
         const emptyData = generateEmptyParcialData(cedula);
         if (!emptyData) return alert('Cédula no encontrada');
-        await _fbDb.collection('students').doc(cedula).set(emptyData);
+        await _sb.from('students').upsert({ cedula: String(cedula), nombre: getStudentByCedula(cedula)?.nombre || null, data: emptyData }, { onConflict: 'cedula' });
         localStorage.removeItem(`maintpro_${cedula}`);
         localStorage.removeItem(`${PARCIAL_STORAGE_FLAG}_${cedula}`);
-        await _fbDb.collection(PARCIAL_COLLECTION).doc(cedula).delete().catch(()=>{});
+        await _sb.from('parcial_locks').delete().eq('cedula', cedula).eq('tipo', 'cmms');
         alert(`✅ Datos reseteados y desbloqueado: ${cedula}`);
     };
 
