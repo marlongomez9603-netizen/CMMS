@@ -446,13 +446,6 @@ class App {
                     </table>
                 </div>
             </div>
-        </div>
-
-        <!-- Sticky report button -->
-        <div class="tech-report-bar" id="techReportBar">
-            <button class="btn btn-danger btn-lg" id="btnReportFault">
-                <i class="fas fa-triangle-exclamation"></i> Reportar Avería / Crear Solicitud
-            </button>
         </div>`;
 
         // Tab switching
@@ -489,8 +482,6 @@ class App {
                 }
             });
         });
-
-        document.getElementById('btnReportFault').addEventListener('click', () => this.showRequestForm());
 
         if (personnel.length > 0) {
             this._selectedTech = personnel[0].id;
@@ -562,10 +553,6 @@ class App {
             if (btn) btn.classList.toggle('tech-tab-active', t === tabName);
             if (pane) pane.style.display = t === tabName ? '' : 'none';
         });
-        const reportBar = document.getElementById('techReportBar');
-        if (reportBar) {
-            reportBar.style.display = (tabName === 'MisTareas' || tabName === 'Solicitudes') ? '' : 'none';
-        }
     }
 
      renderTechRequestsList() {
@@ -573,7 +560,7 @@ class App {
         if (!tbody) return;
         const requests = store.getWorkRequests();
         if (requests.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state" style="padding:20px"><i class="fas fa-envelope-open-text"></i><h3>Sin solicitudes</h3><p>Crea una nueva solicitud usando el botón superior o el botón rojo inferior.</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state" style="padding:20px"><i class="fas fa-envelope-open-text"></i><h3>Sin solicitudes</h3><p>Crea una nueva solicitud usando el botón "Nueva Solicitud".</p></div></td></tr>';
             return;
         }
         tbody.innerHTML = requests.map(r => {
@@ -1934,6 +1921,21 @@ class App {
         });
     }
 
+    /** Mapea el tipo de notificación a la sección a la que debe navegar al hacer clic */
+    _notifTypeToView(type) {
+        const map = {
+            wo_assigned: 'workorders',
+            wo_reassigned: 'workorders',
+            fault_injected: 'workorders',
+            stock_alert: 'inventory',
+            pm_due: 'preventive',
+            purchase_approved: 'purchases',
+            purchase_rejected: 'purchases',
+            request_new: 'requests'
+        };
+        return map[type] || null;
+    }
+
     renderNotifPanel() {
         if (!store) return;
         const panel = document.getElementById('notifPanel');
@@ -1958,7 +1960,7 @@ class App {
                 const [ico, col] = iconMap[n.type] || ['fa-bell', 'var(--text-muted)'];
                 const t = new Date(n.timestamp).toLocaleString('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 const prioColor = { critica: 'var(--danger)', alta: 'var(--warning)', media: 'var(--primary)', baja: 'var(--text-muted)' }[n.priority] || 'var(--primary)';
-                return `<div class="notif-item ${n.read ? 'notif-read' : 'notif-unread'}" data-nid="${n.id}">
+                return `<div class="notif-item ${n.read ? 'notif-read' : 'notif-unread'}" data-nid="${n.id}" data-ntype="${n.type || ''}" data-nrelated="${n.relatedId || ''}" style="cursor:pointer">
                     <div class="notif-icon-wrap" style="border-color:${prioColor}">
                         <i class="fas ${ico}" style="color:${col}"></i>
                     </div>
@@ -1977,6 +1979,12 @@ class App {
                 item.classList.replace('notif-unread', 'notif-read');
                 item.querySelector('.notif-dot')?.remove();
                 this.updateBadges();
+                // Navegar al panel relacionado con la notificación
+                const view = this._notifTypeToView(item.dataset.ntype);
+                if (view) {
+                    panel.classList.remove('active');
+                    this.navigate(view);
+                }
             });
         });
         const markAll = document.getElementById('notifMarkAll');

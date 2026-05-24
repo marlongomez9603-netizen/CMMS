@@ -39,10 +39,17 @@ class DataStore {
         // 1. Intentar cargar de localStorage (rápido, sincrónico)
         this.data = this.load();
 
-        if (!this.data || !this.data.companies || this.data.companies.length === 0) {
+        if (this._isStale(this.data)) {
             // 2. Si localStorage vacío → intentar recuperar de Supabase
-            this.data = null;  // se llenará en _bootstrapFromCloud (async)
-            this._bootstrapFromCloud(cedula);  // no esperar async
+            if (!options.listen) {
+                // Store temporal (p.ej. vista del docente): generar baseline
+                // determinista de inmediato para permitir lecturas síncronas.
+                this.data = generateStudentData(cedula);
+                if (this.data) { this._migrate(); this.currentCompanyId = this.data.companies[0].id; }
+            } else {
+                this.data = null;  // store principal: se llenará en _bootstrapFromCloud (async)
+            }
+            this._bootstrapFromCloud(cedula);  // refina con datos reales de la nube
         } else {
             // Datos locales ok → migrar y sincronizar en background
             this._migrate();
@@ -54,6 +61,11 @@ class DataStore {
         if (options.listen) {
             this._startRealtimeListener();
         }
+    }
+
+    /** ¿Los datos están vacíos o son de una versión anterior del dataset? */
+    _isStale(d) {
+        return !d || d._v !== DATA_VERSION || !d.companies || d.companies.length === 0;
     }
 
     /** Carga desde Supabase si localStorage está vacío (primer login / nuevo dispositivo).
@@ -75,7 +87,7 @@ class DataStore {
                 if (error) throw error;
                 cloudReachable = true;   // la consulta respondió (exista o no la fila)
 
-                if (row && row.data && row.data.companies && row.data.companies.length > 0) {
+                if (row && !this._isStale(row.data)) {
                     this.data = row.data;
                     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
                     loaded = true;
@@ -91,7 +103,7 @@ class DataStore {
                 // La nube no respondió: NO regeneramos para no pisar datos buenos.
                 // Reintentamos suavemente más tarde en lugar de borrar.
                 console.warn('[MaintPro] ⏳ Nube inaccesible — reintentando en 4s (sin regenerar).');
-                this.data = this.load();  // último estado local conocido, si lo hubiera
+                this.data = this.load() || this.data;  // preservar baseline/local si existe
                 if (!this.data) {
                     setTimeout(() => { if (!this.data) this._bootstrapFromCloud(cedula); }, 4000);
                     return;
@@ -309,8 +321,8 @@ class DataStore {
     }
 
     // ---------- Company (single per student) ----------
-    getCompanies() { return this.data.companies; }
-    getCompany(id) { return this.data.companies.find(c => c.id === id); }
+    getCompanies() { return this.data ? this.data.companies : []; }
+    getCompany(id) { return this.data ? this.data.companies.find(c => c.id === id) : undefined; }
     getCurrentCompany() { return this.getCompany(this.currentCompanyId); }
 
     setCurrentCompany(id) {
@@ -318,15 +330,19 @@ class DataStore {
     }
 
     // ---------- Generic CRUD ----------
+    // Guard contra this.data == null (p.ej. store temporal del docente cuya
+    // carga desde la nube aún no terminó) para no lanzar excepciones.
     _getCollection(name) {
+        if (!this.data) return [];
         return (this.data[name] || []).filter(item => item.companyId === this.currentCompanyId);
     }
 
     _getAll(name) {
-        return this.data[name] || [];
+        return this.data ? (this.data[name] || []) : [];
     }
 
     _getById(name, id) {
+        if (!this.data) return undefined;
         return (this.data[name] || []).find(item => item.id === id);
     }
 

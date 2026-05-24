@@ -29,6 +29,11 @@ const STUDENTS = [
 
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'Tosem2026' };
 
+// Versión del dataset generado. Súbela para forzar que TODOS los usuarios
+// (incluido el demo) regeneren sus datos con la estructura nueva al entrar.
+// v2: 10 activos, 2 técnicos por especialidad, inventario completo, ≥12 OTs.
+const DATA_VERSION = 2;
+
 // ---- Helpers ----
 function getStudentByCedula(cedula) {
     return STUDENTS.find(s => s.cedula === cedula) || null;
@@ -349,8 +354,8 @@ function generateStudentData(cedula) {
         cedula: cedula
     };
 
-    // 5 activos deterministas del pool de 10
-    const selectedAssets = pickN(rng, sector.assets.map((a, i) => ({ ...a, _idx: i })), 5);
+    // 10 activos deterministas (5 base + 5 adicionales del pool)
+    const selectedAssets = pickN(rng, sector.assets.map((a, i) => ({ ...a, _idx: i })), 10);
     const assets = selectedAssets.map((a, i) => {
         const yr = 2019 + Math.floor(rng() * 5);
         const mo = String(1 + Math.floor(rng() * 12)).padStart(2, '0');
@@ -376,29 +381,56 @@ function generateStudentData(cedula) {
         };
     });
 
-    // 5 técnicos del pool de 7
-    const selectedTechs = pickN(createRNG(seed + 100), sector.techPool, 5);
-    const personnel = selectedTechs.map((t, i) => ({
-        id: `per_${cedula}_${i}`,
-        companyId: company.id,
-        name: t.name,
-        role: t.role,
-        specialization: t.specialization,
-        email: `${t.name.split(' ')[0].toLowerCase()}@${sector.companyPrefix.toLowerCase()}.co`,
-        phone: `3${Math.floor(10 + rng() * 89)}-${Math.floor(100 + rng() * 899)}-${Math.floor(1000 + rng() * 8999)}`,
-        status: 'activo',
-        shift: t.shift,
-        hourlyRate: t.hourlyRate || 25000,
-        certifications: t.certifications || []
-    }));
+    // 2 técnicos por especialidad: el titular del pool + un técnico de respaldo
+    const BACKUP_NAMES = [
+        'María Fernanda López', 'Jorge Iván Soto', 'Claudia Marcela Ríos', 'Andrés Camilo Vega',
+        'Natalia Restrepo Ariza', 'Óscar Daniel Mejía', 'Paola Andrea Cárdenas', 'Julián Esteban Mora',
+        'Lucía Gómez Pardo', 'Felipe Andrés Niño', 'Sandra Liliana Parra', 'Ricardo Antonio Suárez',
+        'Tatiana Gil Romero', 'Mauricio León Díaz'
+    ];
+    const techRng = createRNG(seed + 100);
+    const slug = (name) => name.split(' ')[0].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const domain = sector.companyPrefix.toLowerCase().replace(/\s+/g, '');
+    const makePhone = () => `3${Math.floor(10 + techRng() * 89)}-${Math.floor(100 + techRng() * 899)}-${Math.floor(1000 + techRng() * 8999)}`;
+    const personnel = [];
+    sector.techPool.forEach((t, i) => {
+        // Técnico titular
+        personnel.push({
+            id: `per_${cedula}_${i}_a`,
+            companyId: company.id,
+            name: t.name,
+            role: t.role,
+            specialization: t.specialization,
+            email: `${slug(t.name)}@${domain}.co`,
+            phone: makePhone(),
+            status: 'activo',
+            shift: t.shift,
+            hourlyRate: t.hourlyRate || 25000,
+            certifications: t.certifications || []
+        });
+        // Técnico de respaldo (misma especialidad, turno opuesto)
+        const bn = BACKUP_NAMES[(seed + i * 3) % BACKUP_NAMES.length];
+        personnel.push({
+            id: `per_${cedula}_${i}_b`,
+            companyId: company.id,
+            name: bn,
+            role: t.role,
+            specialization: t.specialization,
+            email: `${slug(bn)}.${i}@${domain}.co`,
+            phone: makePhone(),
+            status: 'activo',
+            shift: (t.shift || '').startsWith('Nocturno') ? 'Diurno (6am-6pm)' : 'Nocturno (6pm-6am)',
+            hourlyRate: Math.round((t.hourlyRate || 25000) * 0.92),
+            certifications: t.certifications || []
+        });
+    });
 
-    // 4 ítems de inventario del pool de 6
-    const selectedInv = pickN(createRNG(seed + 200), sector.inventoryPool, 4);
-    const inventory = selectedInv.map((item, i) => ({
+    // Inventario completo: todos los ítems del pool (repuestos, filtros, lubricantes, etc.)
+    const inventory = sector.inventoryPool.map((item, i) => ({
         id: `inv_${cedula}_${i}`,
         companyId: company.id,
         ...item,
-        location: `Almacén Central — Estante ${String.fromCharCode(65 + i)}${i + 1}`
+        location: `Almacén Central — Estante ${String.fromCharCode(65 + (i % 6))}${i + 1}`
     }));
 
     // 2 planes preventivos (vinculados a los activos del estudiante)
@@ -510,9 +542,83 @@ function generateStudentData(cedula) {
         }
     ];
 
-    // Descontar del inventario inicial las piezas consumidas por OTs ya completadas
-    inventory[0].quantity = Math.max(0, parseInt(inventory[0].quantity) - 1).toString();
-    inventory[1].quantity = Math.max(0, parseInt(inventory[1].quantity) - 2).toString();
+    // --- Generar OTs adicionales hasta tener al menos 12, cubriendo todos los activos ---
+    const corrDesc = [
+        'Sobrecalentamiento detectado en operación continua',
+        'Ruido anormal y vibración fuera de rango',
+        'Fuga detectada en sello / empaque',
+        'Disparo recurrente de protección eléctrica',
+        'Pérdida de presión / caudal por debajo de lo nominal'
+    ];
+    const prevDesc = [
+        'Inspección preventiva programada y lubricación',
+        'Cambio de filtros y consumibles según plan',
+        'Ajuste, limpieza y verificación de parámetros',
+        'Análisis de vibraciones y termografía de rutina'
+    ];
+    const failureModes = ['mecánico', 'eléctrico', 'hidráulico', 'lubricación', 'desgaste'];
+    const priorities = ['critica', 'alta', 'media', 'baja'];
+    const pick = (arr, i) => arr[((i % arr.length) + arr.length) % arr.length];
+
+    for (let k = 3; k < 12; k++) {
+        const asset = assets[k % assets.length];
+        const tech = personnel[k % personnel.length];
+        const isPrev = k % 2 === 0;
+        const status = (k % 4 === 0) ? 'en_progreso' : (k % 5 === 0 ? 'pendiente' : 'completada');
+        const created = -(8 + k * 2);
+        const wo = {
+            id: `wo_${cedula}_${k}`,
+            companyId: company.id,
+            assetId: asset.id,
+            type: isPrev ? 'preventivo' : 'correctivo',
+            priority: pick(priorities, k + (asset.criticality === 'alta' ? 0 : 1)),
+            status,
+            description: isPrev ? pick(prevDesc, k) : pick(corrDesc, k),
+            assignedTo: tech.id,
+            createdDate: offsetDate(created),
+            estimatedHours: 2 + (k % 4),
+            spareParts: '',
+            partsUsed: [],
+            notes: isPrev
+                ? 'Actividad planificada ejecutada conforme al programa de mantenimiento.'
+                : 'Falla atendida por el equipo técnico; se restableció la operación.'
+        };
+        if (status !== 'pendiente') wo.startDate = offsetDate(created);
+        if (status === 'completada') {
+            wo.completedDate = offsetDate(created + 1);
+            wo.actualHours = wo.estimatedHours + (k % 2);
+            const item = inventory[k % inventory.length];
+            wo.partsUsed = [{
+                itemId: item.id, name: item.name,
+                quantity: 1 + (k % 2),
+                unitCost: parseFloat(item.unitCost) || 50000
+            }];
+            if (!isPrev) {
+                wo.failureMode = pick(failureModes, k);
+                wo.why1 = 'Se reportó una anomalía durante la operación normal.';
+                wo.why2 = 'Un componente operó fuera de sus parámetros de diseño.';
+                wo.why3 = 'Existía un desgaste/holgura no detectado a tiempo.';
+                wo.why4 = 'La frecuencia de inspección no era suficiente para el modo de falla.';
+                wo.why5 = 'No se había definido una tarea preventiva específica para este componente.';
+                wo.rootCause = 'Falta de una tarea preventiva específica e inspección con la frecuencia adecuada.';
+                wo.correctiveAction = 'Incorporar inspección dirigida y ajustar la frecuencia del plan preventivo del activo.';
+            }
+        }
+        workOrders.push(wo);
+    }
+
+    // --- Asegurar inventario suficiente para los mantenimientos de los equipos ---
+    const consumo = {};
+    workOrders.forEach(w => (w.partsUsed || []).forEach(p => {
+        consumo[p.itemId] = (consumo[p.itemId] || 0) + (parseFloat(p.quantity) || 0);
+    }));
+    inventory.forEach(it => {
+        const need = consumo[it.id] || 0;
+        const minS = parseFloat(it.minStock) || 0;
+        const have = parseFloat(it.quantity) || 0;
+        // Stock cómodo por encima del mínimo, aun después del consumo simulado
+        it.quantity = String(Math.max(have, need + minS + 3));
+    });
 
     // --- NUEVO: Solicitudes de Trabajo Iniciales ---
     const workRequests = [
@@ -558,6 +664,7 @@ function generateStudentData(cedula) {
     ];
 
     return {
+        _v: DATA_VERSION,   // versión del dataset (fuerza regeneración al actualizar)
         companies: [company],
         assets: assets,
         workOrders: workOrders,

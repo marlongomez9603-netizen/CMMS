@@ -78,6 +78,11 @@ html {
   scroll-behavior: smooth;
 }
 
+html {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
 body {
   font-family: var(--font-family);
   background: var(--bg-deepest);
@@ -85,7 +90,9 @@ body {
   line-height: 1.6;
   overflow: hidden;
   height: 100vh;
+  height: 100dvh;
   display: flex;
+  overscroll-behavior: none;
 }
 
 #appContainer {
@@ -312,9 +319,11 @@ a {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;        /* el header queda fijo; solo #content hace scroll */
   min-width: 0;
+  min-height: 0;
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* Top Bar */
@@ -361,6 +370,11 @@ a {
   flex: 1;
   padding: 24px;
   background: var(--bg-deepest);
+  overflow-y: auto;            /* única zona scrolleable */
+  overflow-x: hidden;
+  min-height: 0;
+  overscroll-behavior: contain; /* no "rebote" ni fondo visible al llegar al final */
+  -webkit-overflow-scrolling: touch;
 }
 
 .view-section {
@@ -3139,7 +3153,7 @@ input[type="number"]::-webkit-outer-spin-button {
   /* Sticky & Swipeable technician tabs on tablet and mobile */
   .tech-view-tabs {
     position: sticky !important;
-    top: 59px !important; /* just below topbar (60px height) */
+    top: 0 !important; /* #content ya empieza debajo del header fijo */
     background: var(--bg-deepest) !important;
     z-index: 45 !important;
     display: flex !important;

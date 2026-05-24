@@ -35,6 +35,7 @@
         const apellido = getStudentApellido(student.nombre);
 
         return {
+            _v: (typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 2),  // evita regeneración del store
             companies: [{
                 id: `company_${cedula}`,
                 name: `${sector.companyPrefix} ${apellido}`,
