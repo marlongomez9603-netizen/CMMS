@@ -1112,10 +1112,76 @@ class App {
         }));
     }
 
+    // ----- Helpers visuales del dashboard (sparklines + color de salud) -----
+    /** Devuelve clase de salud según umbrales. higherBetter=true: más alto es mejor. */
+    _health(v, good, warn, higherBetter = true) {
+        v = parseFloat(v) || 0;
+        if (higherBetter) return v >= good ? 'health-good' : v >= warn ? 'health-warn' : 'health-bad';
+        return v <= good ? 'health-good' : v <= warn ? 'health-warn' : 'health-bad';
+    }
+
+    /** Conteo de OTs creadas por semana (últimas N semanas), de más antigua a más reciente */
+    _weeklyWOCounts(weeks = 8) {
+        const counts = new Array(weeks).fill(0);
+        const msWeek = 7 * 24 * 3600 * 1000;
+        const ref = new Date(); ref.setHours(0, 0, 0, 0);
+        store.getWorkOrders().forEach(w => {
+            const d = w.createdDate || w.startDate; if (!d) return;
+            const dt = new Date(d + 'T12:00:00');
+            const dw = Math.floor((ref - dt) / msWeek);
+            if (dw >= 0 && dw < weeks) counts[weeks - 1 - dw]++;
+        });
+        return counts;
+    }
+
+    /** Costo de mantenimiento por semana (OTs completadas), de más antigua a más reciente */
+    _weeklyCost(weeks = 8) {
+        const buckets = new Array(weeks).fill(0);
+        const msWeek = 7 * 24 * 3600 * 1000;
+        const ref = new Date(); ref.setHours(0, 0, 0, 0);
+        store.getWorkOrders().filter(w => w.status === 'completada').forEach(w => {
+            const d = w.completedDate; if (!d) return;
+            const dt = new Date(d + 'T12:00:00');
+            const dw = Math.floor((ref - dt) / msWeek);
+            if (dw < 0 || dw >= weeks) return;
+            const hours = parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 0;
+            const tech = store.getPersonnelById(w.assignedTo);
+            const rate = tech ? (parseFloat(tech.hourlyRate) || 25000) : 25000;
+            let parts = 0;
+            if (Array.isArray(w.partsUsed)) parts = w.partsUsed.reduce((s, p) => s + ((parseFloat(p.quantity) || 0) * (parseFloat(p.unitCost) || 0)), 0);
+            buckets[weeks - 1 - dw] += hours * rate + parts;
+        });
+        return buckets;
+    }
+
+    /** SVG inline de mini-tendencia (sparkline) a partir de una serie de valores */
+    _sparklineSVG(values, color = 'var(--primary)') {
+        const vals = (values && values.length) ? values : [0, 0];
+        const n = vals.length;
+        const max = Math.max(...vals, 1), min = Math.min(...vals, 0);
+        const range = (max - min) || 1;
+        const W = 100, H = 28, pad = 3;
+        const pts = vals.map((v, i) => {
+            const x = n === 1 ? W / 2 : (i / (n - 1)) * W;
+            const y = H - pad - ((v - min) / range) * (H - pad * 2);
+            return [x, y];
+        });
+        const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+        const area = `${line} L${W},${H} L0,${H} Z`;
+        const last = pts[pts.length - 1];
+        return `<svg class="kpi-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+            <path class="spark-area" d="${area}" fill="${color}"/>
+            <path class="spark-line" d="${line}" stroke="${color}" vector-effect="non-scaling-stroke"/>
+            <circle class="spark-dot" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="${color}" vector-effect="non-scaling-stroke"/>
+        </svg>`;
+    }
+
     // ========== DASHBOARD ==========
     renderDashboard() {
         const el = document.getElementById('view-dashboard');
         const k = store.getKPIs();
+        const woTrend = this._weeklyWOCounts(8);
+        const costTrend = this._weeklyCost(8);
         const logs = store.getRecentLogs(8);
         const plans = store.getPreventivePlans();
         const today = store.today();
@@ -1140,13 +1206,13 @@ class App {
         </div>` : ''}
         <div class="kpi-grid">
             <div class="kpi-card kpi-primary"><div class="kpi-icon"><i class="fas fa-cogs"></i></div><div class="kpi-content"><div class="kpi-label">Total Activos</div><div class="kpi-value">${k.totalAssets}</div><div class="kpi-trend up"><i class="fas fa-circle-check"></i> ${k.activeAssets} operativos</div></div></div>
-            <div class="kpi-card kpi-warning"><div class="kpi-icon"><i class="fas fa-clipboard-list"></i></div><div class="kpi-content"><div class="kpi-label">OT Pendientes</div><div class="kpi-value">${k.pendingWOs}</div><div class="kpi-trend"><i class="fas fa-spinner"></i> ${k.inProgressWOs} en progreso</div></div></div>
+            <div class="kpi-card kpi-warning"><div class="kpi-icon"><i class="fas fa-clipboard-list"></i></div><div class="kpi-content"><div class="kpi-label">OT Pendientes</div><div class="kpi-value">${k.pendingWOs}</div><div class="kpi-trend"><i class="fas fa-spinner"></i> ${k.inProgressWOs} en progreso</div>${this._sparklineSVG(woTrend, 'var(--warning)')}<div class="kpi-trend" style="color:var(--text-muted)">OTs creadas · últimas 8 semanas</div></div></div>
             <div class="kpi-card kpi-success"><div class="kpi-icon"><i class="fas fa-clock"></i></div><div class="kpi-content"><div class="kpi-label">MTTR (horas)</div><div class="kpi-value">${k.mttr}</div><div class="kpi-trend">Tiempo medio de reparación</div></div></div>
             <div class="kpi-card kpi-info"><div class="kpi-icon"><i class="fas fa-calendar-days"></i></div><div class="kpi-content"><div class="kpi-label">MTBF (días)</div><div class="kpi-value">${k.mtbf}</div><div class="kpi-trend">Tiempo medio entre fallas</div></div></div>
-            <div class="kpi-card kpi-primary"><div class="kpi-icon"><i class="fas fa-gauge-high"></i></div><div class="kpi-content"><div class="kpi-label">Disponibilidad</div><div class="kpi-value">${k.availability}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill ${k.availability >= 90 ? 'fill-success' : k.availability >= 75 ? 'fill-warning' : 'fill-danger'}" style="width:${k.availability}%"></div></div></div></div>
-            <div class="kpi-card kpi-danger"><div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="kpi-content"><div class="kpi-label">PM Vencidos</div><div class="kpi-value">${k.overduePMs}</div><div class="kpi-trend">${k.activePlans} planes activos</div></div></div>
-            <div class="kpi-card kpi-success"><div class="kpi-icon"><i class="fas fa-chart-line"></i></div><div class="kpi-content"><div class="kpi-label">Cumplimiento PM</div><div class="kpi-value">${k.planCompliance}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill ${k.planCompliance >= 80 ? 'fill-success' : k.planCompliance >= 50 ? 'fill-warning' : 'fill-danger'}" style="width:${k.planCompliance}%"></div></div></div></div>
-            <div class="kpi-card kpi-warning"><div class="kpi-icon"><i class="fas fa-coins"></i></div><div class="kpi-content"><div class="kpi-label">Costo Total Mtto</div><div class="kpi-value" style="font-size:1.2rem">${this.fmtMoney(k.totalCost)}</div><div class="kpi-trend"><i class="fas fa-users"></i> MO: ${this.fmtMoney(k.laborCost)} · <i class="fas fa-box"></i> Rep: ${this.fmtMoney(k.partsCost)}</div></div></div>
+            <div class="kpi-card kpi-primary"><div class="kpi-icon"><i class="fas fa-gauge-high"></i></div><div class="kpi-content"><div class="kpi-label">Disponibilidad</div><div class="kpi-value ${this._health(k.availability, 90, 75)}">${k.availability}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill ${k.availability >= 90 ? 'fill-success' : k.availability >= 75 ? 'fill-warning' : 'fill-danger'}" style="width:${k.availability}%"></div></div></div></div>
+            <div class="kpi-card kpi-danger"><div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="kpi-content"><div class="kpi-label">PM Vencidos</div><div class="kpi-value ${this._health(k.overduePMs, 0, 2, false)}">${k.overduePMs}</div><div class="kpi-trend">${k.activePlans} planes activos</div></div></div>
+            <div class="kpi-card kpi-success"><div class="kpi-icon"><i class="fas fa-chart-line"></i></div><div class="kpi-content"><div class="kpi-label">Cumplimiento PM</div><div class="kpi-value ${this._health(k.planCompliance, 80, 50)}">${k.planCompliance}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill ${k.planCompliance >= 80 ? 'fill-success' : k.planCompliance >= 50 ? 'fill-warning' : 'fill-danger'}" style="width:${k.planCompliance}%"></div></div></div></div>
+            <div class="kpi-card kpi-warning"><div class="kpi-icon"><i class="fas fa-coins"></i></div><div class="kpi-content"><div class="kpi-label">Costo Total Mtto</div><div class="kpi-value" style="font-size:1.2rem">${this.fmtMoney(k.totalCost)}</div><div class="kpi-trend"><i class="fas fa-users"></i> MO: ${this.fmtMoney(k.laborCost)} · <i class="fas fa-box"></i> Rep: ${this.fmtMoney(k.partsCost)}</div>${this._sparklineSVG(costTrend, 'var(--warning)')}<div class="kpi-trend" style="color:var(--text-muted)">Costo · últimas 8 semanas</div></div></div>
         </div>
         <div class="dashboard-charts">
             <div class="chart-card"><div class="card-title">Órdenes por Tipo</div><div class="chart-wrapper"><canvas id="chartWOType"></canvas></div></div>
