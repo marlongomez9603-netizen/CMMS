@@ -1202,7 +1202,7 @@ class App {
             const warrantyLabel = a.warrantyDate ? (warrantyExpired ? `<span style="color:var(--text-muted)">Vencida</span>` : `<span style="color:var(--success)">${this.fmtDate(a.warrantyDate)}</span>`) : '—';
             return `<tr><td><strong>${a.code}</strong></td><td>${a.name}</td><td>${a.category}</td><td>${a.location}${a.functionalLocation ? `<br><span style="font-size:0.68rem;color:var(--text-muted)"><i class="fas fa-sitemap"></i> ${a.functionalLocation}</span>` : ''}</td>
             <td>${this.criticalityHTML(a.criticality)}</td><td>${this.statusBadge(a.status)}</td><td>${warrantyLabel}</td>
-            <td><div class="action-btns"><button class="btn btn-icon btn-sm" data-viewasset="${a.id}" data-tooltip="Ver historial"><i class="fas fa-eye"></i></button><button class="btn btn-icon btn-sm" data-edit="${a.id}"><i class="fas fa-pen"></i></button><button class="btn btn-icon btn-sm" data-del="${a.id}"><i class="fas fa-trash"></i></button></div></td></tr>`;
+            <td><div class="action-btns"><button class="btn btn-icon btn-sm" data-viewasset="${a.id}" data-tooltip="Ver historial"><i class="fas fa-eye"></i></button><button class="btn btn-icon btn-sm" data-cal="${a.id}" data-tooltip="Descargar calendario anual" style="color:var(--primary)"><i class="fas fa-calendar-days"></i></button><button class="btn btn-icon btn-sm" data-edit="${a.id}"><i class="fas fa-pen"></i></button><button class="btn btn-icon btn-sm" data-del="${a.id}"><i class="fas fa-trash"></i></button></div></td></tr>`;
         }).join('');
     }
 
@@ -1218,6 +1218,7 @@ class App {
 
     bindAssetActions() {
         document.querySelectorAll('[data-viewasset]').forEach(b => b.addEventListener('click', () => { this.viewingAssetId = b.dataset.viewasset; this.navigate('assetDetail'); }));
+        document.querySelectorAll('[data-cal]').forEach(b => b.addEventListener('click', () => this.exportAssetCalendarPDF(b.dataset.cal)));
         document.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => this.showAssetForm(b.dataset.edit)));
         document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
             this.confirmAction('Este activo será eliminado permanentemente.', () => { store.deleteAsset(b.dataset.del); this.renderAssets(); this.toast('Activo eliminado', 'danger'); });
@@ -1873,7 +1874,7 @@ class App {
         const warrantyLabel = asset.warrantyDate ? (asset.warrantyDate < today ? '<span style="color:var(--danger)">Garantía Vencida</span>' : `<span style="color:var(--success)">Vigente hasta ${this.fmtDate(asset.warrantyDate)}</span>`) : '—';
         const typeLabels = { correctivo: 'Correctivo', preventivo: 'Preventivo', predictivo: 'Predictivo', mejora: 'Mejora' };
         el.innerHTML = `
-        <div class="toolbar"><div class="toolbar-left"><button class="btn btn-secondary" id="btnBackAssets"><i class="fas fa-arrow-left"></i> Volver a Activos</button></div></div>
+        <div class="toolbar"><div class="toolbar-left"><button class="btn btn-secondary" id="btnBackAssets"><i class="fas fa-arrow-left"></i> Volver a Activos</button></div><div class="toolbar-right"><button class="btn btn-primary" id="btnAssetCalendar"><i class="fas fa-calendar-days"></i> Descargar Calendario Anual</button></div></div>
         <div class="asset-detail-header"><div><h2 class="asset-detail-name">${asset.name}</h2><div class="asset-detail-code">${asset.code} · ${asset.brand || ''} ${asset.model || ''}</div></div><div>${this.statusBadge(asset.status)} ${this.criticalityHTML(asset.criticality)}</div></div>
         <div class="detail-grid" style="margin-bottom:24px">
             <div class="detail-field"><div class="detail-field-label">Categoría</div><div class="detail-field-value">${asset.category}</div></div>
@@ -1912,6 +1913,7 @@ class App {
             </div>
         </div>`;
         document.getElementById('btnBackAssets').addEventListener('click', () => this.navigate('assets'));
+        document.getElementById('btnAssetCalendar').addEventListener('click', () => this.exportAssetCalendarPDF(this.viewingAssetId));
     }
 
     // ========== REPORTS ==========
@@ -2335,6 +2337,152 @@ class App {
 
         doc.save(`OT-${woId.substring(0,8).toUpperCase()}_${asset?.code || 'EQU'}_${store.today()}.pdf`);
         this.toast('\uD83D\uDCC4 PDF generado correctamente', 'success');
+    }
+
+    /** Convierte la frecuencia de un plan a un intervalo en d\u00EDas */
+    _planIntervalDays(plan) {
+        const n = parseFloat(plan.frequency) || 0;
+        const u = (plan.frequencyUnit || 'd\u00EDas').toLowerCase();
+        const mult = u.startsWith('sem') ? 7 : u.startsWith('mes') ? 30 : (u.startsWith('a\u00F1') || u.startsWith('an')) ? 365 : 1;
+        return Math.max(1, Math.round(n * mult));
+    }
+
+    /** Proyecta las fechas de ejecuci\u00F3n de un plan dentro de un a\u00F1o dado */
+    _planOccurrencesInYear(plan, year) {
+        const interval = this._planIntervalDays(plan);
+        const anchor = plan.nextExecution || plan.lastExecution || store.today();
+        const yStart = new Date(year, 0, 1, 12, 0, 0);
+        const yEnd = new Date(year, 11, 31, 12, 0, 0);
+        let d = new Date(anchor + 'T12:00:00');
+        if (isNaN(d)) d = new Date(yStart);
+        let guard = 0;
+        while (d > yStart && guard++ < 2000) d.setDate(d.getDate() - interval);
+        const out = [];
+        guard = 0;
+        while (d <= yEnd && guard++ < 4000) {
+            if (d >= yStart) out.push(new Date(d));
+            d.setDate(d.getDate() + interval);
+        }
+        return out;
+    }
+
+    /** Genera el PDF del calendario anual de mantenimiento preventivo de un equipo */
+    exportAssetCalendarPDF(assetId, year) {
+        if (!window.jspdf) { this.toast('No se pudo cargar el generador de PDF. Recarga la p\u00E1gina.', 'danger'); return; }
+        const asset = store.getAsset(assetId); if (!asset) return;
+        const company = store.getCurrentCompany();
+        const plans = store.getPreventivePlans().filter(p => p.assetId === assetId && p.status === 'activo');
+        if (plans.length === 0) {
+            this.toast('Este equipo no tiene planes preventivos activos para programar.', 'warning');
+            return;
+        }
+        year = year || new Date().getFullYear();
+        const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+        // Construir cronograma combinado y resumen mensual
+        const schedule = [];   // { date, plan }
+        const monthly = Array.from({ length: 12 }, () => 0);
+        let totalHours = 0;
+        plans.forEach(p => {
+            this._planOccurrencesInYear(p, year).forEach(d => {
+                schedule.push({ date: d, plan: p });
+                monthly[d.getMonth()]++;
+                totalHours += parseFloat(p.estimatedHours) || 0;
+            });
+        });
+        schedule.sort((a, b) => a.date - b.date);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        // \u2500\u2500 HEADER \u2500\u2500
+        doc.setFillColor(13, 17, 35);
+        doc.rect(0, 0, 210, 42, 'F');
+        doc.setFillColor(97, 218, 251);
+        doc.roundedRect(12, 9, 11, 11, 2, 2, 'F');
+        doc.setTextColor(13, 17, 35); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+        doc.text('MP', 17.5, 16.5, { align: 'center' });
+        doc.setTextColor(97, 218, 251); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+        doc.text('MaintPro CMMS', 27, 17);
+        doc.setTextColor(160, 180, 210); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text('PLAN ANUAL DE MANTENIMIENTO PREVENTIVO', 27, 23);
+        doc.setTextColor(255, 255, 255); doc.setFontSize(20); doc.setFont('helvetica', 'bold');
+        doc.text(`${year}`, 198, 17, { align: 'right' });
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 180, 210);
+        doc.text(company?.name || '', 198, 24, { align: 'right' });
+        doc.text('UNIPAZ \u2014 TOSEM 2026-1', 198, 30, { align: 'right' });
+
+        let y = 50;
+        const section = (title) => {
+            doc.setFillColor(20, 35, 70); doc.rect(12, y, 186, 7, 'F');
+            doc.setTextColor(97, 218, 251); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+            doc.text(title, 15, y + 5); y += 10;
+        };
+
+        // \u2500\u2500 ACTIVO \u2500\u2500
+        section('\u25FE EQUIPO');
+        doc.autoTable({
+            startY: y,
+            body: [
+                ['Equipo:', asset.name, 'C\u00F3digo:', asset.code],
+                ['Categor\u00EDa:', asset.category || '\u2014', 'Criticidad:', (asset.criticality || '\u2014').toUpperCase()],
+                ['Ubicaci\u00F3n:', asset.location || '\u2014', 'Ubic. funcional:', asset.functionalLocation || '\u2014'],
+            ],
+            theme: 'plain',
+            styles: { fontSize: 8.5, cellPadding: 2.5 },
+            columnStyles: { 0:{ fontStyle:'bold', cellWidth:32, textColor:[50,70,120] }, 1:{ cellWidth:61 }, 2:{ fontStyle:'bold', cellWidth:32, textColor:[50,70,120] }, 3:{ cellWidth:61 } },
+            margin: { left: 12, right: 12 },
+            alternateRowStyles: { fillColor: [240,246,255] },
+        });
+        y = doc.lastAutoTable.finalY + 8;
+
+        // \u2500\u2500 RESUMEN MENSUAL \u2500\u2500
+        section('\u25FE RESUMEN MENSUAL DE INTERVENCIONES');
+        doc.autoTable({
+            startY: y,
+            head: [MESES.map(m => m.substring(0, 3))],
+            body: [monthly.map(c => c > 0 ? String(c) : '\u00B7')],
+            theme: 'grid',
+            styles: { fontSize: 7.5, halign: 'center', cellPadding: 1.8 },
+            headStyles: { fillColor: [30, 50, 90], textColor: [255,255,255], fontSize: 7 },
+            margin: { left: 12, right: 12 },
+        });
+        y = doc.lastAutoTable.finalY + 8;
+
+        // \u2500\u2500 CRONOGRAMA DETALLADO \u2500\u2500
+        section('\u25FE CRONOGRAMA DETALLADO');
+        doc.autoTable({
+            startY: y,
+            head: [['Fecha', 'Mes', 'Plan Preventivo', 'Frecuencia', 'Responsable', 'Hrs']],
+            body: schedule.map(s => [
+                this.fmtDate(s.date.toISOString().split('T')[0]),
+                MESES[s.date.getMonth()],
+                s.plan.name,
+                `Cada ${s.plan.frequency} ${s.plan.frequencyUnit}`,
+                this.getPersonName(s.plan.assignedTo),
+                String(s.plan.estimatedHours || '\u2014')
+            ]),
+            theme: 'striped',
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [20, 35, 70], textColor: [97, 218, 251] },
+            columnStyles: { 0:{ cellWidth:22 }, 2:{ cellWidth:48 }, 5:{ halign:'center', cellWidth:12 } },
+            margin: { left: 12, right: 12 },
+        });
+        y = doc.lastAutoTable.finalY + 8;
+
+        // \u2500\u2500 TOTALES \u2500\u2500
+        if (y > 250) { doc.addPage(); y = 20; }
+        doc.setTextColor(30, 40, 65); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text(`Total intervenciones programadas en ${year}: ${schedule.length}   |   Horas-hombre estimadas: ${totalHours.toFixed(1)} h`, 14, y);
+
+        // \u2500\u2500 FOOTER \u2500\u2500
+        const ph = doc.internal.pageSize.getHeight();
+        doc.setFillColor(13, 17, 35); doc.rect(0, ph - 12, 210, 12, 'F');
+        doc.setTextColor(97, 218, 251); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+        doc.text(`MaintPro CMMS v4.0  |  UNIPAZ \u2014 TOSEM 2026-1  |  Generado: ${new Date().toLocaleString('es-CO')}  |  ${company?.name || ''}`, 105, ph - 5, { align: 'center' });
+
+        doc.save(`Calendario_${year}_${asset.code}.pdf`);
+        this.toast('\uD83D\uDCC5 Calendario anual generado', 'success');
     }
 
     // ========================================================
