@@ -74,9 +74,13 @@ class DataStore {
         }
     }
 
-    /** ¿Los datos están vacíos o son de una versión anterior del dataset? */
+    /** ¿El sistema está GENUINAMENTE vacío? (único caso en que se generan datos nuevos)
+     *  IMPORTANTE: NO se regenera por diferencia de versión. Una vez que el estudiante
+     *  tiene datos, NUNCA se borran automáticamente — solo se migran (se agregan campos
+     *  faltantes). Así, la información ingresada por el estudiante no se pierde por ningún
+     *  motivo (cambios de versión, recargas, etc.). */
     _isStale(d) {
-        return !d || d._v !== DATA_VERSION || !d.companies || d.companies.length === 0;
+        return !d || !d.companies || d.companies.length === 0;
     }
 
     /** Carga desde Supabase si localStorage está vacío (primer login / nuevo dispositivo).
@@ -163,6 +167,8 @@ class DataStore {
         });
         if (!this.data.injectedAlerts) this.data.injectedAlerts = [];
         if (!this.data.notifications) this.data.notifications = [];
+        // Sellar versión actual SIN borrar datos (solo informativo / evita confusiones).
+        this.data._v = DATA_VERSION;
         this.save();
     }
 
@@ -206,6 +212,20 @@ class DataStore {
                     if (error) console.warn('[MaintPro] Error sync Supabase:', error.message);
                 });
         }, 400);
+    }
+
+    /** Fuerza la escritura inmediata a la nube (al cerrar/cambiar de pestaña),
+     *  cerrando la ventana del debounce para que no se pierda ningún cambio. */
+    flushSave() {
+        if (this._readOnly || !this._cloudEnabled || !this.data) return;
+        this._lastSaveTimestamp = Date.now();
+        try {
+            this.db.from('students').upsert({
+                cedula: this.cedula,
+                nombre: (typeof getStudentByCedula === 'function' && getStudentByCedula(this.cedula)?.nombre) || null,
+                data: this.data
+            }, { onConflict: 'cedula' }).then(() => {}, () => {});
+        } catch (e) {}
     }
 
     /** Real-time listener: detects remote changes (teacher fault injection, purchase approvals) */
@@ -929,4 +949,13 @@ let store = null;
 function initStore(cedula) {
     if (store && store.stopListening) store.stopListening();
     store = new DataStore(cedula, { listen: true });
+}
+
+// Guardado garantizado al cerrar/ocultar la pestaña: fuerza la escritura a la nube
+// sin esperar el debounce, para que ningún cambio quede sin sincronizar.
+if (typeof window !== 'undefined' && !window._maintproFlushBound) {
+    window._maintproFlushBound = true;
+    const _flush = () => { if (store && typeof store.flushSave === 'function') store.flushSave(); };
+    window.addEventListener('pagehide', _flush);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _flush(); });
 }

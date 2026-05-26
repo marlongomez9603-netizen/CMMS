@@ -80,6 +80,8 @@ html {
 
 html {
   height: 100%;
+  width: 100%;
+  overflow-x: hidden;
   overscroll-behavior: none;
 }
 
@@ -90,7 +92,10 @@ body {
   line-height: 1.6;
   overflow: hidden;
   height: 100vh;
-  height: 100dvh;
+  height: 100dvh;          /* viewport dinámico: respeta la barra del navegador móvil */
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   display: flex;
   overscroll-behavior: none;
 }
@@ -98,7 +103,9 @@ body {
 #appContainer {
   display: flex;
   width: 100vw;
+  max-width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -130,6 +137,7 @@ a {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
   height: 100vh;
+  height: 100dvh;
   background: var(--bg-deep);
   border-right: 1px solid var(--border);
   display: flex;
@@ -1456,7 +1464,12 @@ input[type="number"]::-webkit-outer-spin-button {
   align-items: center;
   justify-content: center;
   height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   width: 100vw;
+  max-width: 100vw;
+  overflow-y: auto;
+  padding: 16px;
   background: var(--bg-deepest);
   background-image:
     radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, 0.08) 0%, transparent 60%),
@@ -2859,6 +2872,7 @@ input[type="number"]::-webkit-outer-spin-button {
     top: 0;
     width: 280px;
     height: 100vh;
+    height: 100dvh;
     z-index: 1000;
     transition: left 0.3s ease;
   }
@@ -2875,6 +2889,7 @@ input[type="number"]::-webkit-outer-spin-button {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background: rgba(0,0,0,0.65);
     backdrop-filter: blur(4px);
     z-index: 999;
