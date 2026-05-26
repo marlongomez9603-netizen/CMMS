@@ -36,6 +36,7 @@ class DataStore {
         this._realtimeChannel = null;  // canal realtime de Supabase
         this._saveQueued = false;      // debounce de escrituras a la nube
         this._readOnly = !!options.readOnly;  // store de solo lectura (vista docente)
+        this._isMain = !!options.listen;      // store principal del estudiante logueado
 
         // Modo "preload": construir desde datos ya obtenidos (p.ej. panel docente
         // que cargó todos los estudiantes en una sola consulta). No carga de la nube.
@@ -71,6 +72,7 @@ class DataStore {
         // 3. Start real-time listener ONLY for the main store (not temp instances)
         if (options.listen) {
             this._startRealtimeListener();
+            if (this.data) this.scheduleAllPendingApprovals();  // reanudar auto-aprobaciones
         }
     }
 
@@ -133,6 +135,7 @@ class DataStore {
 
         this._migrate();
         this.currentCompanyId = this.data ? this.data.companies[0].id : null;
+        if (this._isMain) this.scheduleAllPendingApprovals();  // reanudar auto-aprobaciones
         // Notificar a la app que los datos están listos (rerender suave)
         if (window.app && typeof window.app.navigate === 'function') {
             window.app.navigate(window.app.currentSection || 'dashboard');
@@ -603,6 +606,9 @@ class DataStore {
     // Purchases > $1,000,000 COP require docente approval (needsApproval flag)
     APPROVAL_THRESHOLD = 0;
 
+    // Tiempo de auto-aprobación (simulación de la aprobación del gerente)
+    AUTO_APPROVE_MS = 15000;
+
     getPurchases() { return this._getCollection('purchases'); }
     getPurchase(id) { return this._getById('purchases', id); }
     addPurchase(p) {
@@ -611,10 +617,51 @@ class DataStore {
             p.status = 'pendiente_gerencia';
             p.needsApproval = true;
         }
-        return this._add('purchases', p);
+        const result = this._add('purchases', p);
+        if (result && result.status === 'pendiente_gerencia') {
+            this._scheduleAutoApprove(result.id);
+        }
+        return result;
     }
     updatePurchase(id, u) { return this._update('purchases', id, u); }
     deletePurchase(id) { this._delete('purchases', id); }
+
+    /** Programa la auto-aprobación de una compra pendiente a los 15 segundos */
+    _scheduleAutoApprove(purchaseId) {
+        if (!this._isMain) return;  // solo el store principal del estudiante
+        setTimeout(() => {
+            const p = this.getPurchase(purchaseId);
+            if (!p || p.status !== 'pendiente_gerencia') return;  // ya gestionada
+            this.updatePurchase(purchaseId, { status: 'aprobada', approvedDate: this.today() });
+            this.addNotification({
+                techId: null,
+                message: `✅ Compra aprobada: ${p.itemName || 'Repuesto'}${p.estimatedCost ? ' — $ ' + Number(p.estimatedCost).toLocaleString('es-CO') : ''}`,
+                type: 'purchase_approved',
+                relatedId: purchaseId,
+                priority: 'alta'
+            });
+            this.addLog({ action: 'purchase_approved', message: `Compra aprobada automáticamente: ${p.itemName || purchaseId}` });
+            // Refrescar la UI si corresponde
+            if (window.app) {
+                if (typeof window.app.updateBadges === 'function') window.app.updateBadges();
+                if (window.app.currentView === 'purchases' || window.app.currentView === 'dashboard') {
+                    window.app.navigate(window.app.currentView);
+                }
+                if (typeof window.app.toast === 'function') {
+                    window.app.toast(`✅ Compra aprobada: ${p.itemName || 'Repuesto'}`, 'success');
+                }
+            }
+        }, this.AUTO_APPROVE_MS);
+    }
+
+    /** Reprograma la auto-aprobación de todas las compras que quedaron pendientes
+     *  (p.ej. tras recargar la página antes de que se cumplieran los 15s). */
+    scheduleAllPendingApprovals() {
+        if (!this._isMain || !this.data) return;
+        (this.data.purchases || [])
+            .filter(p => p.status === 'pendiente_gerencia')
+            .forEach(p => this._scheduleAutoApprove(p.id));
+    }
 
     autoCreatePurchase(itemId) {
         const item = this.getInventoryItem(itemId);
