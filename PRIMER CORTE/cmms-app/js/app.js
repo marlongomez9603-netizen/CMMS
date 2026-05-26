@@ -2099,6 +2099,9 @@ class App {
             </div>
             <button class="btn btn-icon" id="twNext"><i class="fas fa-chevron-right"></i></button>
         </div>
+        ${tech ? `<div style="display:flex;justify-content:flex-end;margin:10px 0 4px">
+            <button class="btn btn-sm btn-primary" id="twDownload"><i class="fas fa-file-pdf"></i> Descargar mis asignaciones de la semana</button>
+        </div>` : ''}
 
         <div class="twc-grid">
         ${days.map((d, i) => {
@@ -2151,9 +2154,113 @@ class App {
         document.getElementById('twPrev')?.addEventListener('click', () => { this.techWeekOffset--; this.renderTechWeeklyCalendar(techId); });
         document.getElementById('twNext')?.addEventListener('click', () => { this.techWeekOffset++; this.renderTechWeeklyCalendar(techId); });
         document.getElementById('twNow')?.addEventListener('click',  () => { this.techWeekOffset = 0; this.renderTechWeeklyCalendar(techId); });
+        document.getElementById('twDownload')?.addEventListener('click', () => this.exportTechWeekPDF(techId));
         area.querySelectorAll('[data-tech-view]').forEach(b => b.addEventListener('click', () => {
             this.showAssetDetailModal(b.dataset.techView);
         }));
+    }
+
+    /** Genera el PDF con las asignaciones semanales del técnico (la semana mostrada) */
+    exportTechWeekPDF(techId) {
+        if (!window.jspdf) { this.toast('No se pudo cargar el generador de PDF. Recarga la página.', 'danger'); return; }
+        const tech = store.getPersonnelById(techId);
+        if (!tech) { this.toast('Selecciona un técnico primero', 'warning'); return; }
+        const company = store.getCurrentCompany();
+
+        // Recalcular el lunes de la semana mostrada (mismo cálculo que el calendario)
+        const now = new Date();
+        const dow = now.getDay();
+        const diffToMon = dow === 0 ? -6 : 1 - dow;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diffToMon + (this.techWeekOffset * 7));
+        const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d; });
+        const dayNames = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+        const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const typeLabel = { correctivo:'Correctivo', preventivo:'Preventivo', predictivo:'Predictivo', mejora:'Mejora' };
+        const statusLabel = { pendiente:'Pendiente', en_progreso:'En progreso', completada:'Completada', cancelada:'Cancelada' };
+
+        const wos = store.getWorkOrders().filter(w => w.assignedTo === techId);
+        const plans = store.getPreventivePlans().filter(p => p.status === 'activo' && p.assignedTo === techId);
+
+        const rows = [];
+        let totalTasks = 0, totalHours = 0;
+        days.forEach((d, i) => {
+            const ds = d.toISOString().split('T')[0];
+            const dayLabel = `${dayNames[i]} ${d.getDate()}/${monthNames[d.getMonth()]}`;
+            const dayWOs = wos.filter(w => (w.scheduledDate || w.createdDate) === ds || w.startDate === ds || (w.completedDate === ds && w.status === 'completada'));
+            const dayPMs = plans.filter(p => p.nextExecution === ds);
+            if (dayWOs.length === 0 && dayPMs.length === 0) {
+                rows.push([dayLabel, '—', 'Sin asignaciones', '', '']);
+            } else {
+                dayWOs.forEach(w => {
+                    rows.push([dayLabel, typeLabel[w.type] || w.type, this.getAssetName(w.assetId), (w.description || '').substring(0, 55), statusLabel[w.status] || w.status]);
+                    totalTasks++; totalHours += parseFloat(w.estimatedHours) || 0;
+                });
+                dayPMs.forEach(p => {
+                    rows.push([dayLabel, 'PM Preventivo', this.getAssetName(p.assetId), p.name, 'Programado']);
+                    totalTasks++; totalHours += parseFloat(p.estimatedHours) || 0;
+                });
+            }
+        });
+
+        const weekLabel = `${days[0].getDate()} ${monthNames[days[0].getMonth()]} — ${days[6].getDate()} ${monthNames[days[6].getMonth()]} ${days[6].getFullYear()}`;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        // HEADER
+        doc.setFillColor(13, 17, 35); doc.rect(0, 0, 210, 40, 'F');
+        doc.setFillColor(97, 218, 251); doc.roundedRect(12, 9, 11, 11, 2, 2, 'F');
+        doc.setTextColor(13, 17, 35); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+        doc.text('MP', 17.5, 16.5, { align: 'center' });
+        doc.setTextColor(97, 218, 251); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+        doc.text('MaintPro CMMS', 27, 16);
+        doc.setTextColor(160, 180, 210); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text('PLAN SEMANAL DE TRABAJO — TÉCNICO', 27, 22);
+        doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(company?.name || '', 198, 14, { align: 'right' });
+        doc.text('UNIPAZ — TOSEM 2026-1', 198, 20, { align: 'right' });
+
+        // Técnico + semana
+        let y = 50;
+        doc.setTextColor(30, 40, 65); doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+        doc.text(tech.name, 14, y);
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(90, 100, 130);
+        doc.text(`${tech.role || ''}${tech.specialization ? ' · ' + tech.specialization : ''}`, 14, y + 5);
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(50, 70, 120);
+        doc.text(`Semana: ${weekLabel}`, 14, y + 11);
+        y += 18;
+
+        // Tabla de asignaciones
+        doc.autoTable({
+            startY: y,
+            head: [['Día', 'Tipo', 'Equipo', 'Detalle', 'Estado']],
+            body: rows,
+            theme: 'striped',
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [20, 35, 70], textColor: [97, 218, 251] },
+            columnStyles: { 0:{ cellWidth:30, fontStyle:'bold' }, 1:{ cellWidth:26 }, 2:{ cellWidth:42 }, 4:{ cellWidth:26 } },
+            margin: { left: 12, right: 12 },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.row.raw[2] === 'Sin asignaciones') {
+                    data.cell.styles.textColor = [150, 160, 180];
+                    data.cell.styles.fontStyle = 'italic';
+                }
+            }
+        });
+        y = doc.lastAutoTable.finalY + 8;
+
+        doc.setTextColor(30, 40, 65); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text(`Total de asignaciones en la semana: ${totalTasks}   |   Horas estimadas: ${totalHours.toFixed(1)} h`, 14, y);
+
+        // FOOTER
+        const ph = doc.internal.pageSize.getHeight();
+        doc.setFillColor(13, 17, 35); doc.rect(0, ph - 12, 210, 12, 'F');
+        doc.setTextColor(97, 218, 251); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+        doc.text(`MaintPro CMMS v4.0  |  UNIPAZ — TOSEM 2026-1  |  Generado: ${new Date().toLocaleString('es-CO')}  |  ${company?.name || ''}`, 105, ph - 5, { align: 'center' });
+
+        doc.save(`Asignaciones_${tech.name.replace(/\s+/g, '_')}_${days[0].toISOString().split('T')[0]}.pdf`);
+        this.toast('📅 Plan semanal descargado', 'success');
     }
 
     // ========================================================
