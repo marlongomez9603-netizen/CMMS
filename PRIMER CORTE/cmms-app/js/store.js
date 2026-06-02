@@ -481,6 +481,7 @@ class DataStore {
 
     // ---------- Notifications ----------
     addNotification(notif) {
+        if (!this.data) return;  // store sin datos (carga async no terminada)
         if (!this.data.notifications) this.data.notifications = [];
         this.data.notifications.unshift({
             id: this.genId(),
@@ -499,22 +500,26 @@ class DataStore {
     }
 
     getNotifications(techId) {
+        if (!this.data) return [];
         return (this.data.notifications || [])
             .filter(n => n.companyId === this.currentCompanyId && (!techId || n.techId === techId))
             .slice(0, 30);
     }
 
     getUnreadCount() {
+        if (!this.data) return 0;
         return (this.data.notifications || [])
             .filter(n => n.companyId === this.currentCompanyId && !n.read).length;
     }
 
     markNotificationRead(notifId) {
+        if (!this.data) return;
         (this.data.notifications || []).forEach(n => { if (n.id === notifId) n.read = true; });
         this.save();
     }
 
     markAllRead() {
+        if (!this.data) return;
         (this.data.notifications || [])
             .filter(n => n.companyId === this.currentCompanyId)
             .forEach(n => n.read = true);
@@ -544,12 +549,14 @@ class DataStore {
 
     // ---------- Inventory Movements (Kardex) ----------
     getInventoryMovements(itemId) {
+        if (!this.data) return [];
         return (this.data.inventoryMovements || [])
             .filter(m => m.itemId === itemId)
             .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     }
 
     getAllMovements() {
+        if (!this.data) return [];
         return (this.data.inventoryMovements || [])
             .filter(m => {
                 const item = this._getById('inventory', m.itemId);
@@ -559,6 +566,7 @@ class DataStore {
     }
 
     addInventoryMovement(movement) {
+        if (!this.data) return null;
         if (!this.data.inventoryMovements) this.data.inventoryMovements = [];
         movement.id = this.genId();
         movement.date = movement.date || new Date().toISOString();
@@ -696,6 +704,7 @@ class DataStore {
 
     // ---------- Activity Log ----------
     addLog(entry) {
+        if (!this.data) return;  // store sin datos (carga async no terminada)
         if (!this.data.activityLog) this.data.activityLog = [];
         this.data.activityLog.unshift({
             id: this.genId(),
@@ -708,6 +717,7 @@ class DataStore {
     }
 
     getRecentLogs(limit = 10) {
+        if (!this.data) return [];
         return (this.data.activityLog || [])
             .filter(l => l.companyId === this.currentCompanyId)
             .slice(0, limit);
@@ -882,6 +892,7 @@ class DataStore {
 
     // ---------- Fault Injection (Admin/Docente) ----------
     injectFailure(assetId, description, priority) {
+        if (!this.data) return null;
         const asset = this.getAsset(assetId);
         if (!asset) return null;
 
@@ -939,6 +950,7 @@ class DataStore {
 
     // ---------- Fault Reports ----------
     getFaultReports() {
+        if (!this.data) return [];
         return (this.data.faultReports || [])
             .filter(r => r.companyId === this.currentCompanyId);
     }
@@ -948,6 +960,7 @@ class DataStore {
     }
 
     resolveFaultReport(reportId, woId) {
+        if (!this.data) return null;
         const report = (this.data.faultReports || []).find(r => r.id === reportId);
         if (report) {
             report.status = 'gestionado';
@@ -959,11 +972,13 @@ class DataStore {
     }
 
     getUnseenAlerts() {
+        if (!this.data) return [];
         return (this.data.injectedAlerts || [])
             .filter(a => a.companyId === this.currentCompanyId && !a.seen);
     }
 
     markAlertSeen(alertId) {
+        if (!this.data) return;
         (this.data.injectedAlerts || []).forEach(a => {
             if (a.id === alertId) a.seen = true;
         });
