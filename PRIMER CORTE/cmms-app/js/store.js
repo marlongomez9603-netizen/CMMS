@@ -735,21 +735,38 @@ class DataStore {
         const pending = wos.filter(w => w.status === 'pendiente');
         const inProgress = wos.filter(w => w.status === 'en_progreso');
 
-        // MTTR
+        // MTTR (Mean Time To Repair) — solo correctivas completadas (ISO 14224)
+        const correctiveCompleted = completed.filter(w => w.type === 'correctivo');
         let mttr = 0;
-        if (completed.length > 0) {
-            const totalHours = completed.reduce((s, w) => s + (parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 2), 0);
-            mttr = (totalHours / completed.length).toFixed(1);
+        if (correctiveCompleted.length > 0) {
+            const totalCorrHours = correctiveCompleted.reduce((s, w) => s + (parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 2), 0);
+            mttr = parseFloat((totalCorrHours / correctiveCompleted.length).toFixed(1));
         }
 
-        // MTBF
-        const correctiveCompleted = completed.filter(w => w.type === 'correctivo');
-        let mtbf = assets.length > 0 ? Math.round(365 / Math.max(correctiveCompleted.length, 1)) : 0;
+        // MTBF de la flota (días promedio entre fallas en el último año)
+        const PERIODO_DIAS = 365;
+        const fallas = Math.max(correctiveCompleted.length, 1);
+        const mtbf = assets.length > 0 ? Math.round(PERIODO_DIAS / fallas) : 0;
 
-        // Availability
-        const totalPossibleHours = assets.length * 720;
-        const downtime = wos.reduce((s, w) => s + (parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 0), 0);
-        const availability = totalPossibleHours > 0 ? (((totalPossibleHours - downtime) / totalPossibleHours) * 100).toFixed(1) : 100;
+        // Disponibilidad — por activo, alineado con ISO 14224 / SAE
+        // Un activo NO está disponible si:
+        //   (a) está fuera de servicio, o
+        //   (b) tiene una OT correctiva pendiente o en progreso (avería abierta).
+        // Si está operativo y sin correctivas abiertas: A_i = MTBF/(MTBF+MTTR).
+        let sumA = 0;
+        assets.forEach(a => {
+            if (a.status === 'fuera_de_servicio') return;  // A_i = 0
+            const tieneAveriaAbierta = wos.some(w => w.assetId === a.id && w.type === 'correctivo'
+                && (w.status === 'pendiente' || w.status === 'en_progreso'));
+            if (tieneAveriaAbierta) return;  // A_i = 0 hasta que se cierre la OT
+            const corrA = correctiveCompleted.filter(w => w.assetId === a.id);
+            if (corrA.length === 0) { sumA += 100; return; }  // sin historial de fallas
+            const downA = corrA.reduce((s, w) => s + (parseFloat(w.actualHours) || parseFloat(w.estimatedHours) || 0), 0);
+            const mttrA = downA / corrA.length;
+            const mtbfA = ((PERIODO_DIAS * 24) - downA) / corrA.length;  // horas
+            sumA += Math.max(0, Math.min(100, (mtbfA / (mtbfA + mttrA)) * 100));
+        });
+        const availability = assets.length > 0 ? parseFloat((sumA / assets.length).toFixed(1)) : 100;
 
         // Low stock
         const lowStock = inventory.filter(i => parseFloat(i.quantity) <= parseFloat(i.minStock));
