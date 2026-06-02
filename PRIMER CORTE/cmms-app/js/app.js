@@ -948,11 +948,8 @@ class App {
             this.showManagerApprovalsModal(b.dataset.approveStudent);
         }));
 
-        // Global inject (random)
-        document.getElementById('btnInjectGlobal').addEventListener('click', () => {
-            const r = rows[Math.floor(Math.random() * rows.length)];
-            this.showInjectFaultModal(r.student.cedula);
-        });
+        // Global inject: 2 averías aleatorias por CADA estudiante, sin diálogos
+        document.getElementById('btnInjectGlobal').addEventListener('click', () => this._injectGlobalRandom(2));
 
         // Cargar datos reales de los estudiantes y activar actualización en tiempo real
         this._initAdminRealtime();
@@ -992,6 +989,36 @@ class App {
                 })
                 .subscribe();
         }
+    }
+
+    /** Inyecta N averías aleatorias en CADA estudiante del listado, sin diálogos.
+     *  Selecciona equipos operativos al azar y crea un reporte de falla crítica. */
+    _injectGlobalRandom(n = 2) {
+        const descripciones = [
+            'Vibración anormal detectada — paro de emergencia',
+            'Sobrecalentamiento crítico, equipo fuera de servicio',
+            'Fuga importante de lubricante / fluido',
+            'Disparo recurrente de protección — equipo detenido',
+            'Ruido metálico anómalo y pérdida de presión',
+            'Falla eléctrica intempestiva — bloqueo de operación'
+        ];
+        const randDesc = () => descripciones[Math.floor(Math.random() * descripciones.length)];
+        let totalIny = 0, estudiantes = 0;
+        STUDENTS.forEach(s => {
+            const real = this._adminDataMap && this._adminDataMap.get(String(s.cedula));
+            // store escribible con datos reales (si los hay) o autogenerados
+            const ts = real ? new DataStore(s.cedula, { preload: real }) : new DataStore(s.cedula);
+            const operativos = ts.getAssets().filter(a => a.status === 'operativo');
+            if (operativos.length === 0) return;
+            const shuffled = [...operativos].sort(() => Math.random() - 0.5);
+            const elegidos = shuffled.slice(0, Math.min(n, shuffled.length));
+            elegidos.forEach(a => ts.injectFailure(a.id, randDesc(), 'critica'));
+            if (this._adminDataMap && ts.data) this._adminDataMap.set(String(s.cedula), ts.data);
+            totalIny += elegidos.length;
+            estudiantes++;
+        });
+        this.toast(`⚡ ${totalIny} averías inyectadas en ${estudiantes} estudiantes (${n} por estudiante)`, 'warning');
+        this.navigate('adminRanking');
     }
 
     /** Detiene la suscripción en tiempo real del panel docente (logout). */
