@@ -456,6 +456,14 @@ class DataStore {
         const result = this._update('workOrders', id, u);
         if (result && result.status === 'completada' && oldStatus !== 'completada') {
             this._deductInventoryForWO(result);
+            // Al cerrar una OT CORRECTIVA, el equipo regresa a 'operativo' automáticamente.
+            // (La avería se considera resuelta cuando se completa la OT correctiva.)
+            if (result.type === 'correctivo' && result.assetId) {
+                const asset = this.getAsset(result.assetId);
+                if (asset && asset.status === 'fuera_de_servicio') {
+                    this.updateAsset(result.assetId, { status: 'operativo' });
+                }
+            }
         }
         if (u.assignedTo && u.assignedTo !== old?.assignedTo) {
             const asset = this.getAsset(old?.assetId);
