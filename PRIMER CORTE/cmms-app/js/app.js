@@ -848,9 +848,14 @@ class App {
                 <h2>Centro de Control Docente</h2>
                 <p>Vista consolidada del desempeño de todos los estudiantes · TOSEM 2026-1</p>
             </div>
-            <button class="btn btn-danger btn-inject-global" id="btnInjectGlobal">
-                <i class="fas fa-bolt"></i> Inyectar Avería Global
-            </button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-success" id="btnResetAll" title="Restaura todos los equipos y cancela las OTs correctivas abiertas">
+                    <i class="fas fa-rotate-left"></i> Restaurar Todo (100%)
+                </button>
+                <button class="btn btn-danger btn-inject-global" id="btnInjectGlobal">
+                    <i class="fas fa-bolt"></i> Inyectar Avería Global
+                </button>
+            </div>
         </div>
 
         <!-- Summary KPI row -->
@@ -950,6 +955,8 @@ class App {
 
         // Global inject: 2 averías aleatorias por CADA estudiante, sin diálogos
         document.getElementById('btnInjectGlobal').addEventListener('click', () => this._injectGlobalRandom(2));
+        // Reset global: restaurar todos los equipos y cancelar OTs correctivas abiertas
+        document.getElementById('btnResetAll').addEventListener('click', () => this._resetAllEquipment());
 
         // Cargar datos reales de los estudiantes y activar actualización en tiempo real
         this._initAdminRealtime();
@@ -1018,6 +1025,43 @@ class App {
             estudiantes++;
         });
         this.toast(`⚡ ${totalIny} averías inyectadas en ${estudiantes} estudiantes (${n} por estudiante)`, 'warning');
+        this.navigate('adminRanking');
+    }
+
+    /** Restaura TODOS los equipos a operativo, cancela OTs correctivas abiertas y
+     *  marca los reportes/alertas como resueltos. Devuelve a los 20 estudiantes a 100%. */
+    _resetAllEquipment() {
+        if (!confirm('Esto restaurará TODOS los equipos a operativo y cancelará las OTs correctivas abiertas en los 20 estudiantes. ¿Continuar?')) return;
+        let activosOK = 0, otsCanceladas = 0, estudiantes = 0;
+        STUDENTS.forEach(s => {
+            const real = this._adminDataMap && this._adminDataMap.get(String(s.cedula));
+            const ts = real ? new DataStore(s.cedula, { preload: real }) : new DataStore(s.cedula);
+            if (!ts.data) return;
+            // 1. Equipos -> operativo
+            ts.getAssets().forEach(a => {
+                if (a.status !== 'operativo') {
+                    ts.updateAsset(a.id, { status: 'operativo' });
+                    activosOK++;
+                }
+            });
+            // 2. OTs correctivas abiertas -> canceladas
+            ts.getWorkOrders()
+                .filter(w => w.type === 'correctivo' && (w.status === 'pendiente' || w.status === 'en_progreso'))
+                .forEach(w => {
+                    ts.updateWorkOrder(w.id, { status: 'cancelada' });
+                    otsCanceladas++;
+                });
+            // 3. Reportes de avería pendientes -> gestionados
+            (ts.data.faultReports || []).forEach(r => {
+                if (r.status === 'pendiente') { r.status = 'gestionado'; r.resolvedDate = ts.today(); }
+            });
+            // 4. Alertas inyectadas -> vistas
+            (ts.data.injectedAlerts || []).forEach(a => { a.seen = true; });
+            ts.save();
+            if (this._adminDataMap && ts.data) this._adminDataMap.set(String(s.cedula), ts.data);
+            estudiantes++;
+        });
+        this.toast(`✓ Restauración global: ${activosOK} equipos a operativo, ${otsCanceladas} OTs canceladas (${estudiantes} estudiantes)`, 'success');
         this.navigate('adminRanking');
     }
 
