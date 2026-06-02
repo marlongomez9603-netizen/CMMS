@@ -51,22 +51,25 @@ class DataStore {
         // 1. Intentar cargar de localStorage (rápido, sincrónico)
         this.data = this.load();
 
-        if (this._isStale(this.data)) {
-            // 2. Si localStorage vacío → intentar recuperar de Supabase
-            if (!options.listen) {
-                // Store temporal (p.ej. vista del docente): generar baseline
-                // determinista de inmediato para permitir lecturas síncronas.
+        // 2. Render rápido con la caché local (si la hay), luego reconciliar con la nube.
+        // IMPORTANTE: NO llamar a _migrate() aquí — _migrate hace save() y subiría
+        // datos potencialmente viejos a la nube antes de la reconciliación, pisando
+        // los datos buenos de la nube. La migración real se hace en _bootstrapFromCloud.
+        if (this.data && this.data.companies && this.data.companies.length > 0) {
+            this.currentCompanyId = this.data.companies[0].id;
+        }
+
+        if (options.listen) {
+            // Store principal: SIEMPRE reconciliar con Supabase (cloud-first).
+            // Si la nube tiene datos, esos ganan; si está vacía, se suben los locales
+            // o se generan nuevos. Así nadie queda atrapado con datos viejos del navegador.
+            this._bootstrapFromCloud(cedula);
+        } else {
+            // Store temporal (vista docente / preload): si local vacío, generar baseline sync.
+            if (this._isStale(this.data)) {
                 this.data = generateStudentData(cedula);
                 if (this.data) { this._migrate(); this.currentCompanyId = this.data.companies[0].id; }
-            } else {
-                this.data = null;  // store principal: se llenará en _bootstrapFromCloud (async)
             }
-            this._bootstrapFromCloud(cedula);  // refina con datos reales de la nube
-        } else {
-            // Datos locales ok → migrar y sincronizar en background
-            this._migrate();
-            this.currentCompanyId = this.data ? this.data.companies[0].id : null;
-            this._syncToCloud();  // actualizar Supabase en background
         }
 
         // 3. Start real-time listener ONLY for the main store (not temp instances)
@@ -85,13 +88,16 @@ class DataStore {
         return !d || !d.companies || d.companies.length === 0;
     }
 
-    /** Carga desde Supabase si localStorage está vacío (primer login / nuevo dispositivo).
-     *  IMPORTANTE: solo generamos datos nuevos cuando la nube CONFIRMA que el
-     *  estudiante no existe. Si la lectura falla (red/permisos), NO regeneramos
-     *  ni sobrescribimos la nube — así nunca se borran las tareas. */
+    /** Reconcilia los datos locales con Supabase (cloud-first).
+     *  Reglas:
+     *    1. Si la nube tiene datos: SIEMPRE ganan (descarga, reemplaza local, re-render).
+     *    2. Si la nube está vacía y local también: genera datos iniciales y sube.
+     *    3. Si la nube está vacía pero local tiene: sube local a la nube.
+     *    4. Si la nube no responde: conserva local; reintenta a los 4s.
+     *  Así, datos viejos del navegador nunca "atrapan" al estudiante. */
     async _bootstrapFromCloud(cedula) {
-        let loaded = false;
         let cloudReachable = false;
+        let cloudData = null;
 
         if (this._cloudEnabled) {
             try {
@@ -100,37 +106,33 @@ class DataStore {
                     .select('data')
                     .eq('cedula', this.cedula)
                     .maybeSingle();
-
                 if (error) throw error;
-                cloudReachable = true;   // la consulta respondió (exista o no la fila)
-
-                if (row && !this._isStale(row.data)) {
-                    this.data = row.data;
-                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
-                    loaded = true;
-                    console.info('[MaintPro] ✅ Datos recuperados de Supabase para:', cedula);
-                }
-            } catch(e) {
+                cloudReachable = true;
+                cloudData = row ? row.data : null;
+            } catch (e) {
                 console.warn('[MaintPro] No se pudo leer Supabase:', e.message || e);
             }
         }
 
-        if (!loaded) {
-            if (this._cloudEnabled && !cloudReachable) {
-                // La nube no respondió: NO regeneramos para no pisar datos buenos.
-                // Reintentamos suavemente más tarde en lugar de borrar.
-                console.warn('[MaintPro] ⏳ Nube inaccesible — reintentando en 4s (sin regenerar).');
-                this.data = this.load() || this.data;  // preservar baseline/local si existe
-                if (!this.data) {
-                    setTimeout(() => { if (!this.data) this._bootstrapFromCloud(cedula); }, 4000);
-                    return;
-                }
+        if (cloudReachable) {
+            if (cloudData && cloudData.companies && cloudData.companies.length > 0) {
+                // Regla 1: la nube manda.
+                this.data = cloudData;
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+                console.info('[MaintPro] ✅ Datos sincronizados desde Supabase para:', cedula);
+            } else if (this.data && this.data.companies && this.data.companies.length > 0) {
+                // Regla 3: nube vacía, local tiene → subir local a la nube.
+                this.save();
             } else {
-                // Nube confirmó que NO existe el estudiante (o estamos offline sin local):
-                // recién aquí es seguro generar datos iniciales.
+                // Regla 2: ambos vacíos → generar y subir.
                 this.data = generateStudentData(cedula);
                 if (this.data) this.save();
             }
+        } else if (!this.data || !this.data.companies || this.data.companies.length === 0) {
+            // Regla 4: nube no responde y no tenemos local → reintentar.
+            console.warn('[MaintPro] ⏳ Nube inaccesible — reintentando en 4s.');
+            setTimeout(() => this._bootstrapFromCloud(cedula), 4000);
+            return;
         }
 
         this._migrate();
