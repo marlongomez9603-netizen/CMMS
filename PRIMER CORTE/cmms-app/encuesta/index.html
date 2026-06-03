@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encuesta de Percepción Académica · MaintPro CMMS</title>
+  <meta name="description" content="Instrumento de investigación para evaluar la percepción de los estudiantes sobre la plataforma MaintPro CMMS. UNIPAZ — TOSEM.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/students.js"></script>
+  <style>
+    :root {
+      --primary: #0091b3;
+      --primary-dark: #006d87;
+      --bg: #f5f8fc;
+      --surface: #ffffff;
+      --border: #d5dde8;
+      --text: #1c2430;
+      --muted: #6b7490;
+      --success: #00a86b;
+      --danger: #d9362c;
+      --shadow: 0 10px 30px rgba(13,19,38,.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', -apple-system, Segoe UI, sans-serif;
+      color: var(--text); line-height: 1.55; background: var(--bg);
+      padding: 24px 16px 80px; overflow-x: hidden;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .brand .logo {
+      width: 38px; height: 38px; border-radius: 9px; background: var(--primary);
+      color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;
+    }
+    .brand .t { font-weight: 800; font-size: 16px; }
+    .brand .s { font-size: 11px; color: var(--muted); }
+    h1 { font-size: 26px; line-height: 1.25; margin-bottom: 6px; border-bottom: 3px solid var(--primary); padding-bottom: 10px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 18px; }
+    .card h2 { font-size: 15px; color: var(--primary); margin-bottom: 14px; letter-spacing: .2px; }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+    input[type=text], textarea {
+      width: 100%; padding: 10px 12px; font-family: inherit; font-size: 14px;
+      border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text);
+    }
+    input[type=text]:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,145,179,.15); }
+    textarea { min-height: 90px; resize: vertical; }
+    .info-box {
+      background: #eef7fa; border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 0 8px 8px 0;
+      font-size: 12.5px; color: #25506b; margin-bottom: 16px;
+    }
+    .q {
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .q:last-child { border-bottom: none; }
+    .q-text { font-size: 13.5px; margin-bottom: 8px; }
+    .q-text .num { color: var(--primary); font-weight: 700; margin-right: 4px; }
+    .scale {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+    }
+    .scale label {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 8px 4px; border: 1.5px solid var(--border); border-radius: 8px;
+      cursor: pointer; font-weight: 600; font-size: 11.5px; color: var(--muted);
+      transition: all .15s ease; user-select: none; text-align: center;
+    }
+    .scale label .v { font-size: 16px; color: var(--text); margin-bottom: 2px; }
+    .scale input[type=radio] { display: none; }
+    .scale label:hover { border-color: var(--primary); color: var(--primary); }
+    .scale input[type=radio]:checked + .lbl { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .scale input[type=radio]:checked + .lbl .v { color: #fff; }
+    .scale-legend { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-top: 6px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px;
+      background: var(--primary); color: #fff; border: none; border-radius: 10px;
+      font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+      transition: all .15s ease;
+    }
+    .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn:disabled { background: #b8c3d4; cursor: not-allowed; transform: none; }
+    .actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+    .alert { padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+    .alert-error { background: #fdecea; color: #8a2222; border-left: 4px solid var(--danger); }
+    .alert-ok { background: #e6f7ef; color: #0a6342; border-left: 4px solid var(--success); }
+    .thank-you {
+      text-align: center; padding: 40px 20px;
+    }
+    .thank-you .check {
+      width: 70px; height: 70px; border-radius: 50%; background: var(--success);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 38px; margin: 0 auto 18px;
+    }
+    .hidden { display: none !important; }
+    .nombre-display { font-weight: 700; color: var(--primary); }
+    .progress-bar {
+      position: sticky; top: 0; height: 4px; background: var(--border); margin: -24px -16px 18px;
+      z-index: 10;
+    }
+    .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width .25s ease; }
+    .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 24px; }
+    @media (max-width: 600px) {
+      .scale label { padding: 8px 2px; font-size: 10px; }
+      .scale label .v { font-size: 14px; }
+      h1 { font-size: 20px; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">MP</div>
+      <div>
+        <div class="t">MaintPro CMMS</div>
+        <div class="s">UNIPAZ — TOSEM 2026 · Encuesta de Investigación</div>
+      </div>
+    </div>
+
+    <h1>Encuesta de Percepción Académica</h1>
+    <p class="subtitle">Tu opinión es anónima en cuanto al análisis y sirve como insumo para un proyecto de investigación en tecnología educativa. Toma alrededor de 5 minutos.</p>
+
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
+      <h2>Identificación</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Ingresa tu número de cédula para registrar tu respuesta.</p>
+      <div class="field">
+        <label for="cedulaInput">Número de cédula</label>
+        <input type="text" id="cedulaInput" placeholder="Ej: 1097183856" autocomplete="off">
+      </div>
+      <div id="loginError" class="alert alert-error hidden"></div>
+      <button class="btn" id="btnStart">Comenzar encuesta</button>
+    </div>
+
+    <!-- SURVEY -->
+    <form id="surveyForm" class="hidden">
+      <div class="info-box">
+        Hola <span class="nombre-display" id="nombreDisplay">—</span>. Marca tu nivel de acuerdo en cada afirmación. <br>
+        <strong>1 = Totalmente en desacuerdo · 5 = Totalmente de acuerdo</strong>
+      </div>
+
+      <!-- A. Usabilidad -->
+      <div class="card">
+        <h2>A. Usabilidad y facilidad de uso</h2>
+        <div class="q" data-q="1"><div class="q-text"><span class="num">1.</span>La plataforma es fácil de usar.</div></div>
+        <div class="q" data-q="2"><div class="q-text"><span class="num">2.</span>La navegación entre las secciones es intuitiva.</div></div>
+        <div class="q" data-q="3"><div class="q-text"><span class="num">3.</span>Los botones y elementos visuales son claros y comprensibles.</div></div>
+        <div class="q" data-q="4"><div class="q-text"><span class="num">4.</span>Aprendí a usar la plataforma rápidamente.</div></div>
+        <div class="q" data-q="5"><div class="q-text"><span class="num">5.</span>Pude encontrar lo que necesitaba sin pedir ayuda externa.</div></div>
+      </div>
+
+      <!-- B. Utilidad / aprendizaje -->
+      <div class="card">
+        <h2>B. Utilidad percibida para el aprendizaje</h2>
+        <div class="q" data-q="6"><div class="q-text"><span class="num">6.</span>La plataforma me ayuda a entender conceptos de mantenimiento (ISO 14224, MTBF, MTTR, criticidad).</div></div>
+        <div class="q" data-q="7"><div class="q-text"><span class="num">7.</span>Me ayuda a comprender el ciclo completo de una Orden de Trabajo.</div></div>
+        <div class="q" data-q="8"><div class="q-text"><span class="num">8.</span>Me ayuda a entender la planificación del mantenimiento preventivo.</div></div>
+        <div class="q" data-q="9"><div class="q-text"><span class="num">9.</span>Me permite practicar el análisis de causa raíz (5 porqués) de forma realista.</div></div>
+        <div class="q" data-q="10"><div class="q-text"><span class="num">10.</span>Me permite interpretar indicadores (disponibilidad, cumplimiento PM, costos).</div></div>
+      </div>
+
+      <!-- C. Diseño visual -->
+      <div class="card">
+        <h2>C. Diseño y experiencia visual</h2>
+        <div class="q" data-q="11"><div class="q-text"><span class="num">11.</span>El diseño de la plataforma es atractivo y profesional.</div></div>
+        <div class="q" data-q="12"><div class="q-text"><span class="num">12.</span>La información está bien organizada en pantalla.</div></div>
+        <div class="q" data-q="13"><div class="q-text"><span class="num">13.</span>La plataforma se ve y se usa bien en cualquier dispositivo (computador y celular).</div></div>
+      </div>
+
+      <!-- D. Pertinencia académica -->
+      <div class="card">
+        <h2>D. Pertinencia académica</h2>
+        <div class="q" data-q="14"><div class="q-text"><span class="num">14.</span>El contenido se alinea con los temas vistos en clase (TOSEM).</div></div>
+        <div class="q" data-q="15"><div class="q-text"><span class="num">15.</span>El nivel de profundidad técnica es adecuado para mi curso.</div></div>
+        <div class="q" data-q="16"><div class="q-text"><span class="num">16.</span>Los escenarios simulados se parecen a situaciones reales de la industria.</div></div>
+        <div class="q" data-q="17"><div class="q-text"><span class="num">17.</span>La plataforma refuerza el uso de normas (ISO 14224, ISO 55000).</div></div>
+      </div>
+
+      <!-- E. Motivación -->
+      <div class="card">
+        <h2>E. Motivación y engagement</h2>
+        <div class="q" data-q="18"><div class="q-text"><span class="num">18.</span>La plataforma me motiva a aprender sobre mantenimiento industrial.</div></div>
+        <div class="q" data-q="19"><div class="q-text"><span class="num">19.</span>Me sentí interesado(a) durante el tiempo que la usé.</div></div>
+        <div class="q" data-q="20"><div class="q-text"><span class="num">20.</span>Me gustaría seguir explorando funciones por mi cuenta.</div></div>
+      </div>
+
+      <!-- F. Comparación -->
+      <div class="card">
+        <h2>F. Comparación con métodos tradicionales</h2>
+        <div class="q" data-q="21"><div class="q-text"><span class="num">21.</span>Aprendo más usando la plataforma que solo con clases magistrales.</div></div>
+        <div class="q" data-q="22"><div class="q-text"><span class="num">22.</span>Es más efectiva que resolver ejercicios solo en papel.</div></div>
+      </div>
+
+      <!-- G. Auto-eficacia -->
+      <div class="card">
+        <h2>G. Auto-eficacia y aplicación</h2>
+        <div class="q" data-q="23"><div class="q-text"><span class="num">23.</span>Después de usarla, me siento capaz de gestionar un programa básico de mantenimiento.</div></div>
+        <div class="q" data-q="24"><div class="q-text"><span class="num">24.</span>Aplicaría lo aprendido aquí en un escenario laboral real.</div></div>
+      </div>
+
+      <!-- H. Recomendación -->
+      <div class="card">
+        <h2>H. Recomendación e intención de uso</h2>
+        <div class="q" data-q="25"><div class="q-text"><span class="num">25.</span>Recomendaría usar esta plataforma a otros estudiantes.</div></div>
+      </div>
+
+      <!-- Comentarios -->
+      <div class="card">
+        <h2>Comentarios libres (opcional)</h2>
+        <label for="comentarios" style="font-weight:500;font-size:12.5px;color:var(--muted)">¿Qué te gustaría mejorar, qué te gustó, o cualquier sugerencia adicional?</label>
+        <textarea id="comentarios" placeholder="Tu opinión es muy valiosa para futuras mejoras..."></textarea>
+      </div>
+
+      <div id="submitError" class="alert alert-error hidden"></div>
+      <div class="actions">
+        <button type="submit" class="btn" id="btnSubmit">Enviar respuestas</button>
+        <span id="submitStatus" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+    </form>
+
+    <!-- THANK YOU -->
+    <div class="card hidden" id="thanksCard">
+      <div class="thank-you">
+        <div class="check">✓</div>
+        <h2 style="color:var(--text);font-size:22px;margin-bottom:8px;border:none;padding:0">¡Gracias por tu respuesta!</h2>
+        <p style="color:var(--muted);max-width:480px;margin:0 auto 18px">
+          Tu opinión se guardó correctamente y será utilizada para investigación y mejora de la plataforma.
+        </p>
+        <a href="../index.html" class="btn" style="text-decoration:none">Volver al CMMS</a>
+      </div>
+    </div>
+
+    <div class="footer">MaintPro CMMS · UNIPAZ — TOSEM 2026 · Instrumento de investigación académica</div>
+  </div>
+
+<script>
+(function(){
+  const TOTAL_Q = 25;
+  let cedula = null, nombre = null;
+
+  // Cliente Supabase
+  let sb = null;
+  if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.includes('TU-PROYECTO')) {
+    sb = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, { auth: { persistSession: false } });
+  }
+
+  // Renderizar los 5 botones de escala en cada pregunta
+  document.querySelectorAll('.q').forEach(q => {
+    const n = q.dataset.q;
+    const scale = document.createElement('div');
+    scale.className = 'scale';
+    scale.innerHTML = [1,2,3,4,5].map(v => `
+      <label>
+        <input type="radio" name="q${n}" value="${v}" required>
+        <span class="lbl" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;font-weight:600;font-size:11.5px;color:var(--muted);width:100%">
+          <span class="v" style="font-size:16px;color:var(--text);margin-bottom:2px">${v}</span>
+        </span>
+      </label>`).join('');
+    q.appendChild(scale);
+    const legend = document.createElement('div');
+    legend.className = 'scale-legend';
+    legend.innerHTML = '<span>Totalmente en desacuerdo</span><span>Totalmente de acuerdo</span>';
+    q.appendChild(legend);
+  });
+
+  // Estilo seleccionado: usamos JS para aplicar la clase al label-lbl cuando cambia el radio
+  document.addEventListener('change', e => {
+    if (e.target.type === 'radio') {
+      const name = e.target.name;
+      document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+        const lbl = r.parentElement.querySelector('.lbl');
+        if (r.checked) { lbl.style.background = 'var(--primary)'; lbl.style.color = '#fff'; lbl.style.borderColor = 'var(--primary)'; lbl.querySelector('.v').style.color = '#fff'; }
+        else { lbl.style.background = ''; lbl.style.color = 'var(--muted)'; lbl.style.borderColor = 'var(--border)'; lbl.querySelector('.v').style.color = 'var(--text)'; }
+      });
+      updateProgress();
+    }
+  });
+
+  function updateProgress() {
+    let done = 0;
+    for (let i = 1; i <= TOTAL_Q; i++) {
+      if (document.querySelector(`input[name="q${i}"]:checked`)) done++;
+    }
+    document.getElementById('progressFill').style.width = (done / TOTAL_Q * 100) + '%';
+  }
+
+  // LOGIN
+  document.getElementById('btnStart').addEventListener('click', () => {
+    const ced = document.getElementById('cedulaInput').value.trim();
+    const errBox = document.getElementById('loginError');
+    errBox.classList.add('hidden');
+    if (!ced) { errBox.textContent = 'Ingresa tu número de cédula.'; errBox.classList.remove('hidden'); return; }
+    const student = (typeof getStudentByCedula === 'function') ? getStudentByCedula(ced) : null;
+    if (!student) { errBox.textContent = 'Esa cédula no está registrada en el sistema. Verifica e inténtalo de nuevo.'; errBox.classList.remove('hidden'); return; }
+    cedula = student.cedula; nombre = student.nombre;
+    document.getElementById('nombreDisplay').textContent = nombre.split(',').reverse().join(' ').trim();
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('surveyForm').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.getElementById('cedulaInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnStart').click(); }
+  });
+
+  // SUBMIT
+  document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errBox = document.getElementById('submitError');
+    const statusEl = document.getElementById('submitStatus');
+    errBox.classList.add('hidden');
+
+    // Validar que las 25 estén respondidas
+    const respuestas = {};
+    for (let i = 1; i <= TOTAL_Q; i++) {
+      const r = document.querySelector(`input[name="q${i}"]:checked`);
+      if (!r) {
+        errBox.textContent = `Falta responder la pregunta ${i}.`;
+        errBox.classList.remove('hidden');
+        const q = document.querySelector(`.q[data-q="${i}"]`);
+        if (q) q.scrollIntoView({ behavior:'smooth', block:'center' });
+        return;
+      }
+      respuestas[`q${i}`] = parseInt(r.value, 10);
+    }
+    respuestas.cedula = cedula;
+    respuestas.nombre = nombre;
+    respuestas.comentarios = document.getElementById('comentarios').value.trim() || null;
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true; statusEl.textContent = 'Enviando...';
+
+    if (!sb) {
+      errBox.textContent = 'No se pudo conectar con la base de datos. Verifica tu conexión a internet.';
+      errBox.classList.remove('hidden'); btn.disabled = false; statusEl.textContent = '';
+      return;
+    }
+    const { error } = await sb.from('survey_responses').insert(respuestas);
+    if (error) {
+      errBox.textContent = 'Error al guardar: ' + error.message;
+      errBox.classList.remove('hidden'); btn.disabled = false; statusEl.textContent = '';
+      return;
+    }
+    document.getElementById('surveyForm').classList.add('hidden');
+    document.getElementById('thanksCard').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
+</body>
+</html>

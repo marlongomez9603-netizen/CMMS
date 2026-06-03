@@ -13,7 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <!-- Supabase SDK (base de datos en la nube) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="css/styles.css?v=6.4">
+  <link rel="stylesheet" href="css/styles.css?v=6.5">
 </head>
 <body>
 
@@ -130,6 +130,9 @@
         <button class="btn btn-tech-toggle" id="btnTechMode" style="display:none;width:100%;margin-top:8px" title="Cambiar vista de rol">
           <i class="fas fa-hard-hat"></i> Vista Técnico
         </button>
+        <a href="encuesta/" target="_blank" style="display:block;margin-top:8px;text-align:center;font-size:0.72rem;color:var(--primary);text-decoration:none;padding:7px 6px;border:1px dashed var(--border);border-radius:6px">
+          <i class="fas fa-clipboard-question"></i> Encuesta de Investigación
+        </a>
         <div style="margin-top:8px;font-size:0.65rem;color:var(--text-muted)">MaintPro CMMS v3.0 · UNIPAZ</div>
       </div>
     </aside>
@@ -203,15 +206,15 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- PDF generation (local, sin depender de internet) -->
-  <script src="js/vendor/jspdf.umd.min.js?v=6.4"></script>
-  <script src="js/vendor/jspdf.plugin.autotable.min.js?v=6.4"></script>
+  <script src="js/vendor/jspdf.umd.min.js?v=6.5"></script>
+  <script src="js/vendor/jspdf.plugin.autotable.min.js?v=6.5"></script>
   <!-- Scripts (order matters) -->
-  <script src="js/config.js?v=6.4"></script>
-  <script src="js/students.js?v=6.4"></script>
-  <script src="js/auth.js?v=6.4"></script>
-  <script src="js/store.js?v=6.4"></script>
-  <script src="js/app.js?v=6.4"></script>
-  <script src="js/parcial.js?v=6.4"></script>
+  <script src="js/config.js?v=6.5"></script>
+  <script src="js/students.js?v=6.5"></script>
+  <script src="js/auth.js?v=6.5"></script>
+  <script src="js/store.js?v=6.5"></script>
+  <script src="js/app.js?v=6.5"></script>
+  <script src="js/parcial.js?v=6.5"></script>
   <script>
     // Display current date
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CO', {
