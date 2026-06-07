@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repositorio de Recursos Educativos Digitales · MaintPro CMMS</title>
+<meta name="description" content="Repositorio de Recursos Educativos Digitales. Acceso al recurso MaintPro CMMS, aplicación web educativa para la gestión del mantenimiento industrial.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { brand: {
+    paper:'#ffffff', canvas:'#f7f5f1', ink:'#16212b', body:'#33414e', muted:'#6b7886',
+    line:'#e7e3db', accent:'#0b6b73', deep:'#084e54', ember:'#d97534', gas:'#2563a8' } },
+  fontFamily: {
+    display:['Fraunces','Georgia','serif'],
+    sans:['"IBM Plex Sans"','system-ui','sans-serif'],
+    mono:['"IBM Plex Mono"','ui-monospace','monospace'] }
+}}}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{background-color:#f7f5f1;background-image:radial-gradient(circle at 1px 1px, rgba(22,33,43,.035) 1px, transparent 0);background-size:22px 22px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:#d97534;}
+  .card{background:#fff;border:1px solid #e7e3db;border-radius:1rem;box-shadow:0 1px 2px rgba(22,33,43,.04),0 12px 28px -18px rgba(22,33,43,.18);}
+  .hidden-card{display:none !important;}
+</style>
+</head>
+<body class="font-sans text-brand-body antialiased">
+
+<!-- Top bar -->
+<header class="bg-brand-paper/90 backdrop-blur border-b border-brand-line sticky top-0 z-20">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-lg bg-brand-accent text-white grid place-items-center font-mono font-bold">R</span>
+      <div>
+        <p class="font-display text-lg font-semibold text-brand-ink leading-none">Repositorio <span class="text-brand-accent italic">RED</span></p>
+        <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-brand-muted mt-1">Recursos Educativos Digitales</p>
+      </div>
+    </div>
+    <a href="https://majogoar13.github.io/Evaluacion-de-red/" target="_blank" rel="noopener" class="font-mono text-xs px-4 py-2 rounded-lg border border-brand-line text-brand-body hover:border-brand-accent hover:text-brand-accent transition-colors">Ir al portafolio &rarr;</a>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="max-w-6xl mx-auto px-6 pt-14 pb-8">
+  <div class="flex items-center gap-3 mb-5">
+    <span class="h-px w-10 bg-brand-ember"></span>
+    <span class="eyebrow">Catálogo de recursos</span>
+  </div>
+  <h1 class="font-display text-4xl md:text-5xl font-semibold text-brand-ink leading-[1.05] max-w-3xl">Repositorio de Recursos Educativos Digitales</h1>
+  <p class="text-lg text-brand-body mt-5 max-w-2xl leading-relaxed">Colección de Recursos Educativos Digitales (RED) de autoría propia para la enseñanza de la Ingeniería de Producción. Explore, acceda y revise el recurso disponible.</p>
+
+  <!-- Search + filters -->
+  <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
+    <div class="relative flex-1 max-w-md">
+      <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
+      <input id="search" type="text" placeholder="Buscar recursos…" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-brand-line bg-brand-paper text-sm text-brand-ink focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/15">
+    </div>
+    <div class="flex flex-wrap gap-2 font-mono text-xs">
+      <button class="filter-chip px-3 py-1.5 rounded-full border border-brand-accent bg-brand-accent text-white" data-cat="all">Todos</button>
+      <button class="filter-chip px-3 py-1.5 rounded-full border border-brand-line text-brand-body hover:border-brand-accent transition-colors" data-cat="mantenimiento">Mantenimiento</button>
+      <button class="filter-chip px-3 py-1.5 rounded-full border border-brand-line text-brand-body hover:border-brand-accent transition-colors" data-cat="simulador">Simulador / App</button>
+    </div>
+  </div>
+  <p id="count" class="font-mono text-xs text-brand-muted mt-4">1 recurso disponible</p>
+</section>
+
+<!-- Catalog grid -->
+<main class="max-w-6xl mx-auto px-6 pb-20">
+  <div id="grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- RESOURCE: MaintPro CMMS -->
+    <article class="resource card overflow-hidden flex flex-col group" data-cat="mantenimiento simulador" data-title="maintpro cmms gestión mantenimiento iso 14224">
+      <a href="https://marlongomez9603-netizen.github.io/CMMS/PRIMER%20CORTE/cmms-app/" target="_blank" rel="noopener" class="block relative aspect-video overflow-hidden border-b border-brand-line">
+        <img src="https://img.youtube.com/vi/KsIJ2sU129M/hqdefault.jpg" alt="Vista del CMMS MaintPro" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        <span class="absolute top-3 left-3 font-mono text-[10px] px-2 py-1 rounded-full bg-brand-accent text-white">Aplicación web</span>
+      </a>
+      <div class="p-6 flex flex-col flex-1">
+        <span class="eyebrow">Gestión del mantenimiento</span>
+        <h2 class="font-display text-xl font-semibold text-brand-ink mt-1 mb-2 group-hover:text-brand-accent transition-colors">MaintPro CMMS</h2>
+        <p class="text-sm text-brand-body leading-relaxed mb-4 flex-1">Sistema de Gestión de Mantenimiento Computarizado. Permite gestionar activos (jerarquía ISO 14224), órdenes de trabajo, mantenimiento preventivo, inventario, personal técnico e indicadores (MTBF, MTTR, disponibilidad).</p>
+        <div class="flex flex-wrap gap-2 mb-5 font-mono text-[10px]">
+          <span class="px-2 py-1 rounded bg-brand-accent/10 text-brand-accent border border-brand-accent/20">ISO 14224</span>
+          <span class="px-2 py-1 rounded bg-brand-accent/10 text-brand-accent border border-brand-accent/20">ISO 55000</span>
+          <span class="px-2 py-1 rounded bg-brand-ember/10 text-brand-ember border border-brand-ember/25">COdA-IP 4,65/5</span>
+        </div>
+        <a href="https://marlongomez9603-netizen.github.io/CMMS/PRIMER%20CORTE/cmms-app/" target="_blank" rel="noopener" class="font-mono text-sm px-4 py-2.5 rounded-lg bg-brand-accent text-white text-center hover:bg-brand-deep transition-colors">Abrir recurso &rarr;</a>
+      </div>
+    </article>
+
+    <!-- TILE: acceso demo -->
+    <article class="resource card p-6 flex flex-col" data-cat="mantenimiento" data-title="acceso demo usuario prueba ingreso">
+      <span class="eyebrow">Acceso de prueba</span>
+      <h3 class="font-display text-lg font-semibold text-brand-ink mt-1 mb-2">Usuario demo</h3>
+      <p class="text-sm text-brand-body leading-relaxed flex-1">Para explorar el recurso sin registro, ingrese con el usuario de demostración. En el campo de cédula:</p>
+      <div class="my-4 rounded-xl border border-brand-line bg-brand-canvas/60 p-4 text-center">
+        <span class="font-mono text-2xl font-semibold text-brand-ink tracking-widest">1111111111</span>
+        <p class="font-mono text-[11px] text-brand-muted mt-1">Digite diez veces el número 1</p>
+      </div>
+      <a href="https://marlongomez9603-netizen.github.io/CMMS/PRIMER%20CORTE/cmms-app/" target="_blank" rel="noopener" class="font-mono text-sm px-4 py-2.5 rounded-lg border border-brand-accent text-brand-accent text-center hover:bg-brand-accent hover:text-white transition-colors">Entrar a la plataforma</a>
+    </article>
+
+    <!-- TILE: video -->
+    <article class="resource card overflow-hidden flex flex-col group" data-cat="mantenimiento simulador" data-title="video demostración tutorial">
+      <a href="https://youtu.be/KsIJ2sU129M" target="_blank" rel="noopener" class="block relative aspect-video overflow-hidden border-b border-brand-line">
+        <img src="https://img.youtube.com/vi/KsIJ2sU129M/hqdefault.jpg" alt="Video de demostración del CMMS" class="w-full h-full object-cover">
+        <span class="absolute inset-0 grid place-items-center bg-black/25 group-hover:bg-black/40 transition-colors">
+          <span class="flex items-center gap-2 font-mono text-xs text-white bg-brand-ember/90 px-4 py-2 rounded-full">&#9654;&nbsp; Ver en YouTube</span>
+        </span>
+      </a>
+      <div class="p-6 flex flex-col flex-1">
+        <span class="eyebrow">Demostración</span>
+        <h3 class="font-display text-lg font-semibold text-brand-ink mt-1 mb-2">Video de la plataforma</h3>
+        <p class="text-sm text-brand-body leading-relaxed flex-1">Recorrido en video por las funcionalidades del CMMS: activos, órdenes de trabajo, indicadores y reportes.</p>
+      </div>
+    </article>
+
+    <!-- TILE: evaluación -->
+    <article class="resource card p-6 flex flex-col" data-cat="mantenimiento" data-title="evaluación calidad coda-ip resultados">
+      <span class="eyebrow">Calidad del recurso</span>
+      <h3 class="font-display text-lg font-semibold text-brand-ink mt-1 mb-2">Evaluación COdA-IP</h3>
+      <div class="flex items-baseline gap-2 my-2">
+        <span class="font-display text-4xl font-semibold text-brand-ink">4,65</span>
+        <span class="text-brand-muted">/ 5,0</span>
+        <span class="font-mono text-xs px-2 py-1 rounded-full bg-brand-accent text-white ml-1">Excelente</span>
+      </div>
+      <p class="text-sm text-brand-body leading-relaxed flex-1 mb-4">Evaluado con el modelo rediseñado COdA-IP, con dimensión de Fidelidad Disciplinar y respaldo de una encuesta de percepción (N = 14).</p>
+      <a href="https://majogoar13.github.io/Evaluacion-de-red/aplicacion.html" target="_blank" rel="noopener" class="font-mono text-sm px-4 py-2.5 rounded-lg border border-brand-line text-brand-body text-center hover:border-brand-accent transition-colors">Ver resultados &rarr;</a>
+    </article>
+
+    <!-- TILE: ficha técnica -->
+    <article class="resource card p-6 flex flex-col" data-cat="mantenimiento simulador" data-title="ficha técnica descripción autor tecnología">
+      <span class="eyebrow">Ficha técnica</span>
+      <h3 class="font-display text-lg font-semibold text-brand-ink mt-1 mb-3">Datos del recurso</h3>
+      <dl class="text-sm space-y-2 flex-1">
+        <div><dt class="font-mono text-[10px] uppercase tracking-wider text-brand-muted">Autor</dt><dd class="text-brand-body">Marlon J. Gómez Argüello</dd></div>
+        <div><dt class="font-mono text-[10px] uppercase tracking-wider text-brand-muted">Área</dt><dd class="text-brand-body">Ingeniería de Producción / Gestión del Mantenimiento</dd></div>
+        <div><dt class="font-mono text-[10px] uppercase tracking-wider text-brand-muted">Tecnología</dt><dd class="text-brand-body">HTML5, JavaScript, Chart.js, Supabase</dd></div>
+        <div><dt class="font-mono text-[10px] uppercase tracking-wider text-brand-muted">Tipo</dt><dd class="text-brand-body">Aplicación web educativa / Simulador de gestión</dd></div>
+      </dl>
+      <a href="https://majogoar13.github.io/Evaluacion-de-red/modelos-y-red/recursos-educativos.html" target="_blank" rel="noopener" class="font-mono text-sm px-4 py-2.5 mt-4 rounded-lg border border-brand-line text-brand-body text-center hover:border-brand-accent transition-colors">Ficha completa &rarr;</a>
+    </article>
+
+  </div>
+
+  <p id="empty" class="hidden text-center text-brand-muted font-mono text-sm py-16">No se encontraron recursos para esa búsqueda.</p>
+</main>
+
+<footer class="border-t border-brand-line bg-brand-paper">
+  <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-brand-muted">
+    <p class="font-mono text-xs">Repositorio RED · Marlon J. Gómez Argüello · UNIPAZ</p>
+    <p class="font-mono text-xs">Recurso de autoría propia · 2026</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const search=document.getElementById('search');
+  const chips=Array.from(document.querySelectorAll('.filter-chip'));
+  const cards=Array.from(document.querySelectorAll('.resource'));
+  const count=document.getElementById('count');
+  const empty=document.getElementById('empty');
+  let cat='all';
+  function apply(){
+    const q=(search.value||'').trim().toLowerCase();
+    let n=0;
+    cards.forEach(c=>{
+      const okCat = cat==='all' || (c.dataset.cat||'').includes(cat);
+      const okQ = !q || (c.dataset.title||'').includes(q) || c.textContent.toLowerCase().includes(q);
+      const show = okCat && okQ;
+      c.classList.toggle('hidden-card', !show);
+      if(show) n++;
+    });
+    count.textContent = n + (n===1?' recurso disponible':' recursos disponibles');
+    empty.classList.toggle('hidden', n>0);
+  }
+  search.addEventListener('input', apply);
+  chips.forEach(ch=>ch.addEventListener('click',()=>{
+    cat=ch.dataset.cat;
+    chips.forEach(c=>{c.className='filter-chip px-3 py-1.5 rounded-full border border-brand-line text-brand-body hover:border-brand-accent transition-colors';});
+    ch.className='filter-chip px-3 py-1.5 rounded-full border border-brand-accent bg-brand-accent text-white';
+    apply();
+  }));
+})();
+</script>
+</body>
+</html>
